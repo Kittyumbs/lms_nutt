@@ -1,0 +1,106 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Tối ưu hiệu ứng kéo thả */
+.react-beautiful-dnd-draggable {
+  transition: transform 0.2s ease;
+}
+
+/* Loại bỏ delay khi kéo */
+.react-beautiful-dnd-drag-handle {
+  touch-action: none;
+}
+
+/* Tối ưu hiển thị placeholder */
+.react-beautiful-dnd-placeholder {
+  background: #f0f0f0;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.ant-form-item {
+  margin-bottom: 16px;
+}
+
+.url-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ant-card-actions > li {
+  margin: 0 !important;
+  flex: none !important;
+}
+
+.ant-card-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+.kanban-card {
+  transition: 
+    transform 3s ease-in-out,
+    opacity 3s ease-in-out,
+    margin-top 3s ease-in-out !important;
+  will-change: transform, opacity, margin-top;
+}
+
+.draggable-ticket {
+  transition: all 0.2s ease;
+}
+
+.draggable-ticket:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.delete-icon {
+  color: inherit;
+  transition: color 0.3s;
+}
+
+.delete-icon:hover {
+  color: #ff4d4f !important;
+}

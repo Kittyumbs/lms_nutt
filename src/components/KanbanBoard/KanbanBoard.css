@@ -1,0 +1,326 @@
+.kanban-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  border: none !important;
+  opacity: 1;
+  transform-origin: center;
+  position: relative !important;
+  margin-bottom: 16px !important;
+}
+
+.kanban-card .ant-card-body {
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-radius: 8px !important;
+  padding: 16px !important;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+}
+
+.kanban-card:hover .ant-card-body {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.kanban-card:active {
+  cursor: grabbing !important;
+}
+
+/* Action buttons container */
+.action-buttons {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%) translateX(100%);
+  display: flex;
+  gap: 4px;
+  padding: 4px 8px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 10;
+  pointer-events: none;
+  min-width: max-content;
+}
+
+.kanban-card {
+  position: relative;
+}
+
+.kanban-card:hover .action-buttons {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+  pointer-events: all;
+  right: -5px;
+}
+
+.action-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  border-radius: 4px !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.action-button .anticon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.action-button:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  transform: scale(1.1);
+}
+
+.action-button.delete:hover {
+  background: #fff1f0 !important;
+}
+
+/* Remove outline and border when dragging */
+[data-rbd-draggable-context-id] {
+  outline: none !important;
+  border: none !important;
+}
+
+[data-rbd-draggable-context-id] * {
+  outline: none !important;
+  border: none !important;
+}
+
+/* Custom scrollbar for the columns */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 3px;
+}
+
+/* Căn chỉnh icon và priority */
+.issue-type-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+  vertical-align: middle !important;
+}
+
+.priority-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+  vertical-align: middle !important;
+}
+
+.icon-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 24px !important;
+}
+
+/* Animation cho ticket khi di chuyển */
+.ticket-exit {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.ticket-enter {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.ticket-enter-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Hiệu ứng cho column khi có ticket mới */
+.column-highlight {
+  background-color: rgba(24, 144, 255, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+/* Hiệu ứng cho các nút action */
+.ant-card-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  background: transparent !important;
+  border: none !important;
+  position: relative;
+  z-index: 2;
+  margin-top: 10px !important;
+  padding: 10px 0 !important;
+}
+
+.kanban-card:hover .ant-card-actions {
+  opacity: 1;
+}
+
+.ant-card-actions > li {
+  margin: 0 !important;
+  padding: 0 8px !important;
+}
+
+.ant-card-actions > li > span {
+  transition: all 0.2s ease;
+  padding: 4px 8px !important;
+}
+
+.ant-card-actions > li > span:hover {
+  transform: scale(1.1);
+  color: #1890ff !important;
+}
+
+/* Remove any additional borders */
+.ant-card-bordered {
+  border: none !important;
+}
+
+.draggable-ticket {
+  position: relative;
+  transition: all 0.3s ease;
+  padding: 2px;
+}
+
+/* L-shaped lines container */
+.l-line, .r-line {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* Left L-shape */
+.l-line {
+  top: 0;
+  left: 0;
+}
+
+.l-h {
+  position: absolute;
+  height: 2px;
+  background: #1890ff;
+  width: 0;
+  top: 0;
+  left: 0;
+  transform-origin: left;
+}
+
+.l-v {
+  position: absolute;
+  width: 2px;
+  background: #1890ff;
+  height: 0;
+  top: 0;
+  left: 0;
+  transform-origin: top;
+}
+
+/* Right L-shape */
+.r-line {
+  top: 0;
+  right: 0;
+}
+
+.r-v {
+  position: absolute;
+  width: 2px;
+  background: #1890ff;
+  height: 0;
+  top: 0;
+  right: 0;
+  transform-origin: top;
+}
+
+.r-h {
+  position: absolute;
+  height: 2px;
+  background: #1890ff;
+  width: 0;
+  top: 0;
+  right: 0;
+  transform-origin: right;
+}
+
+/* Hover animations */
+.draggable-ticket:hover .l-h {
+  animation: expandRight 0.3s ease forwards;
+}
+
+.draggable-ticket:hover .l-v {
+  animation: expandDown 0.3s ease forwards;
+  animation-delay: 0.3s;
+}
+
+.draggable-ticket:hover .r-v {
+  animation: expandDown 0.3s ease forwards;
+}
+
+.draggable-ticket:hover .r-h {
+  animation: expandRightReverse 0.3s ease forwards;
+  animation-delay: 0.3s;
+}
+
+@keyframes expandRight {
+  from {
+    width: 0;
+  }
+  to {
+    width: 50%;
+  }
+}
+
+@keyframes expandRightReverse {
+  from {
+    width: 0;
+  }
+  to {
+    width: 50%;
+  }
+}
+
+@keyframes expandDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+} 
