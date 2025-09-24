@@ -14,7 +14,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { isSignedIn, isGapiLoaded, error, handleAuthClick, createCalendarEvent, signOut } = useGoogleCalendar();
+  const { isSignedIn, isGapiLoaded, error, userEmail, handleAuthClick, createCalendarEvent, signOut } = useGoogleCalendar();
 
   useEffect(() => {
     if (isOpen) {
@@ -106,6 +106,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
         )}
         {isSignedIn && (
           <div style={{ marginBottom: 16, textAlign: 'center' }}>
+            {userEmail && <p style={{ marginBottom: 8, fontSize: '0.85em', color: '#555' }}>Đang gửi lịch từ: <strong>{userEmail}</strong></p>}
             <Button onClick={signOut} danger>
               Đăng xuất Google
             </Button>

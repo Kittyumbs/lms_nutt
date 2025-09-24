@@ -1,6 +1,7 @@
 /// <reference types="gapi" />
 /// <reference types="gapi.client" />
 /// <reference types="gapi.client.calendar" />
+/// <reference types="gapi.client.oauth2" /> // Thêm tham chiếu kiểu cho oauth2
 import '../types/gis.d.ts'; // Import GIS types
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { gapi } from 'gapi-script';
@@ -29,6 +30,7 @@ export const useGoogleCalendar = () => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isGapiLoaded, setIsGapiLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null); // Thêm state để lưu email người dùng
   const tokenClient = useRef<any>(null); // Use useRef to store tokenClient
 
   const initGapiClient = useCallback(async () => {
@@ -47,6 +49,16 @@ export const useGoogleCalendar = () => {
           if (resp && resp.access_token) {
             gapi.client.setToken({ access_token: resp.access_token });
             setIsSignedIn(true);
+            // Lấy thông tin người dùng sau khi đăng nhập thành công
+            // Cần tải thư viện 'oauth2' trước khi sử dụng
+            gapi.client.load('oauth2', 'v2', () => {
+              gapi.client.oauth2.userinfo.get().then((userResp: any) => {
+                setUserEmail(userResp.result.email);
+              }).catch((userErr: any) => {
+                console.error("Error fetching user info:", userErr);
+                setUserEmail(null);
+              });
+            });
           }
         },
       });
@@ -92,15 +104,20 @@ export const useGoogleCalendar = () => {
   }, []);
 
   const signOut = useCallback(() => {
-    if (isSignedIn && gapi.client.getToken()) {
-      const accessToken = gapi.client.getToken().access_token;
-      if (accessToken) {
-        window.google.accounts.id.revoke(accessToken, () => {
+    if (isSignedIn && window.google && window.google.accounts && window.google.accounts.id) {
+      const token = gapi.client.getToken();
+      if (token && token.access_token) {
+        window.google.accounts.id.revoke(token.access_token, () => {
           gapi.client.setToken(null);
           setIsSignedIn(false);
+          setUserEmail(null); // Xóa email người dùng khi đăng xuất
           message.success("Đã đăng xuất khỏi Google.");
         });
+      } else {
+        message.warning("Không có access token để đăng xuất."); // Đổi warn thành warning
       }
+    } else {
+      message.warning("Google Identity Services chưa được khởi tạo hoặc người dùng chưa đăng nhập."); // Đổi warn thành warning
     }
   }, [isSignedIn]);
 
@@ -132,6 +149,7 @@ export const useGoogleCalendar = () => {
     isSignedIn,
     isGapiLoaded,
     error,
+    userEmail, // Expose userEmail
     handleAuthClick,
     createCalendarEvent,
     signOut, // Expose signOut
