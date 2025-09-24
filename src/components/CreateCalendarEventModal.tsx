@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Button, DatePicker, Space, message } from 'antd';
+import { Modal, Form, Input, Button, DatePicker, message } from 'antd';
 import dayjs from 'dayjs';
 import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 
@@ -14,7 +14,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { isSignedIn, isGapiLoaded, error, handleAuthClick, createCalendarEvent } = useGoogleCalendar();
+  const { isSignedIn, isGapiLoaded, error, handleAuthClick, createCalendarEvent, signOut } = useGoogleCalendar();
 
   useEffect(() => {
     if (isOpen) {
@@ -82,36 +82,43 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
   }
 
   return (
-    <Modal
-      title="Tạo lịch nhắc hẹn Google Calendar"
-      open={isOpen}
-      onCancel={onClose}
-      footer={[
-        <Button key="cancel" onClick={onClose}>
-          Hủy
-        </Button>,
-        <Button key="submit" type="primary" onClick={handleSubmit} loading={loading} disabled={loading}>
-          Tạo lịch
-        </Button>,
-      ]}
-      width={600}
-    >
-      {!isSignedIn && (
-        <div style={{ marginBottom: 16, textAlign: 'center' }}>
-          <Button type="primary" onClick={handleSignIn} loading={loading} disabled={loading}>
-            Đăng nhập Google để tạo lịch
-          </Button>
-          {error && <p style={{ color: 'red', marginTop: 8 }}>Lỗi: {error}</p>}
-        </div>
-      )}
-      <Form form={form} layout="vertical">
-        <Form.Item
-          name="summary"
-          label="Tiêu đề sự kiện"
-          rules={[{ required: true, message: "Vui lòng nhập tiêu đề sự kiện!" }]}
-        >
-          <Input placeholder="Ví dụ: Họp dự án X" disabled={!isSignedIn || loading} />
-        </Form.Item>
+      <Modal
+        title="Tạo lịch nhắc hẹn Google Calendar"
+        open={isOpen}
+        onCancel={onClose}
+        footer={[
+          <Button key="cancel" onClick={onClose}>
+            Hủy
+          </Button>,
+          <Button key="submit" type="primary" onClick={handleSubmit} loading={loading} disabled={!isSignedIn || loading}>
+            Tạo lịch
+          </Button>,
+        ]}
+        width={600}
+      >
+        {!isSignedIn && (
+          <div style={{ marginBottom: 16, textAlign: 'center' }}>
+            <Button type="primary" onClick={handleSignIn} loading={loading} disabled={loading}>
+              Đăng nhập Google để tạo lịch
+            </Button>
+            {error && <p style={{ color: 'red', marginTop: 8 }}>Lỗi: {error}</p>}
+          </div>
+        )}
+        {isSignedIn && (
+          <div style={{ marginBottom: 16, textAlign: 'center' }}>
+            <Button onClick={signOut} danger>
+              Đăng xuất Google
+            </Button>
+          </div>
+        )}
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="summary"
+            label="Tiêu đề sự kiện"
+            rules={[{ required: true, message: "Vui lòng nhập tiêu đề sự kiện!" }]}
+          >
+            <Input placeholder="Ví dụ: Họp dự án X" disabled={!isSignedIn || loading} />
+          </Form.Item>
 
         <Form.Item
           name="description"
