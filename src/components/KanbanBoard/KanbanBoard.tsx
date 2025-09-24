@@ -38,6 +38,8 @@ import { useKanbanBoard } from "../../hooks/useKanbanBoard"; // Import the hook
 import { IssueType, Ticket } from "../../types/kanban"; // Import types from global definition
 import PersonnelSelectionModal from "./PersonnelSelectionModal"; // Import PersonnelSelectionModal
 import UsefulDocsDrawer from "../UsefulDocsDrawer"; // Import UsefulDocsDrawer
+import CreateCalendarEventModal from "../CreateCalendarEventModal"; // Import CreateCalendarEventModal
+import { CalendarOutlined } from "@ant-design/icons"; // Import CalendarOutlined icon
 
 
 const getIssueTypeIcon = (issueType: IssueType) => {
@@ -72,7 +74,7 @@ const KanbanBoard: React.FC = () => {
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [personnelFilter, setPersonnelFilter] = useState<string | null>(null); // New state for personnel filter
   const [searchText, setSearchText] = useState("");
-  const [activeModal, setActiveModal] = useState<'none' | 'personnel' | 'create' | 'edit'>('none'); // Single state for active modal
+  const [activeModal, setActiveModal] = useState<'none' | 'personnel' | 'create' | 'edit' | 'calendar'>('none'); // Single state for active modal, added 'calendar'
   const [selectedPersonnelForNewTicket, setSelectedPersonnelForNewTicket] = useState<string | null>(null); // New state to hold selected personnel
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
 
@@ -322,6 +324,15 @@ const KanbanBoard: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
+          <Button
+            type="primary"
+            icon={<CalendarOutlined />}
+            onClick={() => setActiveModal('calendar')} // Open calendar modal
+            className="ant-btn css-1v5z42l ant-btn-primary ant-btn-color-primary ant-btn-variant-solid"
+            style={{ backgroundColor: '#16a34a', borderColor: '#16a34a' }} // Green primary-style button
+          >
+            Tạo lịch hẹn
+          </Button>
           <UsefulDocsDrawer /> {/* Add the UsefulDocsDrawer component here */}
           {/* Open personnel selection modal first */}
           <Button
@@ -553,6 +564,11 @@ const KanbanBoard: React.FC = () => {
         isOpen={activeModal === 'personnel'}
         onClose={() => setActiveModal('none')}
         onSelectPersonnel={handlePersonnelSelected}
+      />
+
+      <CreateCalendarEventModal
+        isOpen={activeModal === 'calendar'}
+        onClose={() => setActiveModal('none')}
       />
     </div>
   );
