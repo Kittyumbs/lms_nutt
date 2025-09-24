@@ -10,7 +10,7 @@ import { message } from 'antd'; // Import message
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CALENDAR_CLIENT_ID; // Lấy từ biến môi trường
 const API_KEY = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY; // Lấy từ biến môi trường (nếu cần)
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'];
-const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email';
 
 interface CalendarEvent {
   summary: string;
@@ -40,6 +40,7 @@ export const useGoogleCalendar = () => {
         discoveryDocs: DISCOVERY_DOCS,
       });
       await gapi.client.load('calendar', 'v3');
+      await gapi.client.load('oauth2', 'v2'); // Tải thư viện oauth2 sớm hơn
       setIsGapiLoaded(true);
 
       tokenClient.current = window.google.accounts.oauth2.initTokenClient({
@@ -50,14 +51,11 @@ export const useGoogleCalendar = () => {
             gapi.client.setToken({ access_token: resp.access_token });
             setIsSignedIn(true);
             // Lấy thông tin người dùng sau khi đăng nhập thành công
-            // Cần tải thư viện 'oauth2' trước khi sử dụng
-            gapi.client.load('oauth2', 'v2', () => {
-              gapi.client.oauth2.userinfo.get().then((userResp: any) => {
-                setUserEmail(userResp.result.email);
-              }).catch((userErr: any) => {
-                console.error("Error fetching user info:", userErr);
-                setUserEmail(null);
-              });
+            gapi.client.oauth2.userinfo.get().then((userResp: any) => {
+              setUserEmail(userResp.result.email);
+            }).catch((userErr: any) => {
+              console.error("Error fetching user info:", userErr);
+              setUserEmail(null);
             });
           }
         },
@@ -84,6 +82,14 @@ export const useGoogleCalendar = () => {
     const scriptGis = document.createElement('script');
     scriptGis.src = 'https://accounts.google.com/gsi/client';
     scriptGis.async = true;
+    scriptGis.onload = () => {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        window.google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: () => {}, // Callback rỗng vì chúng ta dùng tokenClient để lấy token
+        });
+      }
+    };
     scriptGis.onerror = () => {
       setError("Failed to load Google Identity Services script.");
     };
@@ -93,7 +99,7 @@ export const useGoogleCalendar = () => {
       document.body.removeChild(scriptGapi);
       document.body.removeChild(scriptGis);
     };
-  }, [initGapiClient]);
+  }, [initGapiClient, CLIENT_ID]);
 
   const handleAuthClick = useCallback(() => {
     if (tokenClient.current) {
