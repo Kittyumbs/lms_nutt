@@ -179,14 +179,12 @@ export function useGoogleCalendar() {
   }, [isGapiLoaded, ensureSignedIn]);
 
   const signOut = useCallback(() => {
-    // Revoke current token and clear session
+    // Clear current token and session without revoking app permissions
     if (window.gapi.client.getToken()) {
-      window.google.accounts.oauth2.revoke(window.gapi.client.getToken().access_token, () => {
-        window.gapi.client.setToken(null);
-        setIsSignedIn(false);
-        setError(null); // Clear any previous errors
-        message.success("Đã đăng xuất Google.");
-      });
+      window.gapi.client.setToken(null);
+      setIsSignedIn(false);
+      setError(null); // Clear any previous errors
+      message.success("Đã thoát tài khoản Google hiện tại.");
     } else {
       setIsSignedIn(false);
       setError(null);
