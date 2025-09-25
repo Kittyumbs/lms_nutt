@@ -39,7 +39,7 @@ import { IssueType, Ticket } from "../../types/kanban"; // Import types from glo
 import PersonnelSelectionModal from "./PersonnelSelectionModal"; // Import PersonnelSelectionModal
 import UsefulDocsDrawer from "../UsefulDocsDrawer"; // Import UsefulDocsDrawer
 import CreateCalendarEventModal from "../CreateCalendarEventModal"; // Import CreateCalendarEventModal
-import { CalendarOutlined, LogoutOutlined } from "@ant-design/icons"; // Import CalendarOutlined and LogoutOutlined icon
+import { CalendarOutlined, SwapOutlined } from "@ant-design/icons"; // Import CalendarOutlined, LogoutOutlined, and SwapOutlined icon
 import { Dropdown } from 'antd'; // Import Dropdown
 import CalendarEventsDrawer from "../CalendarEventsDrawer"; // Import CalendarEventsDrawer
 import { useGoogleCalendar } from "../../hooks/useGoogleCalendar"; // Import useGoogleCalendar hook
@@ -71,7 +71,7 @@ const getPriorityIcon = (priority: string) => {
   }
 };
 
-const KanbanBoard: React.FC = () => {
+const KanbanBoard: React.FC = () => {   
   const { columns, addTicket, updateTicket, deleteTicket, archiveTicket, moveTicket, handleDragEnd } = useKanbanBoard();
   const { isSignedIn, handleAuthClick, signOut } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
 
@@ -333,11 +333,11 @@ const KanbanBoard: React.FC = () => {
           {isSignedIn && (
             <Button
               type="text"
-              icon={<LogoutOutlined style={{ fontSize: '20px', color: '#ff4d4f' }} />}
+              icon={<SwapOutlined style={{ fontSize: '20px', color: '#ff4d4f' }} />} // Changed to SwapOutlined with red color
               onClick={signOut}
               className="ant-btn-icon-only"
               style={{ marginRight: '8px' }}
-              title={`Đăng xuất Google`}
+              title={`Thoát tài khoản Google`} // Updated title for clarity
             />
           )}
           <Dropdown
