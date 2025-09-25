@@ -38,19 +38,28 @@ export const useGoogleCalendar = () => {
 
   console.log("useGoogleCalendar hook initialized. Initial isSignedIn:", isSignedIn, "Initial userEmail:", userEmail);
 
-  const updateSignInStatus = useCallback(async (isUserSignedIn: boolean) => {
+  const updateSignInStatus = useCallback(async (isUserSignedIn: boolean, accessToken?: string) => {
+    console.log("updateSignInStatus called with:", isUserSignedIn, "accessToken present:", !!accessToken);
     setIsSignedIn(isUserSignedIn);
     if (isUserSignedIn) {
       try {
+        // If accessToken is provided, set it before fetching user info
+        if (accessToken) {
+          gapi.client.setToken({ access_token: accessToken });
+        }
         const userResp = await gapi.client.oauth2.userinfo.get();
         setUserEmail(userResp.result.email || null);
         console.log("User email set:", userResp.result.email);
       } catch (userErr) {
-        console.error("Error fetching user info:", userErr);
+        console.error("Error fetching user info in updateSignInStatus:", userErr);
         setUserEmail(null);
+        // If fetching user info fails, it might mean the token is invalid or expired
+        // In this case, we should consider the user as not signed in.
+        setIsSignedIn(false);
       }
     } else {
       setUserEmail(null);
+      gapi.client.setToken(null); // Clear token on sign out
     }
   }, []);
 
@@ -84,8 +93,7 @@ export const useGoogleCalendar = () => {
       callback: (resp) => {
         console.log("Token client callback received:", resp);
         if (resp?.access_token) {
-          gapi.client.setToken({ access_token: resp.access_token });
-          updateSignInStatus(true);
+          updateSignInStatus(true, resp.access_token); // Pass access token to update status
           message.success("Đăng nhập Google thành công!");
         } else {
           updateSignInStatus(false);
@@ -102,6 +110,13 @@ export const useGoogleCalendar = () => {
     });
     setIsTokenClientInitialized(true); // Set this flag
     console.log("Google Identity Services token client initialized.");
+
+    // Check for existing token after tokenClient is initialized
+    const currentToken = gapi.client.getToken();
+    if (currentToken && currentToken.access_token) {
+      console.log("Existing GAPI client token found, updating sign-in status.");
+      updateSignInStatus(true, currentToken.access_token);
+    }
   }, [CLIENT_ID, SCOPES, updateSignInStatus]);
 
   useEffect(() => {
@@ -168,8 +183,7 @@ export const useGoogleCalendar = () => {
     }
     if (window.google?.accounts?.id) {
       google.accounts.id.revoke(userEmail, () => {
-        gapi.client.setToken(null);
-        updateSignInStatus(false);
+        updateSignInStatus(false); // updateSignInStatus will clear the token
         message.success("Đã đăng xuất khỏi Google.");
         console.log("Signed out. isSignedIn:", false, "userEmail:", null);
       });
@@ -180,7 +194,8 @@ export const useGoogleCalendar = () => {
 
   const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
     console.log("createCalendarEvent called. Current isSignedIn:", isSignedIn);
-    if (!isSignedIn) {
+    const currentToken = gapi.client.getToken();
+    if (!currentToken || !currentToken.access_token) {
       message.error("Vui lòng đăng nhập Google để tạo lịch.");
       throw new Error("User not signed in to Google Calendar.");
     }
@@ -202,11 +217,12 @@ export const useGoogleCalendar = () => {
       setError(err.result?.error?.message || "Failed to create calendar event.");
       throw err;
     }
-  }, [isSignedIn]);
+  }, []); // Removed isSignedIn from dependencies
 
   const fetchCalendarEvents = useCallback(async () => {
     console.log("fetchCalendarEvents called. Current isSignedIn:", isSignedIn);
-    if (!isSignedIn) {
+    const currentToken = gapi.client.getToken();
+    if (!currentToken || !currentToken.access_token) {
       message.error("Vui lòng đăng nhập Google để xem lịch.");
       throw new Error("User not signed in to Google Calendar.");
     }
@@ -231,7 +247,7 @@ export const useGoogleCalendar = () => {
       setError(err.result?.error?.message || "Failed to fetch calendar events.");
       throw err;
     }
-  }, [isSignedIn]);
+  }, []); // Removed isSignedIn from dependencies
 
   return {
     isSignedIn,
