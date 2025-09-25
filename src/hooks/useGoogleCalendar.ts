@@ -133,6 +133,7 @@ export const useGoogleCalendar = () => {
     console.log("signOut called. Current isSignedIn:", isSignedIn);
     const authInstance = gapi.auth2?.getAuthInstance();
     if (authInstance && authInstance.isSignedIn.get()) {
+      authInstance.disconnect(); // Add this line to fully disconnect the user
       authInstance.signOut().then(() => {
         setIsSignedIn(false);
         setUserEmail(null);
