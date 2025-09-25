@@ -30,18 +30,22 @@ export const useGoogleCalendar = () => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isGapiLoaded, setIsGapiLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null); // Thêm state để lưu email người dùng
-  const tokenClient = useRef<any>(null); // Use useRef to store tokenClient
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const tokenClient = useRef<any>(null);
+
+  console.log("useGoogleCalendar hook initialized. isSignedIn:", isSignedIn, "userEmail:", userEmail);
 
   const initGapiClient = useCallback(async () => {
+    console.log("initGapiClient called.");
     try {
       await gapi.client.init({
         apiKey: API_KEY,
         discoveryDocs: DISCOVERY_DOCS,
       });
       await gapi.client.load('calendar', 'v3');
-      await gapi.client.load('oauth2', 'v2'); // Tải thư viện oauth2 sớm hơn
+      await gapi.client.load('oauth2', 'v2');
       setIsGapiLoaded(true);
+      console.log("gapi client loaded and initialized.");
 
       tokenClient.current = window.google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
@@ -51,8 +55,7 @@ export const useGoogleCalendar = () => {
           if (resp && resp.access_token) {
             gapi.client.setToken({ access_token: resp.access_token });
             setIsSignedIn(true);
-            console.log("isSignedIn set to true.");
-            // Lấy thông tin người dùng sau khi đăng nhập thành công
+            console.log("isSignedIn set to true after token acquisition.");
             gapi.client.oauth2.userinfo.get().then((userResp: any) => {
               setUserEmail(userResp.result.email);
               console.log("User email set:", userResp.result.email);
@@ -72,7 +75,7 @@ export const useGoogleCalendar = () => {
   }, [API_KEY, CLIENT_ID, DISCOVERY_DOCS, SCOPES]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return; // Guard SSR
+    if (typeof window === 'undefined') return;
 
     const scriptGapi = document.createElement('script');
     scriptGapi.src = 'https://apis.google.com/js/api.js';
@@ -91,7 +94,7 @@ export const useGoogleCalendar = () => {
       if (window.google && window.google.accounts && window.google.accounts.id) {
         window.google.accounts.id.initialize({
           client_id: CLIENT_ID,
-          callback: () => {}, // Callback rỗng vì chúng ta dùng tokenClient để lấy token
+          callback: () => {},
         });
       }
     };
@@ -107,6 +110,7 @@ export const useGoogleCalendar = () => {
   }, [initGapiClient, CLIENT_ID]);
 
   const handleAuthClick = useCallback(() => {
+    console.log("handleAuthClick called. Current isSignedIn:", isSignedIn);
     if (tokenClient.current) {
       console.log("Requesting access token...");
       tokenClient.current.requestAccessToken({ prompt: 'consent' });
@@ -114,30 +118,32 @@ export const useGoogleCalendar = () => {
       setError("Google Identity Services client not initialized.");
       console.error("Google Identity Services client not initialized.");
     }
-  }, []);
+  }, [isSignedIn]);
 
   const signOut = useCallback(() => {
+    console.log("signOut called. Current isSignedIn:", isSignedIn);
     if (isSignedIn && window.google && window.google.accounts && window.google.accounts.id) {
       const token = gapi.client.getToken();
       if (token && token.access_token) {
         window.google.accounts.id.revoke(token.access_token, () => {
           gapi.client.setToken(null);
           setIsSignedIn(false);
-          setUserEmail(null); // Xóa email người dùng khi đăng xuất
+          setUserEmail(null);
           message.success("Đã đăng xuất khỏi Google.");
           console.log("Signed out. isSignedIn:", false, "userEmail:", null);
         });
       } else {
-        message.warning("Không có access token để đăng xuất."); // Đổi warn thành warning
+        message.warning("Không có access token để đăng xuất.");
         console.warn("No access token to sign out.");
       }
     } else {
-      message.warning("Google Identity Services chưa được khởi tạo hoặc người dùng chưa đăng nhập."); // Đổi warn thành warning
+      message.warning("Google Identity Services chưa được khởi tạo hoặc người dùng chưa đăng nhập.");
       console.warn("Google Identity Services not initialized or user not signed in.");
     }
   }, [isSignedIn]);
 
   const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
+    console.log("createCalendarEvent called. Current isSignedIn:", isSignedIn);
     if (!isSignedIn) {
       setError("User not signed in to Google Calendar.");
       console.error("createCalendarEvent: User not signed in.");
@@ -151,7 +157,7 @@ export const useGoogleCalendar = () => {
 
     try {
       const response = await gapi.client.calendar.events.insert({
-        calendarId: 'primary', // 'primary' refers to the user's primary calendar
+        calendarId: 'primary',
         resource: event,
       });
       console.log('Event created:', response.result);
@@ -164,6 +170,7 @@ export const useGoogleCalendar = () => {
   }, [isSignedIn]);
 
   const fetchCalendarEvents = useCallback(async () => {
+    console.log("fetchCalendarEvents called. Current isSignedIn:", isSignedIn);
     if (!isSignedIn) {
       setError("User not signed in to Google Calendar.");
       console.error("fetchCalendarEvents: User not signed in. isSignedIn:", isSignedIn);
@@ -178,10 +185,10 @@ export const useGoogleCalendar = () => {
     try {
       const response = await gapi.client.calendar.events.list({
         calendarId: 'primary',
-        timeMin: (new Date()).toISOString(), // Lấy các sự kiện từ thời điểm hiện tại trở đi
+        timeMin: (new Date()).toISOString(),
         showDeleted: false,
         singleEvents: true,
-        maxResults: 10, // Giới hạn số lượng sự kiện
+        maxResults: 10,
         orderBy: 'startTime',
       });
       return response.result.items || [];
@@ -196,10 +203,10 @@ export const useGoogleCalendar = () => {
     isSignedIn,
     isGapiLoaded,
     error,
-    userEmail, // Expose userEmail
+    userEmail,
     handleAuthClick,
     createCalendarEvent,
-    signOut, // Expose signOut
-    fetchCalendarEvents, // Expose fetchCalendarEvents
+    signOut,
+    fetchCalendarEvents,
   };
 };
