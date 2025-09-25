@@ -107,28 +107,43 @@ export const useGoogleCalendar = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const scriptGapi = document.createElement('script');
-    scriptGapi.src = 'https://apis.google.com/js/api.js';
-    scriptGapi.onload = () => {
-      gapi.load('client', initGapiClient);
-      gapi.load('oauth2', () => { /* oauth2 client is loaded via gapi.client.load in initGapiClient */ });
-    };
-    scriptGapi.onerror = () => {
-      setError("Failed to load Google API script.");
-    };
-    document.body.appendChild(scriptGapi);
+    let gapiScriptElement: HTMLScriptElement | null = null;
+    let gisInitializedOnce = false; // Flag to ensure initGIS is called only once
 
-    // GIS script is loaded in index.html, just ensure it's ready
-    const checkGISReady = setInterval(() => {
-      if (window.google?.accounts?.oauth2) {
-        clearInterval(checkGISReady);
+    const loadGapi = () => {
+      gapiScriptElement = document.createElement('script');
+      gapiScriptElement.src = 'https://apis.google.com/js/api.js';
+      gapiScriptElement.onload = () => {
+        console.log("gapi.js script loaded.");
+        gapi.load('client', initGapiClient);
+      };
+      gapiScriptElement.onerror = () => {
+        setError("Failed to load Google API script.");
+      };
+      document.body.appendChild(gapiScriptElement);
+    };
+
+    const checkAndInitGIS = () => {
+      if (!gisInitializedOnce && window.google?.accounts?.oauth2) {
+        console.log("GIS script ready, initializing token client.");
         initGIS();
+        gisInitializedOnce = true;
       }
-    }, 100); // Check every 100ms
+    };
+
+    // Check immediately if GIS is ready (for cases where it loads very fast)
+    checkAndInitGIS();
+
+    // Set up interval to check for GIS readiness
+    const gisCheckInterval = setInterval(checkAndInitGIS, 100);
+
+    loadGapi(); // Start loading gapi.js
 
     return () => {
-      document.body.removeChild(scriptGapi);
-      clearInterval(checkGISReady);
+      if (gapiScriptElement && document.body.contains(gapiScriptElement)) {
+        document.body.removeChild(gapiScriptElement);
+      }
+      clearInterval(gisCheckInterval); // Clear the interval on unmount
     };
   }, [initGapiClient, initGIS]);
 
