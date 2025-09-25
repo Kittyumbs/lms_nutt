@@ -6,15 +6,19 @@ import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 interface CreateCalendarEventModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isSignedIn: boolean;
+  handleAuthClick: () => void;
 }
 
 const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
   isOpen,
   onClose,
+  isSignedIn,
+  handleAuthClick,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { isSignedIn, isGapiLoaded, error, userEmail, handleAuthClick, createCalendarEvent, signOut } = useGoogleCalendar();
+  const { isGapiLoaded, error, userEmail, createCalendarEvent } = useGoogleCalendar();
 
   useEffect(() => {
     if (isOpen) {
@@ -27,11 +31,6 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
       setLoading(true);
       const values = await form.validateFields();
 
-      if (!isSignedIn) {
-        message.error("Vui lòng đăng nhập Google để tạo lịch.");
-        return;
-      }
-
       const startDateTime = dayjs(values.start).toISOString();
       const endDateTime = dayjs(values.end).toISOString();
       const attendees = values.attendees
@@ -43,7 +42,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
         description: values.description,
         start: {
           dateTime: startDateTime,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Lấy múi giờ hiện tại của người dùng
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
         end: {
           dateTime: endDateTime,
@@ -63,10 +62,6 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
     }
   };
 
-  const handleSignIn = () => {
-    handleAuthClick();
-  };
-
   if (!isGapiLoaded) {
     return (
       <Modal
@@ -81,6 +76,25 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
     );
   }
 
+  if (!isSignedIn) {
+    return (
+      <Modal
+        title="Tạo lịch nhắc hẹn Google Calendar"
+        open={isOpen}
+        onCancel={onClose}
+        footer={null}
+      >
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <p>Vui lòng đăng nhập Google để tạo lịch.</p>
+          <Button type="primary" onClick={handleAuthClick}>
+            Đăng nhập Google
+          </Button>
+          {error && <p style={{ color: 'red', marginTop: 8 }}>Lỗi: {error}</p>}
+        </div>
+      </Modal>
+    );
+  }
+
   return (
       <Modal
         title="Tạo lịch nhắc hẹn Google Calendar"
@@ -90,26 +104,15 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
           <Button key="cancel" onClick={onClose}>
             Hủy
           </Button>,
-          <Button key="submit" type="primary" onClick={handleSubmit} loading={loading} disabled={!isSignedIn || loading}>
+          <Button key="submit" type="primary" onClick={handleSubmit} loading={loading} disabled={loading}>
             Tạo lịch
           </Button>,
         ]}
         width={600}
       >
-        {!isSignedIn && (
-          <div style={{ marginBottom: 16, textAlign: 'center' }}>
-            <Button type="primary" onClick={handleSignIn} loading={loading} disabled={loading}>
-              Đăng nhập Google để tạo lịch
-            </Button>
-            {error && <p style={{ color: 'red', marginTop: 8 }}>Lỗi: {error}</p>}
-          </div>
-        )}
-        {isSignedIn && (
-          <div style={{ marginBottom: 16, textAlign: 'center' }}>
-            {userEmail && <p style={{ marginBottom: 8, fontSize: '0.85em', color: '#555' }}>Đang gửi lịch từ: <strong>{userEmail}</strong></p>}
-            <Button onClick={signOut} danger>
-              Đăng xuất Google
-            </Button>
+        {userEmail && (
+          <div style={{ marginBottom: 16, textAlign: 'center', fontSize: '0.85em', color: '#555' }}>
+            Đang gửi lịch từ: <strong>{userEmail}</strong>
           </div>
         )}
         <Form form={form} layout="vertical">
@@ -118,14 +121,14 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
             label="Tiêu đề sự kiện"
             rules={[{ required: true, message: "Vui lòng nhập tiêu đề sự kiện!" }]}
           >
-            <Input placeholder="Ví dụ: Họp dự án X" disabled={!isSignedIn || loading} />
+            <Input placeholder="Ví dụ: Họp dự án X" disabled={loading} />
           </Form.Item>
 
         <Form.Item
           name="description"
           label="Mô tả"
         >
-          <Input.TextArea placeholder="Mô tả chi tiết về sự kiện" autoSize={{ minRows: 3, maxRows: 5 }} disabled={!isSignedIn || loading} />
+          <Input.TextArea placeholder="Mô tả chi tiết về sự kiện" autoSize={{ minRows: 3, maxRows: 5 }} disabled={loading} />
         </Form.Item>
 
         <Form.Item
@@ -137,7 +140,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
             showTime
             format="YYYY-MM-DD HH:mm"
             style={{ width: "100%" }}
-            disabled={!isSignedIn || loading}
+            disabled={loading}
           />
         </Form.Item>
 
@@ -150,7 +153,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
             showTime
             format="YYYY-MM-DD HH:mm"
             style={{ width: "100%" }}
-            disabled={!isSignedIn || loading}
+            disabled={loading}
           />
         </Form.Item>
 
@@ -158,7 +161,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
           name="attendees"
           label="Người tham dự (Email, cách nhau bởi dấu phẩy)"
         >
-          <Input placeholder="email1@example.com, email2@example.com" disabled={!isSignedIn || loading} />
+          <Input placeholder="email1@example.com, email2@example.com" disabled={loading} />
         </Form.Item>
       </Form>
     </Modal>

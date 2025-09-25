@@ -7,44 +7,46 @@ import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 interface CalendarEventsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  isSignedIn: boolean;
+  handleAuthClick: () => void;
 }
 
 interface GoogleCalendarEvent {
-  id?: string; // Đổi thành optional vì API có thể trả về undefined
-  summary?: string; // Đổi thành optional
+  id?: string;
+  summary?: string;
   description?: string;
-  start?: { // Đổi thành optional
+  start?: {
     dateTime?: string;
     timeZone?: string;
   };
-  end?: { // Đổi thành optional
+  end?: {
     dateTime?: string;
     timeZone?: string;
   };
   attendees?: Array<{
-    email?: string; // Đổi thành optional
-    responseStatus?: 'accepted' | 'declined' | 'needsAction' | 'tentative'; // Đổi thành optional
+    email?: string;
+    responseStatus?: 'accepted' | 'declined' | 'needsAction' | 'tentative';
   }>;
-  htmlLink?: string; // Đổi thành optional
+  htmlLink?: string;
 }
 
 const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   isOpen,
   onClose,
+  isSignedIn,
+  handleAuthClick,
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
-  const { isSignedIn, isGapiLoaded, error, handleAuthClick, fetchCalendarEvents } = useGoogleCalendar();
+  const { isGapiLoaded, error, fetchCalendarEvents } = useGoogleCalendar();
 
   const loadEvents = async () => {
     if (!isSignedIn || !isGapiLoaded) {
-      message.warning("Vui lòng đăng nhập Google để xem lịch.");
       return;
     }
     setLoading(true);
     try {
       const fetchedEvents = await fetchCalendarEvents();
-      // Ép kiểu và lọc bỏ các sự kiện không có ID hoặc summary để tránh lỗi hiển thị
       const validEvents: GoogleCalendarEvent[] = (fetchedEvents as GoogleCalendarEvent[]).filter((event: GoogleCalendarEvent) => event.id && event.summary);
       setEvents(validEvents);
       message.success("Đã tải sự kiện lịch thành công.");
