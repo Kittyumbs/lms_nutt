@@ -27,10 +27,14 @@ interface CalendarEvent {
 
 export const useGoogleCalendar = () => {
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [isGapiLoaded, setIsGapiLoaded] = useState(false);
+  const [isGapiClientLoaded, setIsGapiClientLoaded] = useState(false); // Renamed for clarity
+  const [isTokenClientInitialized, setIsTokenClientInitialized] = useState(false); // New state for GIS token client
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const tokenClient = useRef<google.accounts.oauth2.TokenClient | null>(null);
+
+  // Combined ready state
+  const isGoogleReady = isGapiClientLoaded && isTokenClientInitialized;
 
   console.log("useGoogleCalendar hook initialized. Initial isSignedIn:", isSignedIn, "Initial userEmail:", userEmail);
 
@@ -59,7 +63,7 @@ export const useGoogleCalendar = () => {
       });
       await gapi.client.load('calendar', 'v3');
       await gapi.client.load('oauth2', 'v2');
-      setIsGapiLoaded(true);
+      setIsGapiClientLoaded(true); // Set this flag
       console.log("gapi client loaded and initialized.");
     } catch (err: any) {
       console.error("Error initializing Google API client:", err);
@@ -96,6 +100,7 @@ export const useGoogleCalendar = () => {
         message.error("Lỗi đăng nhập Google.");
       }
     });
+    setIsTokenClientInitialized(true); // Set this flag
     console.log("Google Identity Services token client initialized.");
   }, [CLIENT_ID, SCOPES, updateSignInStatus]);
 
@@ -129,8 +134,8 @@ export const useGoogleCalendar = () => {
 
   const handleAuthClick = useCallback(() => {
     console.log("handleAuthClick called. Current isSignedIn:", isSignedIn);
-    if (!isGapiLoaded || !tokenClient.current) {
-      message.error("Google API client or token client not ready.");
+    if (!isGoogleReady || !tokenClient.current) { // Ensure tokenClient.current is not null
+      message.error("Google API client hoặc token client chưa sẵn sàng.");
       return;
     }
     if (isSignedIn) {
@@ -138,7 +143,7 @@ export const useGoogleCalendar = () => {
       return;
     }
     tokenClient.current.requestAccessToken({ prompt: 'consent' });
-  }, [isGapiLoaded, isSignedIn]);
+  }, [isGoogleReady, isSignedIn]); // Dependency on isGoogleReady
 
   const signOut = useCallback(() => {
     console.log("signOut called. Current isSignedIn:", isSignedIn);
@@ -215,7 +220,7 @@ export const useGoogleCalendar = () => {
 
   return {
     isSignedIn,
-    isGapiLoaded,
+    isGapiLoaded: isGoogleReady, // Expose the combined ready state as isGapiLoaded
     error,
     userEmail,
     handleAuthClick,
