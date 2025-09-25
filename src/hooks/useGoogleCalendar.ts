@@ -36,6 +36,12 @@ export function useGoogleCalendar() {
           await window.gapi.client.load("calendar", "v3");
           setIsGapiLoaded(true);
 
+          // Check for existing token immediately after gapi client is loaded
+          const existingToken = window.gapi.client.getToken();
+          if (existingToken?.access_token) {
+            setIsSignedIn(true);
+          }
+
           const tc = window.google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPE,
