@@ -151,6 +151,33 @@ export const useGoogleCalendar = () => {
     }
   }, [isSignedIn]);
 
+  const fetchCalendarEvents = useCallback(async () => {
+    if (!isSignedIn) {
+      setError("User not signed in to Google Calendar.");
+      throw new Error("User not signed in.");
+    }
+    if (!gapi.client.calendar) {
+      setError("Google Calendar API not loaded.");
+      throw new Error("Google Calendar API not loaded.");
+    }
+
+    try {
+      const response = await gapi.client.calendar.events.list({
+        calendarId: 'primary',
+        timeMin: (new Date()).toISOString(), // Lấy các sự kiện từ thời điểm hiện tại trở đi
+        showDeleted: false,
+        singleEvents: true,
+        maxResults: 10, // Giới hạn số lượng sự kiện
+        orderBy: 'startTime',
+      });
+      return response.result.items || [];
+    } catch (err: any) {
+      console.error("Error fetching calendar events:", err);
+      setError(err.result?.error?.message || "Failed to fetch calendar events.");
+      throw err;
+    }
+  }, [isSignedIn]);
+
   return {
     isSignedIn,
     isGapiLoaded,
@@ -159,5 +186,6 @@ export const useGoogleCalendar = () => {
     handleAuthClick,
     createCalendarEvent,
     signOut, // Expose signOut
+    fetchCalendarEvents, // Expose fetchCalendarEvents
   };
 };
