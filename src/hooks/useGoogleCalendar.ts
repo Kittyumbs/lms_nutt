@@ -60,11 +60,18 @@ export const useGoogleCalendar = () => {
   const initClient = useCallback(async () => {
     console.log("initClient called.");
     try {
+      // Explicitly initialize gapi.auth2 first
+      await gapi.auth2.init({
+        client_id: CLIENT_ID, // Corrected to client_id for gapi.auth2.init
+        scope: SCOPES,
+      });
+      console.log("gapi.auth2 initialized.");
+
       await gapi.client.init({
         apiKey: API_KEY,
-        clientId: CLIENT_ID,
+        clientId: CLIENT_ID, // Corrected to clientId for gapi.client.init
         discoveryDocs: DISCOVERY_DOCS,
-        scope: SCOPES,
+        scope: SCOPES, // Keep scope here for gapi.client initialization
       });
       await gapi.client.load('calendar', 'v3');
       await gapi.client.load('oauth2', 'v2');
