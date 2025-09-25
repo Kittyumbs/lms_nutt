@@ -43,6 +43,7 @@
     "@eslint/js": "^9.22.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/gapi": "^0.0.47",
+    "@types/gapi.auth2": "^0.0.61",
     "@types/gapi.client.calendar": "^3.0.12",
     "@types/gapi.client.oauth2": "^2.0.4",
     "@types/react": "^19.1.2",

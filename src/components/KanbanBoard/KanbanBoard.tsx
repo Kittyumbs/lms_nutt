@@ -615,6 +615,7 @@ const KanbanBoard: React.FC = () => {
         onClose={() => setActiveModal('none')}
         isSignedIn={isSignedIn}
         handleAuthClick={handleAuthClick}
+        userEmail={userEmail} // Pass userEmail
       />
 
       <CalendarEventsDrawer

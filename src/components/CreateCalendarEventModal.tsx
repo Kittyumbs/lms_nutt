@@ -8,6 +8,7 @@ interface CreateCalendarEventModalProps {
   onClose: () => void;
   isSignedIn: boolean;
   handleAuthClick: () => void;
+  userEmail: string | null; // Add userEmail prop
 }
 
 const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
@@ -15,10 +16,11 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
   onClose,
   isSignedIn,
   handleAuthClick,
+  userEmail, // Destructure userEmail
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { isGapiLoaded, error, userEmail, createCalendarEvent } = useGoogleCalendar();
+  const { isGapiLoaded, error, createCalendarEvent } = useGoogleCalendar();
 
   useEffect(() => {
     if (isOpen) {
