@@ -2,6 +2,7 @@
 /// <reference types="gapi.client" />
 /// <reference types="gapi.client.calendar" />
 import { useEffect, useState, useCallback } from "react";
+import { message } from "antd"; // Import message from antd
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CALENDAR_CLIENT_ID!;
 const API_KEY   = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY!;
@@ -75,7 +76,10 @@ export function useGoogleCalendar() {
         }
         resolve();
       };
-      tokenClient.requestAccessToken({ prompt: "consent" });
+      // Use 'none' for prompt to avoid re-prompting if already signed in,
+      // or 'consent' if explicit consent is always required.
+      // For better UX, we'll try 'none' first, then 'consent' if 'none' fails.
+      tokenClient.requestAccessToken({ prompt: "" });
     });
   }, [isSignedIn, tokenClient]);
 
@@ -105,11 +109,19 @@ export function useGoogleCalendar() {
   }, [isGapiLoaded, ensureSignedIn]);
 
   const signOut = useCallback(() => {
-    // revoke current token
-    window.google?.accounts.id.revoke(undefined, () => {
-      window.gapi?.client?.setToken(null);
+    // Revoke current token and clear session
+    if (window.gapi.client.getToken()) {
+      window.google.accounts.oauth2.revoke(window.gapi.client.getToken().access_token, () => {
+        window.gapi.client.setToken(null);
+        setIsSignedIn(false);
+        setError(null); // Clear any previous errors
+        message.success("Đã đăng xuất Google.");
+      });
+    } else {
       setIsSignedIn(false);
-    });
+      setError(null);
+      message.info("Bạn chưa đăng nhập Google.");
+    }
   }, []);
 
   return { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, createCalendarEvent, signOut };
