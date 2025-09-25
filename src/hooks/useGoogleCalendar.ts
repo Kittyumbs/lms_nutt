@@ -62,7 +62,8 @@ export function useGoogleCalendar() {
 
   const handleAuthClick = useCallback(() => {
     if (!tokenClient) { setError("Auth not ready"); return; }
-    tokenClient.requestAccessToken({ prompt: "consent" });
+    // Attempt to use existing session/token first
+    tokenClient.requestAccessToken({ prompt: "" });
   }, [tokenClient]);
 
   const ensureSignedIn = useCallback(async () => {

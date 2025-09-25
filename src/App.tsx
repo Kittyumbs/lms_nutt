@@ -1,4 +1,4 @@
-import { Layout } from 'antd';
+  import { Layout } from 'antd';
 import KanbanBoard from './components/KanbanBoard';
 import { HomeSEO } from './seo'; // Import HomeSEO
 
