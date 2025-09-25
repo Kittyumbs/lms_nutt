@@ -122,20 +122,15 @@ export const useGoogleCalendar = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    let gapiScriptElement: HTMLScriptElement | null = null;
-    let gisInitializedOnce = false; // Flag to ensure initGIS is called only once
+    let gapiLoadedOnce = false;
+    let gisInitializedOnce = false;
 
-    const loadGapi = () => {
-      gapiScriptElement = document.createElement('script');
-      gapiScriptElement.src = 'https://apis.google.com/js/api.js';
-      gapiScriptElement.onload = () => {
-        console.log("gapi.js script loaded.");
+    const checkAndInitGapi = () => {
+      if (!gapiLoadedOnce && window.gapi) {
+        console.log("gapi script ready, loading client.");
         gapi.load('client', initGapiClient);
-      };
-      gapiScriptElement.onerror = () => {
-        setError("Failed to load Google API script.");
-      };
-      document.body.appendChild(gapiScriptElement);
+        gapiLoadedOnce = true;
+      }
     };
 
     const checkAndInitGIS = () => {
@@ -146,19 +141,17 @@ export const useGoogleCalendar = () => {
       }
     };
 
-    // Check immediately if GIS is ready (for cases where it loads very fast)
+    // Check immediately
+    checkAndInitGapi();
     checkAndInitGIS();
 
-    // Set up interval to check for GIS readiness
+    // Set up intervals to check for readiness
+    const gapiCheckInterval = setInterval(checkAndInitGapi, 100);
     const gisCheckInterval = setInterval(checkAndInitGIS, 100);
 
-    loadGapi(); // Start loading gapi.js
-
     return () => {
-      if (gapiScriptElement && document.body.contains(gapiScriptElement)) {
-        document.body.removeChild(gapiScriptElement);
-      }
-      clearInterval(gisCheckInterval); // Clear the interval on unmount
+      clearInterval(gapiCheckInterval);
+      clearInterval(gisCheckInterval);
     };
   }, [initGapiClient, initGIS]);
 
