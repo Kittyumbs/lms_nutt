@@ -83,17 +83,10 @@ export function useGoogleCalendar() {
       if (!tokenClient) throw new Error("Auth not ready even after waiting");
     }
 
-    // Check if a token is already available without prompting
-    const token = window.gapi.client.getToken();
-    if (token && token.access_token) {
-      window.gapi.client.setToken(token); // Ensure gapi has the token
-      setIsSignedIn(true);
-      return;
-    }
-
-    // If not signed in and no token, initiate the authentication flow.
-    // The callback in useEffect will handle setting isSignedIn.
-    tokenClient.requestAccessToken({ prompt: "" });
+    // If not signed in, trigger the authentication flow.
+    // handleAuthClick uses tokenClient.requestAccessToken({ prompt: "" })
+    // The callback in useEffect will update isSignedIn.
+    handleAuthClick(); // This calls tokenClient.requestAccessToken({ prompt: "" })
 
     // Wait for the isSignedIn state to become true.
     // This promise will resolve when the callback in initTokenClient (from useEffect) is executed and sets isSignedIn to true.
@@ -105,7 +98,7 @@ export function useGoogleCalendar() {
         }
       }, 100); // Check every 100ms
     });
-  }, [isSignedIn, tokenClient]);
+  }, [isSignedIn, tokenClient, handleAuthClick]); // Added handleAuthClick to dependencies
 
   const fetchCalendarEvents = useCallback(async (): Promise<GEvent[]> => {
     if (!isGapiLoaded) throw new Error("API not ready");
