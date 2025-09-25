@@ -36,12 +36,6 @@ export function useGoogleCalendar() {
           await window.gapi.client.load("calendar", "v3");
           setIsGapiLoaded(true);
 
-          // Check for existing token immediately after gapi client is loaded
-          const existingToken = window.gapi.client.getToken();
-          if (existingToken?.access_token) {
-            setIsSignedIn(true);
-          }
-
           const tc = window.google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPE,
@@ -55,6 +49,13 @@ export function useGoogleCalendar() {
             },
           });
           setTokenClient(tc);
+
+          // Check for existing token immediately after gapi client is loaded and tokenClient is initialized
+          // This ensures isSignedIn is set correctly on initial load if a token exists.
+          const existingToken = window.gapi.client.getToken();
+          if (existingToken?.access_token) {
+            setIsSignedIn(true);
+          }
         } catch (e: any) {
           setError(e?.message ?? "Failed to init Google API client");
         }
