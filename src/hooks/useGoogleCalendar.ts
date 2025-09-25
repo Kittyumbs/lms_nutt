@@ -67,20 +67,43 @@ export function useGoogleCalendar() {
   }, [tokenClient]);
 
   const ensureSignedIn = useCallback(async () => {
+    // If already signed in, do nothing.
     if (isSignedIn) return;
-    if (!tokenClient) throw new Error("Auth not ready");
-    await new Promise<void>((resolve) => {
-      tokenClient.callback = (resp: any) => {
-        if (resp?.access_token) {
-          window.gapi.client.setToken({ access_token: resp.access_token });
-          setIsSignedIn(true);
+
+    // Wait for tokenClient to be initialized if it's not ready.
+    if (!tokenClient) {
+      await new Promise<void>(resolve => {
+        const interval = setInterval(() => {
+          if (tokenClient) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 100);
+      });
+      if (!tokenClient) throw new Error("Auth not ready even after waiting");
+    }
+
+    // Check if a token is already available without prompting
+    const token = window.gapi.client.getToken();
+    if (token && token.access_token) {
+      window.gapi.client.setToken(token); // Ensure gapi has the token
+      setIsSignedIn(true);
+      return;
+    }
+
+    // If not signed in and no token, initiate the authentication flow.
+    // The callback in useEffect will handle setting isSignedIn.
+    tokenClient.requestAccessToken({ prompt: "" });
+
+    // Wait for the isSignedIn state to become true.
+    // This promise will resolve when the callback in initTokenClient (from useEffect) is executed and sets isSignedIn to true.
+    return new Promise<void>((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (isSignedIn) {
+          clearInterval(checkInterval);
+          resolve();
         }
-        resolve();
-      };
-      // Use 'none' for prompt to avoid re-prompting if already signed in,
-      // or 'consent' if explicit consent is always required.
-      // For better UX, we'll try 'none' first, then 'consent' if 'none' fails.
-      tokenClient.requestAccessToken({ prompt: "" });
+      }, 100); // Check every 100ms
     });
   }, [isSignedIn, tokenClient]);
 
