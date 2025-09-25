@@ -215,23 +215,14 @@ export const useGoogleCalendar = () => {
   }, [isGoogleReady, isSignedIn, SCOPES]);
 
   const signOut = useCallback(() => {
-    console.log("signOut called. Current isSignedIn:", isSignedIn);
-    if (!isGISIdInitialized || !window.google?.accounts?.id) { // Ensure GIS ID client is initialized
-      message.error("Google Identity Services chưa sẵn sàng để đăng xuất.");
-      return;
-    }
-    if (!isSignedIn || !userEmail) {
-      message.warning("Người dùng chưa đăng nhập.");
-      return;
-    }
-    
+    console.log("signOut called.");
     // Immediately update UI to signed out state
     updateSignInStatus(false);
     gapi.client.setToken(null); // Clear GAPI client token immediately
     localStorage.removeItem('google_access_token'); // Clear token from local storage
     message.success("Đã đăng xuất khỏi Google.");
     console.log("Signed out. isSignedIn:", false, "userEmail:", null);
-  }, [updateSignInStatus]); // Removed isSignedIn, userEmail, isGISIdInitialized from dependencies as they are no longer directly used in this simplified signOut
+  }, [updateSignInStatus]);
 
   const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
     console.log("createCalendarEvent called. Current isSignedIn:", isSignedIn);
