@@ -38,7 +38,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
-  const { isGapiLoaded, error, fetchCalendarEvents } = useGoogleCalendar();
+  const { isGapiLoaded, error, fetchCalendarEvents, userEmail } = useGoogleCalendar();
 
   const loadEvents = async () => {
     if (!isSignedIn || !isGapiLoaded) {

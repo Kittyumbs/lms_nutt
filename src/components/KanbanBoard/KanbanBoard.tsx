@@ -73,7 +73,7 @@ const getPriorityIcon = (priority: string) => {
 
 const KanbanBoard: React.FC = () => {
   const { columns, addTicket, updateTicket, deleteTicket, archiveTicket, moveTicket, handleDragEnd } = useKanbanBoard();
-  const { isSignedIn, handleAuthClick, signOut } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
+  const { isSignedIn, handleAuthClick, signOut, userEmail } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
 
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [personnelFilter, setPersonnelFilter] = useState<string | null>(null); // New state for personnel filter
@@ -335,7 +335,7 @@ const KanbanBoard: React.FC = () => {
               onClick={signOut}
               className="ant-btn-icon-only"
               style={{ marginRight: '8px' }}
-              title="Đăng xuất Google"
+              title={`Đăng xuất Google (${userEmail})`}
             />
           )}
           <Dropdown
