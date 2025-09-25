@@ -47,6 +47,7 @@ export const useGoogleCalendar = () => {
         // If accessToken is provided, set it before fetching user info
         if (accessToken) {
           gapi.client.setToken({ access_token: accessToken });
+          localStorage.setItem('google_access_token', accessToken); // Store token in local storage
         }
         const userResp = await gapi.client.oauth2.userinfo.get();
         setUserEmail(userResp.result.email || null);
@@ -181,13 +182,20 @@ export const useGoogleCalendar = () => {
     if (typeof window === 'undefined' || !isGoogleReady) return;
 
     console.log("Both GAPI client and GIS are ready. Checking initial sign-in status.");
-    const currentToken = gapi.client.getToken();
-    if (currentToken && currentToken.access_token) {
-      console.log("Existing GAPI client token found, updating sign-in status.");
-      updateSignInStatus(true, currentToken.access_token);
+    const storedAccessToken = localStorage.getItem('google_access_token');
+    if (storedAccessToken) {
+      console.log("Found stored access token, attempting to restore session.");
+      updateSignInStatus(true, storedAccessToken);
     } else {
-      console.log("No existing GAPI client token found.");
-      updateSignInStatus(false);
+      console.log("No stored access token found. Checking GAPI client token.");
+      const currentToken = gapi.client.getToken();
+      if (currentToken && currentToken.access_token) {
+        console.log("Existing GAPI client token found, updating sign-in status.");
+        updateSignInStatus(true, currentToken.access_token);
+      } else {
+        console.log("No existing GAPI client token found.");
+        updateSignInStatus(false);
+      }
     }
   }, [isGoogleReady, updateSignInStatus]);
 
@@ -197,14 +205,14 @@ export const useGoogleCalendar = () => {
       message.error("Google API client hoặc token client chưa sẵn sàng.");
       return;
     }
-    // If not signed in, force a re-login prompt
+    // If not signed in, force a re-login prompt and request scopes
     if (!isSignedIn) {
-      tokenClient.current.requestAccessToken({ prompt: 'select_account' });
+      tokenClient.current.requestAccessToken({ prompt: 'select_account', scope: SCOPES });
     } else {
       // If already signed in, just request token (might be for scope refresh, etc.)
-      tokenClient.current.requestAccessToken();
+      tokenClient.current.requestAccessToken({ scope: SCOPES });
     }
-  }, [isGoogleReady, isSignedIn]);
+  }, [isGoogleReady, isSignedIn, SCOPES]);
 
   const signOut = useCallback(() => {
     console.log("signOut called. Current isSignedIn:", isSignedIn);
@@ -220,15 +228,10 @@ export const useGoogleCalendar = () => {
     // Immediately update UI to signed out state
     updateSignInStatus(false);
     gapi.client.setToken(null); // Clear GAPI client token immediately
-
-    // Revoke with Google Identity Services
-    google.accounts.id.revoke(userEmail, (done) => {
-      console.log("Google token revoked:", done);
-      google.accounts.id.disableAutoSelect(); // Disable auto-selection
-      message.success("Đã đăng xuất khỏi Google.");
-      console.log("Signed out. isSignedIn:", false, "userEmail:", null);
-    });
-  }, [isSignedIn, userEmail, updateSignInStatus, isGISIdInitialized]);
+    localStorage.removeItem('google_access_token'); // Clear token from local storage
+    message.success("Đã đăng xuất khỏi Google.");
+    console.log("Signed out. isSignedIn:", false, "userEmail:", null);
+  }, [updateSignInStatus]); // Removed isSignedIn, userEmail, isGISIdInitialized from dependencies as they are no longer directly used in this simplified signOut
 
   const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
     console.log("createCalendarEvent called. Current isSignedIn:", isSignedIn);
