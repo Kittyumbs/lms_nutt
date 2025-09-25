@@ -81,20 +81,15 @@ export function useGoogleCalendar() {
   }, [tokenClient]);
 
   const ensureSignedIn = useCallback(async () => {
-    // If gapi client has a token, assume signed in.
-    // This prevents re-prompting for login on component re-mounts.
-    const token = window.gapi?.client?.getToken();
-    if (token?.access_token) {
-      if (!isSignedIn) {
-        setIsSignedIn(true);
-      }
+    // Always check for an existing token first.
+    // If a token exists, set isSignedIn to true and return.
+    const existingToken = window.gapi?.client?.getToken();
+    if (existingToken?.access_token) {
+      setIsSignedIn(true);
       return;
     }
 
-    // If already signed in, do nothing.
-    if (isSignedIn) return;
-
-    // Wait for tokenClient to be initialized if it's not ready.
+    // If not signed in and no existing token, proceed with authentication flow.
     if (!tokenClient) {
       await new Promise<void>(resolve => {
         const interval = setInterval(() => {
@@ -107,20 +102,24 @@ export function useGoogleCalendar() {
       if (!tokenClient) throw new Error("Auth not ready even after waiting");
     }
 
-    // Trigger the authentication flow.
-    // tokenClient.requestAccessToken({ prompt: "" }) should use existing session if available.
-    // The callback in useEffect will update isSignedIn.
+    // Request access token. The callback in useEffect will handle setting isSignedIn.
     tokenClient.requestAccessToken({ prompt: "" });
 
-    // Wait for the isSignedIn state to become true.
-    // This promise will resolve when the callback in initTokenClient (from useEffect) is executed and sets isSignedIn to true.
-    return new Promise<void>((resolve) => {
+    // Wait for the isSignedIn state to become true, or for a token to appear.
+    return new Promise<void>((resolve, reject) => {
       const checkInterval = setInterval(() => {
-        if (isSignedIn) {
+        const currentToken = window.gapi?.client?.getToken();
+        if (isSignedIn || currentToken?.access_token) {
           clearInterval(checkInterval);
+          setIsSignedIn(true); // Ensure state is true if token is found
           resolve();
         }
       }, 100); // Check every 100ms
+      // Add a timeout to prevent infinite waiting in case of an issue
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        reject(new Error("Authentication timed out."));
+      }, 10000); // 10 seconds timeout
     });
   }, [isSignedIn, tokenClient]);
 
