@@ -38,36 +38,47 @@ export function useGoogleCalendar() {
           await window.gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY });
           await window.gapi.client.load("calendar", "v3");
           setIsGapiLoaded(true);
+          console.log("useGoogleCalendar: gapi client loaded. isGapiLoaded:", true);
 
           // Check for existing token immediately after gapi client is loaded
           const existingToken = window.gapi.client.getToken();
           if (existingToken?.access_token) {
             setIsSignedIn(true);
+            console.log("useGoogleCalendar: Existing token found on load. isSignedIn:", true);
+          } else {
+            console.log("useGoogleCalendar: No existing token found on load.");
           }
 
           const tc = window.google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPE,
             callback: (resp: any) => {
+              console.log("useGoogleCalendar: tokenClient callback fired. resp:", resp);
               if (resp?.access_token) {
                 window.gapi.client.setToken({ access_token: resp.access_token });
                 setIsSignedIn(true);
+                console.log("useGoogleCalendar: Access token received from callback. isSignedIn:", true);
               } else {
                 setError("No access token from GIS");
+                console.error("useGoogleCalendar: No access token from GIS callback.");
               }
             },
           });
           setTokenClient(tc);
+          console.log("useGoogleCalendar: tokenClient initialized.");
         } catch (e: any) {
           setError(e?.message ?? "Failed to init Google API client");
+          console.error("useGoogleCalendar: Error during gapi client init:", e);
         } finally {
           setIsAuthLoading(false); // Authentication loading is complete
+          console.log("useGoogleCalendar: Authentication loading complete. isAuthLoading:", false);
         }
       });
     };
     api.onerror = () => {
       setError("Failed to load Google API script");
       setIsAuthLoading(false); // Authentication loading is complete even on error
+      console.error("useGoogleCalendar: Failed to load Google API script.");
     };
 
     document.body.append(gsi, api);
