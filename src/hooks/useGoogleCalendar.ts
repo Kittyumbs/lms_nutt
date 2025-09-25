@@ -29,12 +29,13 @@ export const useGoogleCalendar = () => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isGapiClientLoaded, setIsGapiClientLoaded] = useState(false); // Renamed for clarity
   const [isTokenClientInitialized, setIsTokenClientInitialized] = useState(false); // New state for GIS token client
+  const [isGISIdInitialized, setIsGISIdInitialized] = useState(false); // New state for google.accounts.id initialization
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const tokenClient = useRef<google.accounts.oauth2.TokenClient | null>(null);
 
   // Combined ready state
-  const isGoogleReady = isGapiClientLoaded && isTokenClientInitialized;
+  const isGoogleReady = isGapiClientLoaded && isTokenClientInitialized && isGISIdInitialized;
 
   console.log("useGoogleCalendar hook initialized. Initial isSignedIn:", isSignedIn, "Initial userEmail:", userEmail);
 
@@ -83,7 +84,7 @@ export const useGoogleCalendar = () => {
   const initGIS = useCallback(() => {
     console.log("initGIS called.");
     if (typeof window === 'undefined' || !window.google?.accounts?.oauth2) {
-      console.warn("Google Identity Services script not loaded yet.");
+      console.warn("Google Identity Services (OAuth2) script not loaded yet.");
       return;
     }
 
@@ -110,15 +111,29 @@ export const useGoogleCalendar = () => {
     });
     setIsTokenClientInitialized(true); // Set this flag
     console.log("Google Identity Services token client initialized.");
-
-    // Initial token check will be handled by a separate useEffect after both GAPI client and GIS are ready
   }, [CLIENT_ID, SCOPES, updateSignInStatus]);
+
+  const initGISId = useCallback(() => {
+    console.log("initGISId called.");
+    if (typeof window === 'undefined' || !window.google?.accounts?.id) {
+      console.warn("Google Identity Services (ID) script not loaded yet.");
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: () => {}, // Simplified callback to satisfy type requirements
+      cancel_on_tap_outside: false, // Prevent accidental dismissal
+    });
+    setIsGISIdInitialized(true);
+    console.log("Google Identity Services ID client initialized.");
+  }, [CLIENT_ID]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     let gapiLoadedOnce = false;
-    let gisInitializedOnce = false;
+    let gisOAuth2InitializedOnce = false;
+    let gisIdInitializedOnce = false;
 
     const checkAndInitGapi = () => {
       if (!gapiLoadedOnce && window.gapi) {
@@ -128,27 +143,38 @@ export const useGoogleCalendar = () => {
       }
     };
 
-    const checkAndInitGIS = () => {
-      if (!gisInitializedOnce && window.google?.accounts?.oauth2) {
-        console.log("GIS script ready, initializing token client.");
+    const checkAndInitGISOAuth2 = () => {
+      if (!gisOAuth2InitializedOnce && window.google?.accounts?.oauth2) {
+        console.log("GIS OAuth2 script ready, initializing token client.");
         initGIS();
-        gisInitializedOnce = true;
+        gisOAuth2InitializedOnce = true;
+      }
+    };
+
+    const checkAndInitGISId = () => {
+      if (!gisIdInitializedOnce && window.google?.accounts?.id) {
+        console.log("GIS ID script ready, initializing ID client.");
+        initGISId();
+        gisIdInitializedOnce = true;
       }
     };
 
     // Check immediately
     checkAndInitGapi();
-    checkAndInitGIS();
+    checkAndInitGISOAuth2();
+    checkAndInitGISId();
 
     // Set up intervals to check for readiness
     const gapiCheckInterval = setInterval(checkAndInitGapi, 100);
-    const gisCheckInterval = setInterval(checkAndInitGIS, 100);
+    const gisOAuth2CheckInterval = setInterval(checkAndInitGISOAuth2, 100);
+    const gisIdCheckInterval = setInterval(checkAndInitGISId, 100);
 
     return () => {
       clearInterval(gapiCheckInterval);
-      clearInterval(gisCheckInterval);
+      clearInterval(gisOAuth2CheckInterval);
+      clearInterval(gisIdCheckInterval);
     };
-  }, [initGapiClient, initGIS]);
+  }, [initGapiClient, initGIS, initGISId]);
 
   // Effect to check initial sign-in status once both GAPI client and GIS are ready
   useEffect(() => {
@@ -171,35 +197,38 @@ export const useGoogleCalendar = () => {
       message.error("Google API client hoặc token client chưa sẵn sàng.");
       return;
     }
-    if (isSignedIn) {
-      message.info("Bạn đã đăng nhập.");
-      return;
+    // If not signed in, force a re-login prompt
+    if (!isSignedIn) {
+      tokenClient.current.requestAccessToken({ prompt: 'select_account' });
+    } else {
+      // If already signed in, just request token (might be for scope refresh, etc.)
+      tokenClient.current.requestAccessToken();
     }
-    tokenClient.current.requestAccessToken({ prompt: 'consent' });
-  }, [isGoogleReady, isSignedIn]); // Dependency on isGoogleReady
+  }, [isGoogleReady, isSignedIn]);
 
   const signOut = useCallback(() => {
     console.log("signOut called. Current isSignedIn:", isSignedIn);
+    if (!isGISIdInitialized || !window.google?.accounts?.id) { // Ensure GIS ID client is initialized
+      message.error("Google Identity Services chưa sẵn sàng để đăng xuất.");
+      return;
+    }
     if (!isSignedIn || !userEmail) {
       message.warning("Người dùng chưa đăng nhập.");
       return;
     }
-    if (window.google?.accounts?.id) {
-      // Clear GAPI client token immediately
-      gapi.client.setToken(null);
-      // Revoke the token with Google Identity Services
-      google.accounts.id.revoke(userEmail, () => {
-        console.log("Google token revoked.");
-        // Disable auto-selection to prevent automatic re-login
-        google.accounts.id.disableAutoSelect();
-        updateSignInStatus(false); // Update local state
-        message.success("Đã đăng xuất khỏi Google.");
-        console.log("Signed out. isSignedIn:", false, "userEmail:", null);
-      });
-    } else {
-      message.error("Google Identity Services chưa sẵn sàng để đăng xuất.");
-    }
-  }, [isSignedIn, userEmail, updateSignInStatus]);
+    
+    // Immediately update UI to signed out state
+    updateSignInStatus(false);
+    gapi.client.setToken(null); // Clear GAPI client token immediately
+
+    // Revoke with Google Identity Services
+    google.accounts.id.revoke(userEmail, (done) => {
+      console.log("Google token revoked:", done);
+      google.accounts.id.disableAutoSelect(); // Disable auto-selection
+      message.success("Đã đăng xuất khỏi Google.");
+      console.log("Signed out. isSignedIn:", false, "userEmail:", null);
+    });
+  }, [isSignedIn, userEmail, updateSignInStatus, isGISIdInitialized]);
 
   const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
     console.log("createCalendarEvent called. Current isSignedIn:", isSignedIn);
