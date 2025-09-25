@@ -152,8 +152,10 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
                 description={
                   <Space direction="vertical" size={4}>
                     <span>
-                      {event.start?.dateTime && dayjs(event.start.dateTime).format('YYYY-MM-DD HH:mm')} -{' '}
-                      {event.end?.dateTime && dayjs(event.end.dateTime).format('YYYY-MM-DD HH:mm')}
+                      Thời gian bắt đầu: {event.start?.dateTime && dayjs(event.start.dateTime).format('DD/MM/YY HH:mm')}
+                    </span>
+                    <span>
+                      Thời gian kết thúc: {event.end?.dateTime && dayjs(event.end.dateTime).format('DD/MM/YY HH:mm')}
                     </span>
                     {event.attendees && event.attendees.length > 0 && (
                       <div>

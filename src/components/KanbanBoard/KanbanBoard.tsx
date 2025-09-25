@@ -39,9 +39,10 @@ import { IssueType, Ticket } from "../../types/kanban"; // Import types from glo
 import PersonnelSelectionModal from "./PersonnelSelectionModal"; // Import PersonnelSelectionModal
 import UsefulDocsDrawer from "../UsefulDocsDrawer"; // Import UsefulDocsDrawer
 import CreateCalendarEventModal from "../CreateCalendarEventModal"; // Import CreateCalendarEventModal
-import { CalendarOutlined } from "@ant-design/icons"; // Import CalendarOutlined icon
+import { CalendarOutlined, LogoutOutlined } from "@ant-design/icons"; // Import CalendarOutlined and LogoutOutlined icon
 import { Dropdown } from 'antd'; // Import Dropdown
 import CalendarEventsDrawer from "../CalendarEventsDrawer"; // Import CalendarEventsDrawer
+import { useGoogleCalendar } from "../../hooks/useGoogleCalendar"; // Import useGoogleCalendar hook
 
 
 const getIssueTypeIcon = (issueType: IssueType) => {
@@ -72,6 +73,7 @@ const getPriorityIcon = (priority: string) => {
 
 const KanbanBoard: React.FC = () => {
   const { columns, addTicket, updateTicket, deleteTicket, archiveTicket, moveTicket, handleDragEnd } = useKanbanBoard();
+  const { isSignedIn, handleAuthClick, signOut } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
 
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [personnelFilter, setPersonnelFilter] = useState<string | null>(null); // New state for personnel filter
@@ -326,18 +328,40 @@ const KanbanBoard: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
+          {isSignedIn && (
+            <Button
+              type="text"
+              icon={<LogoutOutlined style={{ fontSize: '20px', color: '#ff4d4f' }} />}
+              onClick={signOut}
+              className="ant-btn-icon-only"
+              style={{ marginRight: '8px' }}
+              title="Đăng xuất Google"
+            />
+          )}
           <Dropdown
             menu={{
               items: [
                 {
                   key: 'create',
                   label: 'Tạo lịch hẹn',
-                  onClick: () => setActiveModal('createCalendar'),
+                  onClick: () => {
+                    if (!isSignedIn) {
+                      handleAuthClick();
+                    } else {
+                      setActiveModal('createCalendar');
+                    }
+                  },
                 },
                 {
                   key: 'view',
                   label: 'Xem sự kiện lịch',
-                  onClick: () => setActiveModal('viewCalendarEvents'),
+                  onClick: () => {
+                    if (!isSignedIn) {
+                      handleAuthClick();
+                    } else {
+                      setActiveModal('viewCalendarEvents');
+                    }
+                  },
                 },
               ],
             }}
@@ -348,6 +372,7 @@ const KanbanBoard: React.FC = () => {
               icon={<CalendarOutlined style={{ fontSize: '20px', color: '#595959' }} />}
               className="ant-btn-icon-only"
               style={{ marginRight: '8px' }}
+              title="Lịch Google"
             />
           </Dropdown>
           <UsefulDocsDrawer /> {/* Add the UsefulDocsDrawer component here */}
