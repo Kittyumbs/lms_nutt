@@ -33,7 +33,27 @@ export const useGoogleCalendar = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const tokenClient = useRef<any>(null);
 
-  console.log("useGoogleCalendar hook initialized. isSignedIn:", isSignedIn, "userEmail:", userEmail);
+  console.log("useGoogleCalendar hook initialized. Initial isSignedIn:", isSignedIn, "Initial userEmail:", userEmail);
+
+  const checkSignInStatus = useCallback(async () => {
+    console.log("checkSignInStatus called.");
+    if (gapi.client.getToken()) {
+      setIsSignedIn(true);
+      console.log("gapi.client.getToken() found. isSignedIn set to true.");
+      try {
+        const userResp = await gapi.client.oauth2.userinfo.get();
+        setUserEmail(userResp.result.email || null);
+        console.log("User email set from checkSignInStatus:", userResp.result.email);
+      } catch (userErr) {
+        console.error("Error fetching user info in checkSignInStatus:", userErr);
+        setUserEmail(null);
+      }
+    } else {
+      setIsSignedIn(false);
+      setUserEmail(null);
+      console.log("No gapi.client.getToken() found. isSignedIn set to false.");
+    }
+  }, []);
 
   const initGapiClient = useCallback(async () => {
     console.log("initGapiClient called.");
@@ -50,29 +70,33 @@ export const useGoogleCalendar = () => {
       tokenClient.current = window.google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
-        callback: (resp: any) => {
+        callback: async (resp: any) => {
           console.log("Token client callback response:", resp);
           if (resp && resp.access_token) {
             gapi.client.setToken({ access_token: resp.access_token });
             setIsSignedIn(true);
             console.log("isSignedIn set to true after token acquisition.");
-            gapi.client.oauth2.userinfo.get().then((userResp: any) => {
-              setUserEmail(userResp.result.email);
+            try {
+              const userResp = await gapi.client.oauth2.userinfo.get();
+              setUserEmail(userResp.result.email || null);
               console.log("User email set:", userResp.result.email);
-            }).catch((userErr: any) => {
+            } catch (userErr: any) {
               console.error("Error fetching user info:", userErr);
               setUserEmail(null);
-            });
+            }
           } else {
             console.log("No access token in callback response.");
+            setIsSignedIn(false);
+            setUserEmail(null);
           }
         },
       });
+      checkSignInStatus(); // Check status immediately after client init
     } catch (err: any) {
       console.error("Error initializing Google API client:", err);
       setError("Failed to initialize Google API client.");
     }
-  }, [API_KEY, CLIENT_ID, DISCOVERY_DOCS, SCOPES]);
+  }, [API_KEY, CLIENT_ID, DISCOVERY_DOCS, SCOPES, checkSignInStatus]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -108,6 +132,10 @@ export const useGoogleCalendar = () => {
       document.body.removeChild(scriptGis);
     };
   }, [initGapiClient, CLIENT_ID]);
+
+  useEffect(() => {
+    console.log("isSignedIn state changed:", isSignedIn, "userEmail:", userEmail);
+  }, [isSignedIn, userEmail]);
 
   const handleAuthClick = useCallback(() => {
     console.log("handleAuthClick called. Current isSignedIn:", isSignedIn);
