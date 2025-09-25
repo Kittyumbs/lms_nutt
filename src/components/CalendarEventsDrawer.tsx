@@ -40,7 +40,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
-  const { isGapiLoaded, error, fetchCalendarEvents, ensureSignedIn } = useGoogleCalendar();
+  const { isGapiLoaded, error, fetchCalendarEvents } = useGoogleCalendar();
 
   console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn, "userEmail prop:", userEmail); // Debugging line
 
@@ -53,7 +53,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
     }
     setLoading(true);
     try {
-      await ensureSignedIn(); // Ensure user is signed in
+      // ensureSignedIn is no longer needed here as handleAuthClick handles it before opening the drawer
       const fetchedEvents = await fetchCalendarEvents();
       const validEvents: GoogleCalendarEvent[] = (fetchedEvents as GoogleCalendarEvent[]).filter((event: GoogleCalendarEvent) => event.id && event.summary);
       setEvents(validEvents);
@@ -64,7 +64,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [isGapiLoaded, ensureSignedIn, fetchCalendarEvents]);
+  }, [isGapiLoaded, fetchCalendarEvents]);
 
   useEffect(() => {
     if (isOpen && isSignedIn && isGapiLoaded) {
