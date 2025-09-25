@@ -1,10 +1,9 @@
 /// <reference types="gapi" />
-/// <reference types="gapi.auth2" />
+/// <reference types="google.accounts" />
 /// <reference types="gapi.client" />
 /// <reference types="gapi.client.calendar" />
 /// <reference types="gapi.client.oauth2" />
-import { useState, useCallback, useEffect } from 'react';
-import { gapi } from 'gapi-script';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { message } from 'antd';
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CALENDAR_CLIENT_ID;
@@ -31,78 +30,74 @@ export const useGoogleCalendar = () => {
   const [isGapiLoaded, setIsGapiLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const tokenClient = useRef<google.accounts.oauth2.TokenClient | null>(null);
 
   console.log("useGoogleCalendar hook initialized. Initial isSignedIn:", isSignedIn, "Initial userEmail:", userEmail);
 
-  const ensureSignedIn = useCallback(async () => {
-    console.log("ensureSignedIn called.");
-    const authInstance = gapi.auth2?.getAuthInstance(); // Use optional chaining for safety
-    if (!authInstance) {
-      throw new Error('Google Auth2 client not initialized. Please try again.');
-    }
-    if (!authInstance.isSignedIn.get()) {
-      console.log("User not signed in, prompting for sign-in.");
-      await authInstance.signIn({ prompt: 'consent' });
-    }
-    // The isSignedIn state is managed by the listener, so we don't set it manually here.
-    // This avoids a race condition where the state is set to true before the sign-in is complete.
-    console.log("ensureSignedIn: sign-in process completed or user was already signed in.");
-    try {
-      const userResp = await gapi.client.oauth2.userinfo.get();
-      setUserEmail(userResp.result.email || null);
-      console.log("User email set from ensureSignedIn:", userResp.result.email);
-    } catch (userErr) {
-      console.error("Error fetching user info in ensureSignedIn:", userErr);
+  const updateSignInStatus = useCallback(async (isUserSignedIn: boolean) => {
+    setIsSignedIn(isUserSignedIn);
+    if (isUserSignedIn) {
+      try {
+        const userResp = await gapi.client.oauth2.userinfo.get();
+        setUserEmail(userResp.result.email || null);
+        console.log("User email set:", userResp.result.email);
+      } catch (userErr) {
+        console.error("Error fetching user info:", userErr);
+        setUserEmail(null);
+      }
+    } else {
       setUserEmail(null);
     }
   }, []);
 
-  const initClient = useCallback(async () => {
-    console.log("initClient called.");
+  const initGapiClient = useCallback(async () => {
+    console.log("initGapiClient called.");
     try {
-      // Explicitly initialize gapi.auth2 first
-      await gapi.auth2.init({
-        client_id: CLIENT_ID, // Corrected to client_id for gapi.auth2.init
-        scope: SCOPES,
-      });
-      console.log("gapi.auth2 initialized.");
-
       await gapi.client.init({
         apiKey: API_KEY,
-        clientId: CLIENT_ID, // Corrected to clientId for gapi.client.init
         discoveryDocs: DISCOVERY_DOCS,
-        scope: SCOPES, // Keep scope here for gapi.client initialization
       });
       await gapi.client.load('calendar', 'v3');
       await gapi.client.load('oauth2', 'v2');
       setIsGapiLoaded(true);
       console.log("gapi client loaded and initialized.");
-
-      const authInstance = gapi.auth2?.getAuthInstance();
-      if (authInstance) {
-        setIsSignedIn(authInstance.isSignedIn.get());
-        authInstance.isSignedIn.listen(setIsSignedIn);
-        console.log("Auth instance initialized. Initial isSignedIn:", authInstance.isSignedIn.get());
-
-        if (authInstance.isSignedIn.get()) {
-          try {
-            const userResp = await gapi.client.oauth2.userinfo.get();
-            setUserEmail(userResp.result.email || null);
-            console.log("User email set during initClient:", userResp.result.email);
-          } catch (userErr) {
-            console.error("Error fetching user info during initClient:", userErr);
-            setUserEmail(null);
-          }
-        }
-      } else {
-        console.error("Google Auth instance not found after client initialization.");
-        setError("Failed to initialize Google Auth instance.");
-      }
     } catch (err: any) {
       console.error("Error initializing Google API client:", err);
       setError("Failed to initialize Google API client.");
     }
-  }, []);
+  }, [API_KEY, DISCOVERY_DOCS]);
+
+  const initGIS = useCallback(() => {
+    console.log("initGIS called.");
+    if (typeof window === 'undefined' || !window.google?.accounts?.oauth2) {
+      console.warn("Google Identity Services script not loaded yet.");
+      return;
+    }
+
+    tokenClient.current = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: (resp) => {
+        console.log("Token client callback received:", resp);
+        if (resp?.access_token) {
+          gapi.client.setToken({ access_token: resp.access_token });
+          updateSignInStatus(true);
+          message.success("Đăng nhập Google thành công!");
+        } else {
+          updateSignInStatus(false);
+          setError(resp?.error || "Failed to get access token.");
+          message.error("Không thể đăng nhập Google.");
+        }
+      },
+      error_callback: (err) => {
+        console.error("Token client error:", err);
+        setError(err?.type || "Unknown token client error.");
+        updateSignInStatus(false);
+        message.error("Lỗi đăng nhập Google.");
+      }
+    });
+    console.log("Google Identity Services token client initialized.");
+  }, [CLIENT_ID, SCOPES, updateSignInStatus]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -110,58 +105,65 @@ export const useGoogleCalendar = () => {
     const scriptGapi = document.createElement('script');
     scriptGapi.src = 'https://apis.google.com/js/api.js';
     scriptGapi.onload = () => {
-      gapi.load('client:auth2', initClient); // Load client and auth2, then call initClient
+      gapi.load('client', initGapiClient);
+      gapi.load('oauth2', () => { /* oauth2 client is loaded via gapi.client.load in initGapiClient */ });
     };
     scriptGapi.onerror = () => {
       setError("Failed to load Google API script.");
     };
     document.body.appendChild(scriptGapi);
 
+    // GIS script is loaded in index.html, just ensure it's ready
+    const checkGISReady = setInterval(() => {
+      if (window.google?.accounts?.oauth2) {
+        clearInterval(checkGISReady);
+        initGIS();
+      }
+    }, 100); // Check every 100ms
+
     return () => {
       document.body.removeChild(scriptGapi);
+      clearInterval(checkGISReady);
     };
-  }, [initClient]);
+  }, [initGapiClient, initGIS]);
 
-  useEffect(() => {
-    console.log("isSignedIn state changed:", isSignedIn, "userEmail:", userEmail);
-  }, [isSignedIn, userEmail]);
-
-  const handleAuthClick = useCallback(async () => {
+  const handleAuthClick = useCallback(() => {
     console.log("handleAuthClick called. Current isSignedIn:", isSignedIn);
-    try {
-      await ensureSignedIn();
-    } catch (err: any) {
-      console.error("Error during authentication:", err);
-      setError(err.message || "Failed to sign in to Google.");
+    if (!isGapiLoaded || !tokenClient.current) {
+      message.error("Google API client or token client not ready.");
+      return;
     }
-  }, [ensureSignedIn]);
+    if (isSignedIn) {
+      message.info("Bạn đã đăng nhập.");
+      return;
+    }
+    tokenClient.current.requestAccessToken({ prompt: 'consent' });
+  }, [isGapiLoaded, isSignedIn]);
 
   const signOut = useCallback(() => {
     console.log("signOut called. Current isSignedIn:", isSignedIn);
-    const authInstance = gapi.auth2?.getAuthInstance();
-    if (authInstance && authInstance.isSignedIn.get()) {
-      authInstance.disconnect(); // Add this line to fully disconnect the user
-      authInstance.signOut().then(() => {
-        setIsSignedIn(false);
-        setUserEmail(null);
+    if (!isSignedIn || !userEmail) {
+      message.warning("Người dùng chưa đăng nhập.");
+      return;
+    }
+    if (window.google?.accounts?.id) {
+      google.accounts.id.revoke(userEmail, () => {
+        gapi.client.setToken(null);
+        updateSignInStatus(false);
         message.success("Đã đăng xuất khỏi Google.");
         console.log("Signed out. isSignedIn:", false, "userEmail:", null);
       });
     } else {
-      message.warning("Người dùng chưa đăng nhập hoặc Google Auth client chưa sẵn sàng.");
-      console.warn("User not signed in or Google Auth client not ready.");
+      message.error("Google Identity Services chưa sẵn sàng để đăng xuất.");
     }
-  }, []);
+  }, [isSignedIn, userEmail, updateSignInStatus]);
 
   const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
     console.log("createCalendarEvent called. Current isSignedIn:", isSignedIn);
-    try {
-      await ensureSignedIn(); // Ensure user is signed in before creating event
-    } catch (err: any) {
-      setError(err.message || "User not signed in to Google Calendar.");
-      throw err;
+    if (!isSignedIn) {
+      message.error("Vui lòng đăng nhập Google để tạo lịch.");
+      throw new Error("User not signed in to Google Calendar.");
     }
-
     if (!gapi.client.calendar) {
       setError("Google Calendar API not loaded.");
       console.error("createCalendarEvent: Google Calendar API not loaded.");
@@ -180,17 +182,14 @@ export const useGoogleCalendar = () => {
       setError(err.result?.error?.message || "Failed to create calendar event.");
       throw err;
     }
-  }, [ensureSignedIn]);
+  }, [isSignedIn]);
 
   const fetchCalendarEvents = useCallback(async () => {
     console.log("fetchCalendarEvents called. Current isSignedIn:", isSignedIn);
-    try {
-      await ensureSignedIn(); // Ensure user is signed in before fetching events
-    } catch (err: any) {
-      setError(err.message || "User not signed in to Google Calendar.");
-      throw err;
+    if (!isSignedIn) {
+      message.error("Vui lòng đăng nhập Google để xem lịch.");
+      throw new Error("User not signed in to Google Calendar.");
     }
-
     if (!gapi.client.calendar) {
       setError("Google Calendar API not loaded.");
       console.error("fetchCalendarEvents: Google Calendar API not loaded.");
@@ -212,7 +211,7 @@ export const useGoogleCalendar = () => {
       setError(err.result?.error?.message || "Failed to fetch calendar events.");
       throw err;
     }
-  }, [ensureSignedIn]);
+  }, [isSignedIn]);
 
   return {
     isSignedIn,
@@ -223,6 +222,5 @@ export const useGoogleCalendar = () => {
     createCalendarEvent,
     signOut,
     fetchCalendarEvents,
-    ensureSignedIn,
   };
 };

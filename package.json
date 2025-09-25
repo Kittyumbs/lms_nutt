@@ -46,6 +46,7 @@
     "@types/gapi.auth2": "^0.0.61",
     "@types/gapi.client.calendar": "^3.0.12",
     "@types/gapi.client.oauth2": "^2.0.4",
+    "@types/google.accounts": "^0.0.18",
     "@types/react": "^19.1.2",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^19.0.4",
