@@ -82,8 +82,27 @@ export function useGoogleCalendar() {
     };
 
     document.body.append(gsi, api);
-    return () => { gsi.remove(); api.remove(); };
+    return () => {
+      gsi.remove();
+      api.remove();
+    };
   }, []);
+
+  // Polling mechanism to ensure isSignedIn state is updated if token exists
+  useEffect(() => {
+    let intervalId: number; // Changed from NodeJS.Timeout to number
+    if (isGapiLoaded && !isSignedIn) {
+      intervalId = setInterval(() => {
+        const currentToken = window.gapi?.client?.getToken();
+        if (currentToken?.access_token) {
+          console.log("useGoogleCalendar: Polling found existing token. Setting isSignedIn to true.");
+          setIsSignedIn(true);
+          clearInterval(intervalId);
+        }
+      }, 500); // Check every 500ms
+    }
+    return () => clearInterval(intervalId);
+  }, [isGapiLoaded, isSignedIn]);
 
   const handleAuthClick = useCallback(() => {
     if (!tokenClient) { setError("Auth not ready"); return; }
