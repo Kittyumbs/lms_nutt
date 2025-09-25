@@ -111,12 +111,7 @@ export const useGoogleCalendar = () => {
     setIsTokenClientInitialized(true); // Set this flag
     console.log("Google Identity Services token client initialized.");
 
-    // Check for existing token after tokenClient is initialized
-    const currentToken = gapi.client.getToken();
-    if (currentToken && currentToken.access_token) {
-      console.log("Existing GAPI client token found, updating sign-in status.");
-      updateSignInStatus(true, currentToken.access_token);
-    }
+    // Initial token check will be handled by a separate useEffect after both GAPI client and GIS are ready
   }, [CLIENT_ID, SCOPES, updateSignInStatus]);
 
   useEffect(() => {
@@ -154,6 +149,21 @@ export const useGoogleCalendar = () => {
       clearInterval(gisCheckInterval);
     };
   }, [initGapiClient, initGIS]);
+
+  // Effect to check initial sign-in status once both GAPI client and GIS are ready
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isGoogleReady) return;
+
+    console.log("Both GAPI client and GIS are ready. Checking initial sign-in status.");
+    const currentToken = gapi.client.getToken();
+    if (currentToken && currentToken.access_token) {
+      console.log("Existing GAPI client token found, updating sign-in status.");
+      updateSignInStatus(true, currentToken.access_token);
+    } else {
+      console.log("No existing GAPI client token found.");
+      updateSignInStatus(false);
+    }
+  }, [isGoogleReady, updateSignInStatus]);
 
   const handleAuthClick = useCallback(() => {
     console.log("handleAuthClick called. Current isSignedIn:", isSignedIn);
