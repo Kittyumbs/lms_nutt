@@ -40,7 +40,7 @@ import PersonnelSelectionModal from "./PersonnelSelectionModal"; // Import Perso
 import UsefulDocsDrawer from "../UsefulDocsDrawer"; // Import UsefulDocsDrawer
 import CreateCalendarEventModal from "../CreateCalendarEventModal"; // Import CreateCalendarEventModal
 import { CalendarOutlined } from "@ant-design/icons"; // Import CalendarOutlined icon
-import { Dropdown, MenuProps } from 'antd'; // Import Dropdown and MenuProps
+import { Dropdown } from 'antd'; // Import Dropdown
 import CalendarEventsDrawer from "../CalendarEventsDrawer"; // Import CalendarEventsDrawer
 
 
