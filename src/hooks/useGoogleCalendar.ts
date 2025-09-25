@@ -16,10 +16,13 @@ export function useGoogleCalendar() {
   const [isGapiLoaded, setIsGapiLoaded] = useState(false);
   const [tokenClient, setTokenClient] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true); // New state for authentication loading
 
   // Load GIS + gapi scripts in browser only
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    setIsAuthLoading(true); // Start authentication loading
 
     const gsi = document.createElement("script");
     gsi.src = "https://accounts.google.com/gsi/client";
@@ -36,6 +39,12 @@ export function useGoogleCalendar() {
           await window.gapi.client.load("calendar", "v3");
           setIsGapiLoaded(true);
 
+          // Check for existing token immediately after gapi client is loaded
+          const existingToken = window.gapi.client.getToken();
+          if (existingToken?.access_token) {
+            setIsSignedIn(true);
+          }
+
           const tc = window.google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPE,
@@ -49,19 +58,17 @@ export function useGoogleCalendar() {
             },
           });
           setTokenClient(tc);
-
-          // Check for existing token immediately after gapi client is loaded and tokenClient is initialized
-          // This ensures isSignedIn is set correctly on initial load if a token exists.
-          const existingToken = window.gapi.client.getToken();
-          if (existingToken?.access_token) {
-            setIsSignedIn(true);
-          }
         } catch (e: any) {
           setError(e?.message ?? "Failed to init Google API client");
+        } finally {
+          setIsAuthLoading(false); // Authentication loading is complete
         }
       });
     };
-    api.onerror = () => setError("Failed to load Google API script");
+    api.onerror = () => {
+      setError("Failed to load Google API script");
+      setIsAuthLoading(false); // Authentication loading is complete even on error
+    };
 
     document.body.append(gsi, api);
     return () => { gsi.remove(); api.remove(); };
@@ -158,5 +165,5 @@ export function useGoogleCalendar() {
     }
   }, []);
 
-  return { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, createCalendarEvent, signOut };
+  return { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, createCalendarEvent, signOut, isAuthLoading };
 }

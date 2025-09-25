@@ -34,9 +34,9 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
-const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents } = useGoogleCalendar();
+const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
 
-  console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn); // Debugging line
+  console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn, "isAuthLoading:", isAuthLoading); // Debugging line
 
   const loadEvents = useCallback(async () => {
     console.log("loadEvents called. isSignedIn:", isSignedIn, "isGapiLoaded:", isGapiLoaded); // Debugging line
@@ -82,7 +82,7 @@ const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchC
     }
   };
 
-  if (!isGapiLoaded) {
+  if (isAuthLoading) {
     return (
       <Drawer
         title="Sự kiện Google Calendar"
@@ -91,8 +91,10 @@ const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchC
         open={isOpen}
         onClose={onClose}
       >
-        <p>Đang tải Google API...</p>
-        {error && <p style={{ color: 'red' }}>Lỗi: {error}</p>}
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <Spin size="large" />
+          <p style={{ marginTop: 10 }}>Đang kiểm tra trạng thái đăng nhập...</p>
+        </div>
       </Drawer>
     );
   }
