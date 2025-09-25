@@ -47,16 +47,21 @@ export const useGoogleCalendar = () => {
         client_id: CLIENT_ID,
         scope: SCOPES,
         callback: (resp: any) => {
+          console.log("Token client callback response:", resp);
           if (resp && resp.access_token) {
             gapi.client.setToken({ access_token: resp.access_token });
             setIsSignedIn(true);
+            console.log("isSignedIn set to true.");
             // Lấy thông tin người dùng sau khi đăng nhập thành công
             gapi.client.oauth2.userinfo.get().then((userResp: any) => {
               setUserEmail(userResp.result.email);
+              console.log("User email set:", userResp.result.email);
             }).catch((userErr: any) => {
               console.error("Error fetching user info:", userErr);
               setUserEmail(null);
             });
+          } else {
+            console.log("No access token in callback response.");
           }
         },
       });
@@ -103,9 +108,11 @@ export const useGoogleCalendar = () => {
 
   const handleAuthClick = useCallback(() => {
     if (tokenClient.current) {
+      console.log("Requesting access token...");
       tokenClient.current.requestAccessToken({ prompt: 'consent' });
     } else {
       setError("Google Identity Services client not initialized.");
+      console.error("Google Identity Services client not initialized.");
     }
   }, []);
 
@@ -118,22 +125,27 @@ export const useGoogleCalendar = () => {
           setIsSignedIn(false);
           setUserEmail(null); // Xóa email người dùng khi đăng xuất
           message.success("Đã đăng xuất khỏi Google.");
+          console.log("Signed out. isSignedIn:", false, "userEmail:", null);
         });
       } else {
         message.warning("Không có access token để đăng xuất."); // Đổi warn thành warning
+        console.warn("No access token to sign out.");
       }
     } else {
       message.warning("Google Identity Services chưa được khởi tạo hoặc người dùng chưa đăng nhập."); // Đổi warn thành warning
+      console.warn("Google Identity Services not initialized or user not signed in.");
     }
   }, [isSignedIn]);
 
   const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
     if (!isSignedIn) {
       setError("User not signed in to Google Calendar.");
+      console.error("createCalendarEvent: User not signed in.");
       throw new Error("User not signed in.");
     }
     if (!gapi.client.calendar) {
       setError("Google Calendar API not loaded.");
+      console.error("createCalendarEvent: Google Calendar API not loaded.");
       throw new Error("Google Calendar API not loaded.");
     }
 
@@ -154,10 +166,12 @@ export const useGoogleCalendar = () => {
   const fetchCalendarEvents = useCallback(async () => {
     if (!isSignedIn) {
       setError("User not signed in to Google Calendar.");
+      console.error("fetchCalendarEvents: User not signed in. isSignedIn:", isSignedIn);
       throw new Error("User not signed in.");
     }
     if (!gapi.client.calendar) {
       setError("Google Calendar API not loaded.");
+      console.error("fetchCalendarEvents: Google Calendar API not loaded.");
       throw new Error("Google Calendar API not loaded.");
     }
 

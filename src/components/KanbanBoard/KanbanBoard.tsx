@@ -75,6 +75,8 @@ const KanbanBoard: React.FC = () => {
   const { columns, addTicket, updateTicket, deleteTicket, archiveTicket, moveTicket, handleDragEnd } = useKanbanBoard();
   const { isSignedIn, handleAuthClick, signOut, userEmail } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
 
+  console.log("KanbanBoard - isSignedIn:", isSignedIn, "userEmail:", userEmail); // Debugging line
+
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [personnelFilter, setPersonnelFilter] = useState<string | null>(null); // New state for personnel filter
   const [searchText, setSearchText] = useState("");
@@ -620,6 +622,7 @@ const KanbanBoard: React.FC = () => {
         onClose={() => setActiveModal('none')}
         isSignedIn={isSignedIn}
         handleAuthClick={handleAuthClick}
+        userEmail={userEmail}
       />
     </div>
   );

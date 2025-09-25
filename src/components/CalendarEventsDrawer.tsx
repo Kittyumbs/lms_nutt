@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Drawer, List, Avatar, Tag, Spin, message, Button, Space } from 'antd';
 import { UserOutlined, CheckCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined, SyncOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -9,6 +9,7 @@ interface CalendarEventsDrawerProps {
   onClose: () => void;
   isSignedIn: boolean;
   handleAuthClick: () => void;
+  userEmail: string | null; // Add userEmail prop
 }
 
 interface GoogleCalendarEvent {
@@ -35,13 +36,18 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   onClose,
   isSignedIn,
   handleAuthClick,
+  userEmail, // Destructure userEmail
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const { isGapiLoaded, error, fetchCalendarEvents } = useGoogleCalendar();
 
-  const loadEvents = async () => {
+  console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn, "userEmail prop:", userEmail); // Debugging line
+
+  const loadEvents = useCallback(async () => {
+    console.log("loadEvents called. isSignedIn:", isSignedIn, "isGapiLoaded:", isGapiLoaded); // Debugging line
     if (!isSignedIn || !isGapiLoaded) {
+      console.log("loadEvents: Not signed in or gapi not loaded. Returning."); // Debugging line
       return;
     }
     setLoading(true);
@@ -56,7 +62,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [isSignedIn, isGapiLoaded, fetchCalendarEvents, error]);
 
   useEffect(() => {
     if (isOpen && isSignedIn && isGapiLoaded) {
@@ -127,6 +133,11 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
         </Button>
       }
     >
+      {userEmail && (
+        <div style={{ marginBottom: 16, textAlign: 'center', fontSize: '0.85em', color: '#555' }}>
+          Đang xem lịch của: <strong>{userEmail}</strong>
+        </div>
+      )}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '20px' }}>
           <Spin size="large" />
