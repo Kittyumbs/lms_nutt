@@ -8,7 +8,6 @@ interface CreateCalendarEventModalProps {
   onClose: () => void;
   isSignedIn: boolean;
   handleAuthClick: () => void;
-  userEmail: string | null; // Add userEmail prop
 }
 
 const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
@@ -16,11 +15,10 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
   onClose,
   isSignedIn,
   handleAuthClick,
-  userEmail, // Destructure userEmail
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { isGapiLoaded, error, createCalendarEvent } = useGoogleCalendar();
+const { isGapiLoaded, error, createCalendarEvent } = useGoogleCalendar();
 
   useEffect(() => {
     if (isOpen) {
@@ -112,11 +110,6 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
         ]}
         width={600}
       >
-        {userEmail && (
-          <div style={{ marginBottom: 16, textAlign: 'center', fontSize: '0.85em', color: '#555' }}>
-            Đang gửi lịch từ: <strong>{userEmail}</strong>
-          </div>
-        )}
         <Form form={form} layout="vertical">
           <Form.Item
             name="summary"

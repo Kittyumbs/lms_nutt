@@ -7,7 +7,6 @@ import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 interface CalendarEventsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  userEmail: string | null; // Add userEmail prop
 }
 
 interface GoogleCalendarEvent {
@@ -32,13 +31,12 @@ interface GoogleCalendarEvent {
 const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   isOpen,
   onClose,
-  userEmail, // Destructure userEmail
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
 const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents } = useGoogleCalendar();
 
-  console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn, "userEmail prop:", userEmail); // Debugging line
+  console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn); // Debugging line
 
   const loadEvents = useCallback(async () => {
     console.log("loadEvents called. isSignedIn:", isSignedIn, "isGapiLoaded:", isGapiLoaded); // Debugging line
@@ -137,11 +135,6 @@ const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchC
         </Button>
       }
     >
-      {userEmail && (
-        <div style={{ marginBottom: 16, textAlign: 'center', fontSize: '0.85em', color: '#555' }}>
-          Đang xem lịch của: <strong>{userEmail}</strong>
-        </div>
-      )}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '20px' }}>
           <Spin size="large" />

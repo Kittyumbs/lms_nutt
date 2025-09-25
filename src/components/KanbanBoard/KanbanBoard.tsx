@@ -73,9 +73,9 @@ const getPriorityIcon = (priority: string) => {
 
 const KanbanBoard: React.FC = () => {
   const { columns, addTicket, updateTicket, deleteTicket, archiveTicket, moveTicket, handleDragEnd } = useKanbanBoard();
-  const { isSignedIn, handleAuthClick, signOut, userEmail } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
+  const { isSignedIn, handleAuthClick, signOut } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
 
-  console.log("KanbanBoard - isSignedIn:", isSignedIn, "userEmail:", userEmail); // Debugging line
+  console.log("KanbanBoard - isSignedIn:", isSignedIn); // Debugging line
 
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [personnelFilter, setPersonnelFilter] = useState<string | null>(null); // New state for personnel filter
@@ -337,7 +337,7 @@ const KanbanBoard: React.FC = () => {
               onClick={signOut}
               className="ant-btn-icon-only"
               style={{ marginRight: '8px' }}
-              title={`Đăng xuất Google (${userEmail})`}
+              title={`Đăng xuất Google`}
             />
           )}
           <Dropdown
@@ -615,15 +615,11 @@ const KanbanBoard: React.FC = () => {
         onClose={() => setActiveModal('none')}
         isSignedIn={isSignedIn}
         handleAuthClick={handleAuthClick}
-        userEmail={userEmail} // Pass userEmail
       />
 
       <CalendarEventsDrawer
         isOpen={activeModal === 'viewCalendarEvents'}
         onClose={() => setActiveModal('none')}
-        isSignedIn={isSignedIn}
-        handleAuthClick={handleAuthClick}
-        userEmail={userEmail}
       />
     </div>
   );
