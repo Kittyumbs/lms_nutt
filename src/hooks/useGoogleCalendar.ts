@@ -185,8 +185,14 @@ export const useGoogleCalendar = () => {
       return;
     }
     if (window.google?.accounts?.id) {
+      // Clear GAPI client token immediately
+      gapi.client.setToken(null);
+      // Revoke the token with Google Identity Services
       google.accounts.id.revoke(userEmail, () => {
-        updateSignInStatus(false); // updateSignInStatus will clear the token
+        console.log("Google token revoked.");
+        // Disable auto-selection to prevent automatic re-login
+        google.accounts.id.disableAutoSelect();
+        updateSignInStatus(false); // Update local state
         message.success("Đã đăng xuất khỏi Google.");
         console.log("Signed out. isSignedIn:", false, "userEmail:", null);
       });
