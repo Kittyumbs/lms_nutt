@@ -7,8 +7,6 @@ import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 interface CalendarEventsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  isSignedIn: boolean;
-  handleAuthClick: () => void;
   userEmail: string | null; // Add userEmail prop
 }
 
@@ -18,11 +16,11 @@ interface GoogleCalendarEvent {
   description?: string;
   start?: {
     dateTime?: string;
-    timeZone?: string;
+    timeZone: string;
   };
   end?: {
     dateTime?: string;
-    timeZone?: string;
+    timeZone: string;
   };
   attendees?: Array<{
     email?: string;
@@ -34,37 +32,36 @@ interface GoogleCalendarEvent {
 const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   isOpen,
   onClose,
-  isSignedIn,
-  handleAuthClick,
   userEmail, // Destructure userEmail
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
-  const { isGapiLoaded, error, fetchCalendarEvents } = useGoogleCalendar();
+const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents } = useGoogleCalendar();
 
   console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn, "userEmail prop:", userEmail); // Debugging line
 
   const loadEvents = useCallback(async () => {
     console.log("loadEvents called. isSignedIn:", isSignedIn, "isGapiLoaded:", isGapiLoaded); // Debugging line
     if (!isGapiLoaded) {
-      message.warning('Google API chưa sẵn sàng');
-      console.log("loadEvents: gapi not loaded. Returning.");
+      message.warning('Google API chưa sẵn sàng.');
       return;
     }
     setLoading(true);
     try {
-      // ensureSignedIn is no longer needed here as handleAuthClick handles it before opening the drawer
-      const fetchedEvents = await fetchCalendarEvents();
-      const validEvents: GoogleCalendarEvent[] = (fetchedEvents as GoogleCalendarEvent[]).filter((event: GoogleCalendarEvent) => event.id && event.summary);
-      setEvents(validEvents);
-      message.success("Đã tải sự kiện lịch thành công.");
-    } catch (e: any) {
-      console.error("Error fetching calendar events:", e);
-      message.error(e?.message || "Không thể tải sự kiện lịch.");
+      // ép đăng nhập nếu chưa
+      await ensureSignedIn();
+
+      const fetched = await fetchCalendarEvents();
+      const valid = (fetched ?? []).filter(e => !!(e.id && e.summary));
+      setEvents(valid as any);
+      message.success('Đã tải sự kiện lịch.');
+    } catch (err: any) {
+      console.error('Error fetching calendar events:', err);
+      message.error(error || err.message || 'Không thể tải sự kiện lịch.');
     } finally {
       setLoading(false);
     }
-  }, [isGapiLoaded, fetchCalendarEvents]);
+  }, [isGapiLoaded, ensureSignedIn, fetchCalendarEvents, error]);
 
   useEffect(() => {
     if (isOpen && isSignedIn && isGapiLoaded) {
@@ -130,7 +127,12 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
       open={isOpen}
       onClose={onClose}
       extra={
-        <Button icon={<SyncOutlined />} onClick={loadEvents} loading={loading} disabled={!isSignedIn || !isGapiLoaded}>
+        <Button
+          icon={<SyncOutlined />}
+          onClick={loadEvents}
+          loading={loading}
+          disabled={!isGapiLoaded || !isSignedIn}
+        >
           Làm mới
         </Button>
       }
@@ -149,7 +151,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
         <List
           itemLayout="horizontal"
           dataSource={events}
-          rowKey="id" // Add rowKey for performance and stability
+          rowKey={(e) => e.id as string}
           renderItem={(event) => (
             <List.Item
               actions={[

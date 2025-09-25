@@ -1,11 +1,56 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/nuttency.png" type="image/png">
-    <title>TaskManage</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>TaskManage · Lịch & Kanban</title>
+    <meta name="description" content="TaskManage: quản lý công việc, Kanban và đồng bộ Google Calendar." />
+    <link rel="canonical" href="https://lms-nuttency.vercel.app/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="TaskManage · Lịch & Kanban" />
+    <meta property="og:description" content="Quản lý công việc, Kanban và đồng bộ Google Calendar." />
+    <meta property="og:url" content="https://lms-nuttency.vercel.app/" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:locale" content="vi_VN" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TaskManage · Lịch & Kanban" />
+    <meta name="twitter:description" content="Quản lý công việc, Kanban và đồng bộ Google Calendar." />
+    <meta name="twitter:image" content="/og-image.png" />
+
+    <!-- Icons / Manifest -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- JSON-LD: Organization + WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "TaskManage",
+      "url": "https://lms-nuttency.vercel.app/",
+      "logo": "https://lms-nuttency.vercel.app/icon.png"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context":"https://schema.org",
+      "@type":"WebSite",
+      "name":"TaskManage",
+      "url":"https://lms-nuttency.vercel.app/",
+      "potentialAction":{
+        "@type":"SearchAction",
+        "target":"https://lms-nuttency.vercel.app/?q={search_term_string}",
+        "query-input":"required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

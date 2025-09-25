@@ -52,3 +52,31 @@ export default tseslint.config({
   },
 })
 ```
+
+## Security / Key Hardening
+
+1. Restrict API Key (Google Cloud → APIs & Services → Credentials → <Your API key>):
+   - Application restrictions: **HTTP referrers (web sites)**
+     - Add:
+       - https://lms-nuttency.vercel.app
+       - http://localhost:5173
+   - API restrictions: **Restrict key**
+     - Enable only: **Google Calendar API**
+   - Save changes.
+
+2. OAuth Client (Web) (Google Cloud → Credentials → <OAuth 2.0 Client IDs>):
+   - Authorized JavaScript origins:
+     - https://lms-nuttency.vercel.app
+     - http://localhost:5173
+   - (Không dùng wildcard cho preview domain. Test trên prod domain hoặc thêm origin cụ thể.)
+
+3. Rotate keys khi nghi ngờ lộ:
+   - Create new API key → apply restrictions → update Vercel env → delete old key.
+
+4. Leak check:
+   - Tìm trong repo: `VITE_GOOGLE_CALENDAR_API_KEY` và `VITE_GOOGLE_CALENDAR_CLIENT_ID` không được log ra console, không commit file .env.
+   - Nếu từng push key: rotate ngay.
+
+5. Browser privacy:
+   - Dùng **GIS** token flow (đã triển khai), không expose refresh token.
+   - Không lưu access_token trong localStorage; rely on gapi in-memory token.
