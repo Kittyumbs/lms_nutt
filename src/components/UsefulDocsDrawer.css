@@ -5,5 +5,4 @@
 .useful-docs-button.ant-btn-primary:hover {
   background-color: #108a3e; /* A slightly darker green */
   border-color: #108a3e;
-  transform: translateY(-1px); /* Slight lift effect */
 }
