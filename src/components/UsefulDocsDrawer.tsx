@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Segmented } from 'antd';
 import { PlusOutlined, LinkOutlined, DeleteOutlined } from '@ant-design/icons';
-import './UsefulDocsDrawer.css';
 import {
   collection,
   addDoc,
@@ -139,7 +138,6 @@ export default function UsefulDocsDrawer() {
       <Button
         type="primary"
         icon={<PlusOutlined />}
-        className="useful-docs-button"
         onClick={handleOpen}
       >
         Tài liệu thường dùng

@@ -28,7 +28,7 @@ import { useEffect } from "react";
 export function HomeSEO() {
   useEffect(() => {
     setMeta({
-      title: "Trang chính",
+      title: "Home",
       desc: "Quản lý công việc, Kanban và đồng bộ Google Calendar.",
       url: "https://lms-nuttency.vercel.app/"
     });
