@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Segmented } from 'antd';
 import { PlusOutlined, LinkOutlined, DeleteOutlined } from '@ant-design/icons';
+import './UsefulDocsDrawer.css';
 import {
   collection,
   addDoc,
@@ -132,20 +133,13 @@ export default function UsefulDocsDrawer() {
     }
   };
 
-  // Green primary-style button
-  const greenBtnStyle: React.CSSProperties = {
-    backgroundColor: '#16a34a',
-    borderColor: '#16a34a',
-  };
-
   return (
     <>
       {contextHolder}
       <Button
         type="primary"
         icon={<PlusOutlined />}
-        className="ant-btn css-1v5z42l ant-btn-primary ant-btn-color-primary ant-btn-variant-solid"
-        style={greenBtnStyle}
+        className="useful-docs-button"
         onClick={handleOpen}
       >
         Tài liệu thường dùng

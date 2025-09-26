@@ -1,0 +1,9 @@
+.useful-docs-button.ant-btn-primary {
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.useful-docs-button.ant-btn-primary:hover {
+  background-color: #108a3e; /* A slightly darker green */
+  border-color: #108a3e;
+  transform: translateY(-1px); /* Slight lift effect */
+}
