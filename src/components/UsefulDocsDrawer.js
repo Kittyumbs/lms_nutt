@@ -2,6 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-run
 import React, { useEffect, useState } from 'react';
 import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Segmented } from 'antd';
 import { PlusOutlined, LinkOutlined, DeleteOutlined } from '@ant-design/icons';
+import './UsefulDocsDrawer.css';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, } from 'firebase/firestore';
 import { db } from '../../src/firebase'; // Adjusted path to firebase.ts
 function toFavicon(url) {
@@ -103,12 +104,7 @@ export default function UsefulDocsDrawer() {
             messageApi.error(err?.message || 'Không thể xoá');
         }
     };
-    // Green primary-style button
-    const greenBtnStyle = {
-        backgroundColor: '#16a34a',
-        borderColor: '#16a34a',
-    };
-    return (_jsxs(_Fragment, { children: [contextHolder, _jsx(Button, { type: "primary", icon: _jsx(PlusOutlined, {}), className: "ant-btn css-1v5z42l ant-btn-primary ant-btn-color-primary ant-btn-variant-solid", style: greenBtnStyle, onClick: handleOpen, children: "T\u00E0i li\u1EC7u th\u01B0\u1EDDng d\u00F9ng" }), _jsxs(Drawer, { title: "T\u00E0i li\u1EC7u th\u01B0\u1EDDng d\u00F9ng", placement: "right", width: "33vw", open: open, onClose: handleClose, children: [_jsxs(Form, { form: form, layout: "vertical", autoComplete: "off", children: [_jsx(Form.Item, { label: "Link (URL)", name: "url", rules: [
+    return (_jsxs(_Fragment, { children: [contextHolder, _jsx(Button, { type: "primary", icon: _jsx(PlusOutlined, {}), className: "useful-docs-button", onClick: handleOpen, children: "T\u00E0i li\u1EC7u th\u01B0\u1EDDng d\u00F9ng" }), _jsxs(Drawer, { title: "T\u00E0i li\u1EC7u th\u01B0\u1EDDng d\u00F9ng", placement: "right", width: "33vw", open: open, onClose: handleClose, children: [_jsxs(Form, { form: form, layout: "vertical", autoComplete: "off", children: [_jsx(Form.Item, { label: "Link (URL)", name: "url", rules: [
                                     { required: true, message: 'Vui lòng nhập URL' },
                                     {
                                         validator: (_, value) => {
