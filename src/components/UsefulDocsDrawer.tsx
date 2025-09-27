@@ -11,7 +11,7 @@ import {
   deleteDoc,
   doc,
 } from 'firebase/firestore';
-import { db } from '../../src/firebase'; // Adjusted path to firebase.ts
+import { db } from '../../firebase';
 
 type ResourceLink = {
   id?: string;

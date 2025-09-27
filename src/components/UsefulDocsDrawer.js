@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Segmented } from 'antd';
 import { PlusOutlined, LinkOutlined, DeleteOutlined } from '@ant-design/icons';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, } from 'firebase/firestore';
-import { db } from '../../src/firebase'; // Adjusted path to firebase.ts
+import { db } from '../../firebase';
 function toFavicon(url) {
     try {
         const u = new URL(url);

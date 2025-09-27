@@ -1,6 +1,6 @@
 import { Layout } from 'antd';
 import KanbanBoard from './components/KanbanBoard';
-import { HomeSEO } from './seo'; // Import HomeSEO
+import { HomeSEO } from './utils/seo'; // Import HomeSEO
 
 const {  Content } = Layout;
 
