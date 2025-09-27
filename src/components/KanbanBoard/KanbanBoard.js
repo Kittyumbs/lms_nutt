@@ -11,7 +11,7 @@ import { useKanbanBoard } from "../../hooks/useKanbanBoard"; // Import the hook
 import PersonnelSelectionModal from "./PersonnelSelectionModal"; // Import PersonnelSelectionModal
 import UsefulDocsDrawer from "../UsefulDocsDrawer"; // Import UsefulDocsDrawer
 import CreateCalendarEventModal from "../CreateCalendarEventModal"; // Import CreateCalendarEventModal
-import { CalendarOutlined, LogoutOutlined } from "@ant-design/icons"; // Import CalendarOutlined and LogoutOutlined icon
+import { CalendarOutlined, SwapOutlined } from "@ant-design/icons"; // Import CalendarOutlined, LogoutOutlined, and SwapOutlined icon
 import { Dropdown } from 'antd'; // Import Dropdown
 import CalendarEventsDrawer from "../CalendarEventsDrawer"; // Import CalendarEventsDrawer
 import { useGoogleCalendar } from "../../hooks/useGoogleCalendar"; // Import useGoogleCalendar hook
@@ -252,7 +252,7 @@ const KanbanBoard = () => {
                                     { value: "low", label: _jsx("span", { style: { color: '#52c41a' }, children: "\uD83D\uDFE2 Low" }) },
                                     { value: "medium", label: _jsx("span", { style: { color: '#faad14' }, children: "\uD83D\uDFE1 Medium" }) },
                                     { value: "high", label: _jsx("span", { style: { color: '#ff4d4f' }, children: "\uD83D\uDD34 High" }) },
-                                ] }), _jsx(Select, { placeholder: "Filter by personnel", allowClear: true, style: { width: 200 }, onChange: setPersonnelFilter, options: personnelFilterOptions })] }), _jsxs("div", { className: "flex gap-2", children: [isSignedIn && (_jsx(Button, { type: "text", icon: _jsx(LogoutOutlined, { style: { fontSize: '20px', color: '#ff4d4f' } }), onClick: signOut, className: "ant-btn-icon-only", style: { marginRight: '8px' }, title: `Đăng xuất Google` })), _jsx(Dropdown, { menu: {
+                                ] }), _jsx(Select, { placeholder: "Filter by personnel", allowClear: true, style: { width: 200 }, onChange: setPersonnelFilter, options: personnelFilterOptions })] }), _jsxs("div", { className: "flex gap-2", children: [isSignedIn && (_jsx(Button, { type: "text", icon: _jsx(SwapOutlined, { style: { fontSize: '20px', color: '#ff4d4f' } }), onClick: signOut, className: "ant-btn-icon-only", style: { marginRight: '8px' }, title: `Thoát tài khoản Google` })), _jsx(Dropdown, { menu: {
                                     items: [
                                         {
                                             key: 'create',

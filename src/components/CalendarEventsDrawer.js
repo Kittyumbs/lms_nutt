@@ -7,8 +7,8 @@ import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 const CalendarEventsDrawer = ({ isOpen, onClose, }) => {
     const [loading, setLoading] = useState(false);
     const [events, setEvents] = useState([]);
-    const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents } = useGoogleCalendar();
-    console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn); // Debugging line
+    const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
+    console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn, "isAuthLoading:", isAuthLoading); // Debugging line
     const loadEvents = useCallback(async () => {
         console.log("loadEvents called. isSignedIn:", isSignedIn, "isGapiLoaded:", isGapiLoaded); // Debugging line
         if (!isGapiLoaded) {
@@ -51,8 +51,8 @@ const CalendarEventsDrawer = ({ isOpen, onClose, }) => {
                 return _jsx(Tag, { children: status || 'Không rõ' });
         }
     };
-    if (!isGapiLoaded) {
-        return (_jsxs(Drawer, { title: "S\u1EF1 ki\u1EC7n Google Calendar", placement: "right", width: "33vw", open: isOpen, onClose: onClose, children: [_jsx("p", { children: "\u0110ang t\u1EA3i Google API..." }), error && _jsxs("p", { style: { color: 'red' }, children: ["L\u1ED7i: ", error] })] }));
+    if (isAuthLoading) {
+        return (_jsx(Drawer, { title: "S\u1EF1 ki\u1EC7n Google Calendar", placement: "right", width: "33vw", open: isOpen, onClose: onClose, children: _jsxs("div", { style: { textAlign: 'center', padding: '20px' }, children: [_jsx(Spin, { size: "large" }), _jsx("p", { style: { marginTop: 10 }, children: "\u0110ang ki\u1EC3m tra tr\u1EA1ng th\u00E1i \u0111\u0103ng nh\u1EADp..." })] }) }));
     }
     if (!isSignedIn) {
         return (_jsx(Drawer, { title: "S\u1EF1 ki\u1EC7n Google Calendar", placement: "right", width: "33vw", open: isOpen, onClose: onClose, children: _jsxs("div", { style: { textAlign: 'center', padding: '20px' }, children: [_jsx("p", { children: "Vui l\u00F2ng \u0111\u0103ng nh\u1EADp Google \u0111\u1EC3 xem c\u00E1c s\u1EF1 ki\u1EC7n l\u1ECBch." }), _jsx(Button, { type: "primary", onClick: handleAuthClick, children: "\u0110\u0103ng nh\u1EADp Google" }), error && _jsxs("p", { style: { color: 'red', marginTop: 8 }, children: ["L\u1ED7i: ", error] })] }) }));
