@@ -56,9 +56,6 @@ const KanbanBoard = () => {
     });
     const [movingTicket, setMovingTicket] = useState(null);
     const [highlightedColumn, setHighlightedColumn] = useState(null);
-    // useEffect(() => { // No longer needed as state is managed by useKanbanBoard and Firestore
-    //   saveColumnsToStorage(columns);
-    // }, [columns]);
     const onDragEnd = useCallback(async (result) => {
         setLoadingStates((prev) => ({ ...prev, update: true }));
         try {
@@ -80,20 +77,6 @@ const KanbanBoard = () => {
         minHeight: 500,
         transition: 'background-color 0.2s ease'
     });
-    // generateUniqueTaskId is no longer needed as Firestore generates IDs
-    // const generateUniqueTaskId = useCallback((existingIds: string[]): string => {
-    //   const generateId = (): string => {
-    //     const timestamp = Date.now();
-    //     const randomNum = Math.floor(Math.random() * 1000);
-    //     const id = `${timestamp % 10000}${randomNum.toString().padStart(3, '0')}`.slice(0, 4);
-    //     return `ID Task: ${id}`;
-    //   };
-    //   let newId = generateId();
-    //   while (existingIds.includes(newId)) {
-    //     newId = generateId();
-    //   }
-    //   return newId;
-    // }, []);
     const handleOpenCreateTicketFlow = useCallback(() => {
         setSelectedPersonnelForNewTicket(null); // Ensure no personnel is pre-selected
         setActiveModal('personnel'); // Open personnel selection modal
