@@ -1,0 +1,11 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AppLayout from './components/Layout/AppLayout';
+import TaskManageHome from './pages/taskmanage/TaskManageHome';
+import LmsHome from './pages/LmsHome';
+import Catalog from './pages/lms/Catalog';
+import Dashboard from './pages/lms/Dashboard';
+import Notes from './pages/lms/Notes';
+import './index.css';
+createRoot(document.getElementById('root')).render(_jsx(BrowserRouter, { children: _jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(Navigate, { to: "/taskmanage", replace: true }) }), _jsxs(Route, { element: _jsx(AppLayout, {}), children: [_jsx(Route, { path: "/taskmanage", element: _jsx(TaskManageHome, {}) }), _jsx(Route, { path: "/lms", element: _jsx(LmsHome, {}) }), _jsx(Route, { path: "/lms/catalog", element: _jsx(Catalog, {}) }), _jsx(Route, { path: "/lms/dashboard", element: _jsx(Dashboard, {}) }), _jsx(Route, { path: "/lms/notes", element: _jsx(Notes, {}) })] })] }) }));
