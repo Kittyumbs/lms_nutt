@@ -45,20 +45,46 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({ open, course, onClose
     >
       <div className="relative">
         {renderCover(course)}
-        {/* Close button at top-left */}
+        {/* Close icon at top-left */}
         <Button
           type="text"
           icon={<CloseOutlined className="text-white text-lg" />}
           onClick={onClose}
           className="absolute top-4 left-4 z-10 bg-black/20 hover:bg-black/40 rounded-full w-8 h-8 flex items-center justify-center"
         />
-        {/* Edit button at top-right */}
-        <Button
-          type="text"
-          icon={<EditOutlined className="text-white text-lg" />}
-          onClick={() => onEdit(course)}
-          className="absolute top-4 right-4 z-10 bg-black/20 hover:bg-black/40 rounded-full w-8 h-8 flex items-center justify-center"
-        />
+        <div className="absolute top-4 right-4 z-10 flex space-x-2"> {/* Container for edit and status buttons */}
+          {/* Edit icon at top-right */}
+          <Button
+            type="text"
+            icon={<EditOutlined className="text-white text-lg" />}
+            onClick={() => onEdit(course)}
+            className="bg-black/20 hover:bg-black/40 rounded-full w-8 h-8 flex items-center justify-center"
+          />
+          {/* Status update button next to edit icon */}
+          {course.status === 'Published' ? (
+            <Tooltip title="Unpublish">
+              <Button
+                type="text"
+                icon={<CloseOutlined className="text-white text-lg" />}
+                onClick={() => onSetStatus(course.id, 'Draft')}
+                className="bg-black/20 hover:bg-black/40 rounded-full px-3 py-1 flex items-center justify-center"
+              >
+                Unpublish
+              </Button>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Publish">
+              <Button
+                type="text"
+                icon={<CheckOutlined className="text-white text-lg" />}
+                onClick={() => onSetStatus(course.id, 'Published')}
+                className="bg-black/20 hover:bg-black/40 rounded-full px-3 py-1 flex items-center justify-center"
+              >
+                Publish
+              </Button>
+            </Tooltip>
+          )}
+        </div>
       </div>
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
@@ -72,17 +98,6 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({ open, course, onClose
           {course.tags.map((tag) => (
             <Tag key={tag} className="rounded-full">{tag}</Tag>
           ))}
-        </Space>
-        <Space className="mb-6">
-          {course.status === 'Published' ? (
-            <Tooltip title="Unpublish">
-              <Button icon={<CloseOutlined />} onClick={() => onSetStatus(course.id, 'Draft')}>Unpublish</Button>
-            </Tooltip>
-          ) : (
-            <Tooltip title="Publish">
-              <Button icon={<CheckOutlined />} onClick={() => onSetStatus(course.id, 'Published')}>Publish</Button>
-            </Tooltip>
-          )}
         </Space>
         <Tabs
           defaultActiveKey="overview"
