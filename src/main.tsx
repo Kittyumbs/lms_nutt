@@ -2,7 +2,6 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/Layout/AppLayout';
 import TaskManageHome from './pages/taskmanage/TaskManageHome';
-import LmsHome from './pages/LmsHome';
 import Catalog from './pages/lms/Catalog';
 import Dashboard from './pages/lms/Dashboard';
 import Notes from './pages/lms/Notes';
@@ -14,12 +13,12 @@ createRoot(document.getElementById('root')!).render(
   <ConfigProvider
     theme={{
       token: {
-        colorPrimary: '#057EC8', // Primary brand color
+        colorPrimary: '#1C6EA4', // Primary brand color (new mid-blue)
         borderRadius: 12, // Global border radius
       },
       components: {
         Segmented: {
-          itemSelectedBg: '#D8EFF0', // Accent color for selected segmented item
+          itemSelectedBg: '#FFF9AF', // Accent color for selected segmented item (new light yellow)
         },
       },
     }}
