@@ -1,6 +1,6 @@
 import { Layout } from 'antd';
 import KanbanBoard from '../../components/KanbanBoard';
-import { HomeSEO } from '../../utils/seo'; // Import HomeSEO
+import { PageSEO } from '../../utils/seo'; // Import PageSEO
 
 const {  Content } = Layout;
 
@@ -8,7 +8,7 @@ const {  Content } = Layout;
 function TaskManageHome() {
   return (
     <Layout className="h-screen select-none">
-      <HomeSEO /> {/* Render HomeSEO component */}
+      <PageSEO title="TaskManage" description="Quản lý công việc, Kanban và đồng bộ Google Calendar." /> {/* Render PageSEO component */}
       <Content>
         <KanbanBoard />
       </Content>

@@ -25,13 +25,19 @@ export function setMeta({ title, desc, url }:{
 
 import { useEffect } from "react";
 
-export function HomeSEO() {
+interface PageSEOProps {
+  title?: string;
+  description?: string;
+  url?: string;
+}
+
+export function PageSEO({ title, description, url }: PageSEOProps) {
   useEffect(() => {
     setMeta({
-      title: "Home",
-      desc: "Quản lý công việc, Kanban và đồng bộ Google Calendar.",
-      url: "https://lms-nuttency.vercel.app/"
+      title: title,
+      desc: description || "Quản lý công việc, Kanban và đồng bộ Google Calendar.",
+      url: url || "https://lms-nuttency.vercel.app/"
     });
-  }, []);
+  }, [title, description, url]);
   return null;
 }

@@ -1,0 +1,311 @@
+import React, { useEffect, useState } from 'react';
+import {
+  Button,
+  Input,
+  Select,
+  Segmented,
+  Card,
+  Space,
+  Empty,
+  Tooltip,
+  Tag,
+} from 'antd';
+import {
+  PlusOutlined,
+  EditOutlined,
+  EllipsisOutlined,
+  CheckOutlined,
+  CloseOutlined,
+} from '@ant-design/icons';
+import {
+  useCourses,
+  createCourse,
+  updateCourse,
+  duplicateCourse,
+  setCourseStatus,
+  type Course,
+  type CourseStatus,
+} from '../../hooks/useCourses';
+import CourseFormDrawer from './components/CourseFormDrawer';
+import CourseQuickView from './components/CourseQuickView';
+import { PageSEO } from '../../utils/seo';
+
+const { Search } = Input;
+const { Option } = Select;
+
+const CoursesPage: React.FC = () => {
+  // filters
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'All' | CourseStatus>('All');
+
+  // drawers
+  const [isFormDrawerOpen, setIsFormDrawerOpen] = useState(false);
+  const [formDrawerMode, setFormDrawerMode] = useState<'create' | 'edit'>('create');
+  const [editingCourse, setEditingCourse] = useState<Course | undefined>(undefined);
+
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const [quickViewCourse, setQuickViewCourse] = useState<Course | undefined>(undefined);
+
+  // data
+  const { items: courses, loading, refresh } = useCourses({
+    search,
+    tags,
+    status: statusFilter,
+  });
+
+  // debounce search input -> search
+  useEffect(() => {
+    const t = window.setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => window.clearTimeout(t);
+  }, [searchInput]);
+
+  // handlers
+  const handleNewCourse = () => {
+    setFormDrawerMode('create');
+    setEditingCourse(undefined);
+    setIsFormDrawerOpen(true);
+  };
+
+  const handleEditCourse = (course: Course) => {
+    setFormDrawerMode('edit');
+    setEditingCourse(course);
+    setIsFormDrawerOpen(true);
+  };
+
+  const handleCourseSaved = () => {
+    setIsFormDrawerOpen(false);
+    refresh();
+  };
+
+  const handleQuickView = (course: Course) => {
+    setQuickViewCourse(course);
+    setIsQuickViewOpen(true);
+  };
+
+  const handleSetStatus = async (id: string, status: CourseStatus) => {
+    await setCourseStatus(id, status);
+    refresh();
+  };
+
+  const handleDuplicateCourse = async (id: string) => {
+    await duplicateCourse(id);
+    refresh();
+  };
+
+  // ui helpers
+  const getStatusColor = (status: CourseStatus) => {
+    switch (status) {
+      case 'Published':
+        return 'green';
+      case 'Archived':
+        return 'gray';
+      default:
+        return 'default';
+    }
+  };
+
+  // COVER + STATUS PILL (absolute trong cover)
+  const CoverWithStatus: React.FC<{ course: Course }> = ({ course }) => (
+    <div
+      onClick={() => handleQuickView(course)}
+      style={{ position: 'relative', width: '100%' }}
+    >
+      {course.coverUrl ? (
+        <img
+          alt={course.title}
+          src={course.coverUrl}
+          style={{
+            width: '100%',
+            aspectRatio: '16 / 9',
+            objectFit: 'cover',
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+            display: 'block',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            aspectRatio: '16 / 9',
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+            background:
+              'linear-gradient(135deg, #D8EFF0 0%, rgba(255,255,255,1) 100%)',
+          }}
+        />
+      )}
+
+      {/* STATUS PILL gắn góc phải trên của ảnh */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          zIndex: 1,
+        }}
+      >
+        <Tag
+          color={getStatusColor(course.status)}
+          style={{ margin: 0, borderRadius: 999, padding: '2px 8px' }}
+        >
+          {course.status}
+        </Tag>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-4">
+      <PageSEO title="Courses" description="Manage your courses" />
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Courses</h2>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
+          New Course
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-[#D8EFF0] p-3 rounded-xl mb-4 border border-black/10">
+        <Space wrap>
+          <Search
+            allowClear
+            placeholder="Search course…"
+            style={{ width: 280 }}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onSearch={(v) => setSearchInput(v)}
+          />
+          <Select
+            mode="multiple"
+            allowClear
+            placeholder="Tags"
+            style={{ minWidth: 220 }}
+            value={tags}
+            onChange={(value: string[]) => setTags(value)}
+          >
+            {/* mock options; sau thay bằng dynamic */}
+            <Option value="React">React</Option>
+            <Option value="TypeScript">TypeScript</Option>
+            <Option value="Ant Design">Ant Design</Option>
+            <Option value="Firebase">Firebase</Option>
+          </Select>
+          <Segmented
+            options={['All', 'Draft', 'Published', 'Archived']}
+            value={statusFilter}
+            onChange={(v) => setStatusFilter(v as 'All' | CourseStatus)}
+          />
+        </Space>
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} loading className="rounded-xl border border-black/10" />
+          ))}
+        </div>
+      ) : courses.length === 0 ? (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <span>
+              No courses yet <br />
+              <Button type="link" onClick={handleNewCourse}>
+                Create a new course
+              </Button>
+            </span>
+          }
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {courses.map((course) => (
+            <Card
+              key={course.id}
+              hoverable
+              className="rounded-xl border border-black/10 hover:shadow-md transition"
+              cover={<CoverWithStatus course={course} />}
+              actions={[
+                course.status === 'Published' ? (
+                  <Tooltip title="Unpublish" key="unpub">
+                    <Button
+                      type="text"
+                      icon={<CloseOutlined />}
+                      onClick={() => handleSetStatus(course.id, 'Draft')}
+                    />
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="Publish" key="pub">
+                    <Button
+                      type="text"
+                      icon={<CheckOutlined />}
+                      onClick={() => handleSetStatus(course.id, 'Published')}
+                    />
+                  </Tooltip>
+                ),
+                <Tooltip title="Edit" key="edit">
+                  <Button type="text" icon={<EditOutlined />} onClick={() => handleEditCourse(course)} />
+                </Tooltip>,
+                <Tooltip title="Duplicate" key="dup">
+                  <Button type="text" icon={<EllipsisOutlined />} onClick={() => handleDuplicateCourse(course.id)} />
+                </Tooltip>,
+              ]}
+            >
+              <Card.Meta
+                title={
+                  <Tooltip title={course.title}>
+                    <div className="font-bold whitespace-nowrap overflow-hidden text-ellipsis">
+                      {course.title}
+                    </div>
+                  </Tooltip>
+                }
+                description={
+                  <div className="flex flex-col">
+                    <p className="line-clamp-2 text-sm text-gray-600">
+                      {course.desc || 'No description provided.'}
+                    </p>
+                    <div className="mt-2">
+                      <Space wrap size={[0, 8]}>
+                        {course.tags.slice(0, 3).map((tag) => (
+                          <Tag key={tag} className="rounded-full">
+                            {tag}
+                          </Tag>
+                        ))}
+                        {course.tags.length > 3 && (
+                          <Tag className="rounded-full">+{course.tags.length - 3}</Tag>
+                        )}
+                      </Space>
+                    </div>
+                  </div>
+                }
+              />
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Drawers */}
+      <CourseFormDrawer
+        open={isFormDrawerOpen}
+        mode={formDrawerMode}
+        initial={editingCourse}
+        onClose={() => setIsFormDrawerOpen(false)}
+        onSaved={handleCourseSaved}
+      />
+
+      <CourseQuickView
+        open={isQuickViewOpen}
+        course={quickViewCourse}
+        onClose={() => setIsQuickViewOpen(false)}
+        onEdit={handleEditCourse}
+        onSetStatus={handleSetStatus}
+      />
+    </div>
+  );
+};
+
+export default CoursesPage;
