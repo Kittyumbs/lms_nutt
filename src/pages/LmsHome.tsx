@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 export default function LmsHome() {
   useEffect(() => {
-    document.title = 'LMS';
+    document.title = 'Courses';
   }, []);
 
   return (
