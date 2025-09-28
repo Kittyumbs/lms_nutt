@@ -45,11 +45,19 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({ open, course, onClose
     >
       <div className="relative">
         {renderCover(course)}
+        {/* Close button at top-left */}
         <Button
           type="text"
-          icon={<CloseOutlined />}
+          icon={<CloseOutlined className="text-white text-lg" />}
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 text-white text-lg"
+          className="absolute top-4 left-4 z-10 bg-black/20 hover:bg-black/40 rounded-full w-8 h-8 flex items-center justify-center"
+        />
+        {/* Edit button at top-right */}
+        <Button
+          type="text"
+          icon={<EditOutlined className="text-white text-lg" />}
+          onClick={() => onEdit(course)}
+          className="absolute top-4 right-4 z-10 bg-black/20 hover:bg-black/40 rounded-full w-8 h-8 flex items-center justify-center"
         />
       </div>
       <div className="p-6">
@@ -66,9 +74,6 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({ open, course, onClose
           ))}
         </Space>
         <Space className="mb-6">
-          <Button ghost icon={<EditOutlined />} onClick={() => onEdit(course)}>
-            Edit
-          </Button>
           {course.status === 'Published' ? (
             <Tooltip title="Unpublish">
               <Button icon={<CloseOutlined />} onClick={() => onSetStatus(course.id, 'Draft')}>Unpublish</Button>
