@@ -14,7 +14,7 @@ createRoot(document.getElementById('root')!).render(
       <Route path="/" element={<Navigate to="/taskmanage" replace />} />
       <Route element={<AppLayout />}>
         <Route path="/taskmanage" element={<TaskManageHome />} />
-        <Route path="/lms" element={<LmsHome />} />
+        <Route path="/lms/courses" element={<LmsHome />} />
         <Route path="/lms/catalog" element={<Catalog />} />
         <Route path="/lms/dashboard" element={<Dashboard />} />
         <Route path="/lms/notes" element={<Notes />} />

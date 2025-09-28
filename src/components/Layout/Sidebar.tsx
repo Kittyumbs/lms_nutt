@@ -94,7 +94,7 @@ export default function Sidebar() {
           <Item to="/taskmanage" label="TaskManage" collapsed={collapsed} icon={<CheckSquareOutlined />} />
 
           <div style={{ fontSize: 12, color: '#6b7280', padding: '10px 8px 6px' }}>{collapsed ? 'L' : 'LMS'}</div>
-          <Item to="/lms" label="Courses" collapsed={collapsed} icon={<BookOutlined />} />
+          <Item to="/lms/courses" label="Courses" collapsed={collapsed} icon={<BookOutlined />} />
           <Item to="/lms/catalog" label="Catalog" collapsed={collapsed} icon={<AppstoreOutlined />} />
           <Item to="/lms/dashboard" label="Dashboard" collapsed={collapsed} icon={<BarChartOutlined />} />
           <Item to="/lms/notes" label="Notes" collapsed={collapsed} icon={<FileTextOutlined />} />
