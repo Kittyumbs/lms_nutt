@@ -34,7 +34,7 @@ export function useGoogleCalendar() {
     api.async = true;
 
     api.onload = () => {
-      window.gapi.load("client", async () => {
+      window.gapi.load("client:auth2", async () => {
         try {
           await window.gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY });
           await window.gapi.client.load("calendar", "v3");
@@ -220,17 +220,42 @@ export function useGoogleCalendar() {
   const fetchUserProfile = useCallback(async () => {
     if (!isGapiLoaded) return;
     try {
-      const response = await window.gapi.client.get({
-        path: 'https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses,photos'
-      });
-      const profile = response.result;
-      const email = profile.emailAddresses?.[0]?.value || '';
-      const name = profile.names?.[0]?.displayName || email;
-      const picture = profile.photos?.[0]?.url || '';
-      setUserProfile({ email, name, picture });
+      // Try Google Identity Services user info first
+      if (window.google?.accounts?.oauth2) {
+        // This approach needs a different way to get user info
+        // Let's try the People API directly
+        console.log('Fetching user profile from People API...');
+        const response = await window.gapi.client.people.people.get({
+          resourceName: 'people/me',
+          personFields: 'names,emailAddresses,photos'
+        });
+
+        const person = response.result;
+        const email = person.emailAddresses?.[0]?.value || '';
+        const name = person.names?.[0]?.displayName || email;
+        const picture = person.photos?.[0]?.url || '';
+
+        setUserProfile({ email, name, picture });
+        console.log('Profile fetched successfully:', { email, name: name.slice(0, 20) + (name.length > 20 ? '...' : ''), picture: picture ? 'has url' : 'no url' });
+      }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
-      setUserProfile(null);
+      // Fallback: try to get basic info from Google User Info API
+      try {
+        const response = await window.gapi.client.get({
+          path: 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json'
+        });
+        const userInfo = response.result;
+        setUserProfile({
+          email: userInfo.email || '',
+          name: userInfo.name || userInfo.email || '',
+          picture: userInfo.picture || ''
+        });
+        console.log('Profile fetched from fallback User Info API:', { email: userInfo.email, name: userInfo.name, picture: userInfo.picture ? 'has url' : 'no url' });
+      } catch (fallbackError) {
+        console.error('Fallback User Info API also failed:', fallbackError);
+        setUserProfile(null);
+      }
     }
   }, [isGapiLoaded]);
 
