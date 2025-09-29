@@ -6,8 +6,8 @@ import { message } from "antd"; // Import message from antd
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CALENDAR_CLIENT_ID!;
 const API_KEY   = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY!;
-const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
-const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest", "https://www.googleapis.com/discovery/v1/apis/people/v1/rest"];
+const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/contacts.readonly";
 
 type GEvent = gapi.client.calendar.Event;
 
@@ -38,6 +38,7 @@ export function useGoogleCalendar() {
         try {
           await window.gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY });
           await window.gapi.client.load("calendar", "v3");
+          await window.gapi.client.load("people", "v1");
           setIsGapiLoaded(true);
           console.log("useGoogleCalendar: gapi client loaded. isGapiLoaded:", true);
 
@@ -89,21 +90,58 @@ export function useGoogleCalendar() {
     };
   }, []);
 
-  // Polling mechanism to ensure isSignedIn state is updated if token exists
+  // More robust synchronization with continuous polling
   useEffect(() => {
-    let intervalId: number; // Changed from NodeJS.Timeout to number
-    if (isGapiLoaded && !isSignedIn) {
-      intervalId = setInterval(() => {
+    if (isGapiLoaded) {
+      const intervalId = setInterval(() => {
         const currentToken = window.gapi?.client?.getToken();
-        if (currentToken?.access_token) {
-          console.log("useGoogleCalendar: Polling found existing token. Setting isSignedIn to true.");
-          setIsSignedIn(true);
-          clearInterval(intervalId);
-        }
-      }, 500); // Check every 500ms
+        const hasToken = !!currentToken?.access_token;
+
+        // Update isSignedIn based on token existence
+        setIsSignedIn(hasToken);
+
+        // Update loading state if needed
+        setIsAuthLoading(false);
+      }, 200); // Check every 200ms for better responsiveness
+
+      return () => clearInterval(intervalId);
     }
-    return () => clearInterval(intervalId);
-  }, [isGapiLoaded, isSignedIn]);
+  }, [isGapiLoaded]);
+
+  // Window event for additional synchronization
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'google_auth_state') {
+        const newState = e.newValue === 'signed_in';
+        console.log("useGoogleCalendar: Storage change detected. Setting isSignedIn to:", newState);
+        setIsSignedIn(newState);
+      }
+    };
+
+    const handleAuthStateChange = () => {
+      const token = window.gapi?.client?.getToken();
+      const hasToken = !!token?.access_token;
+      console.log("useGoogleCalendar: Auth state change detected. hasToken:", hasToken);
+      setIsSignedIn(hasToken);
+      setUserProfile(null); // Reset profile temporarily
+    };
+
+    const handleSignOutEvent = () => {
+      console.log("useGoogleCalendar: Sign out event detected. Setting isSignedIn to false.");
+      setIsSignedIn(false);
+      setUserProfile(null);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('gapi_auth_changed', handleAuthStateChange as EventListener);
+    window.addEventListener('gapi_auth_signout', handleSignOutEvent);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('gapi_auth_changed', handleAuthStateChange as EventListener);
+      window.removeEventListener('gapi_auth_signout', handleSignOutEvent);
+    };
+  }, []);
 
   const handleAuthClick = useCallback(() => {
     if (!tokenClient) { setError("Auth not ready"); return; }
@@ -212,6 +250,10 @@ export function useGoogleCalendar() {
       setIsSignedIn(false);
       setUserProfile(null);
       setError(null); // Clear any previous errors
+
+      // Trigger custom event for synchronization
+      window.dispatchEvent(new CustomEvent('gapi_auth_signout'));
+
       message.success("Đã thoát tài khoản Google hiện tại.");
     } else {
       setIsSignedIn(false);
