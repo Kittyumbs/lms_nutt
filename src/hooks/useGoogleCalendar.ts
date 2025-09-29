@@ -7,7 +7,7 @@ import { message } from "antd"; // Import message from antd
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CALENDAR_CLIENT_ID!;
 const API_KEY   = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY!;
 const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
-const SCOPE     = "https://www.googleapis.com/auth/calendar.events";
+const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
 type GEvent = gapi.client.calendar.Event;
 
@@ -17,6 +17,7 @@ export function useGoogleCalendar() {
   const [tokenClient, setTokenClient] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true); // New state for authentication loading
+  const [userProfile, setUserProfile] = useState<{ email: string; name: string; picture: string } | null>(null);
 
   // Load GIS + gapi scripts in browser only
   useEffect(() => {
@@ -178,19 +179,58 @@ export function useGoogleCalendar() {
     return r.result;
   }, [isGapiLoaded, ensureSignedIn]);
 
+  const fetchUserProfile = useCallback(async () => {
+    if (!isGapiLoaded) return;
+    try {
+      const response = await window.gapi.client.get({
+        path: 'https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses,photos'
+      });
+      const profile = response.result;
+      const email = profile.emailAddresses?.[0]?.value || '';
+      const name = profile.names?.[0]?.displayName || email;
+      const picture = profile.photos?.[0]?.url || '';
+      setUserProfile({ email, name, picture });
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      setUserProfile(null);
+    }
+  }, [isGapiLoaded]);
+
+  // Fetch user profile when sign in state changes
+  useEffect(() => {
+    if (isSignedIn && isGapiLoaded) {
+      fetchUserProfile();
+    } else {
+      setUserProfile(null);
+    }
+  }, [isSignedIn, isGapiLoaded, fetchUserProfile]);
+
   const signOut = useCallback(() => {
     // Clear current token and session without revoking app permissions
     if (window.gapi.client.getToken()) {
       window.gapi.client.setToken(null);
       setIsSignedIn(false);
+      setUserProfile(null);
       setError(null); // Clear any previous errors
       message.success("Đã thoát tài khoản Google hiện tại.");
     } else {
       setIsSignedIn(false);
+      setUserProfile(null);
       setError(null);
       message.info("Bạn chưa đăng nhập Google.");
     }
   }, []);
 
-  return { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, createCalendarEvent, signOut, isAuthLoading };
+  return {
+    isSignedIn,
+    isGapiLoaded,
+    error,
+    handleAuthClick,
+    ensureSignedIn,
+    fetchCalendarEvents,
+    createCalendarEvent,
+    signOut,
+    isAuthLoading,
+    userProfile
+  };
 }
