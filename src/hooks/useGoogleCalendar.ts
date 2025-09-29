@@ -6,8 +6,8 @@ import { message } from "antd"; // Import message from antd
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CALENDAR_CLIENT_ID!;
 const API_KEY   = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY!;
-const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest", "https://www.googleapis.com/discovery/v1/apis/people/v1/rest"];
-const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/contacts.readonly";
+const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
+const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
 type GEvent = gapi.client.calendar.Event;
 
@@ -38,7 +38,6 @@ export function useGoogleCalendar() {
         try {
           await window.gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY });
           await window.gapi.client.load("calendar", "v3");
-          await window.gapi.client.load("people", "v1");
           setIsGapiLoaded(true);
           console.log("useGoogleCalendar: gapi client loaded. isGapiLoaded:", true);
 
@@ -219,42 +218,72 @@ export function useGoogleCalendar() {
 
   const fetchUserProfile = useCallback(async () => {
     if (!isGapiLoaded) return;
+
+    const token = window.gapi?.client?.getToken()?.access_token;
+    if (!token) {
+      console.error('No access token available for profile fetch');
+      return;
+    }
+
     try {
-      // Try Google Identity Services user info first
-      if (window.google?.accounts?.oauth2) {
-        // This approach needs a different way to get user info
-        // Let's try the People API directly
-        console.log('Fetching user profile from People API...');
-        const response = await window.gapi.client.people.people.get({
-          resourceName: 'people/me',
-          personFields: 'names,emailAddresses,photos'
-        });
+      console.log('Fetching user profile using fetch with Bearer token...');
 
-        const person = response.result;
-        const email = person.emailAddresses?.[0]?.value || '';
-        const name = person.names?.[0]?.displayName || email;
-        const picture = person.photos?.[0]?.url || '';
+      // Use fetch directly with the access token
+      const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
 
-        setUserProfile({ email, name, picture });
-        console.log('Profile fetched successfully:', { email, name: name.slice(0, 20) + (name.length > 20 ? '...' : ''), picture: picture ? 'has url' : 'no url' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const userInfo = await response.json();
+      const email = userInfo.email || '';
+      const name = userInfo.name || userInfo.email || 'Google User';
+      const picture = userInfo.picture || '';
+
+      setUserProfile({ email, name, picture });
+      console.log('Profile fetched successfully:', {
+        email: email.slice(0, 3) + '...',
+        name: name.slice(0, 10) + (name.length > 10 ? '...' : ''),
+        hasPicture: !!picture
+      });
+
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
-      // Fallback: try to get basic info from Google User Info API
+
+      // Fallback: try using gapi auth2 method if available
       try {
-        const response = await window.gapi.client.get({
-          path: 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json'
-        });
-        const userInfo = response.result;
-        setUserProfile({
-          email: userInfo.email || '',
-          name: userInfo.name || userInfo.email || '',
-          picture: userInfo.picture || ''
-        });
-        console.log('Profile fetched from fallback User Info API:', { email: userInfo.email, name: userInfo.name, picture: userInfo.picture ? 'has url' : 'no url' });
-      } catch (fallbackError) {
-        console.error('Fallback User Info API also failed:', fallbackError);
-        setUserProfile(null);
+        console.log('Trying gapi auth2 fallback...');
+        if (window.gapi.auth2?.getAuthInstance()) {
+          const auth2 = window.gapi.auth2.getAuthInstance();
+          const currentUser = auth2.currentUser.get();
+          const profile = currentUser.getBasicProfile();
+
+          if (profile) {
+            const email = profile.getEmail();
+            const name = profile.getName();
+            const picture = profile.getImageUrl();
+
+            setUserProfile({ email, name, picture });
+            console.log('Profile fetched from gapi.auth2:', {
+              email: email.slice(0, 3) + '...',
+              name: name.slice(0, 10) + (name.length > 10 ? '...' : ''),
+              hasPicture: !!picture
+            });
+            return;
+          }
+        }
+        throw new Error('gapi.auth2 not available or no profile');
+
+      } catch (auth2Error) {
+        console.error('gapi.auth2 fallback also failed:', auth2Error);
+        setUserProfile({ email: '', name: 'Google Account', picture: '' });
+        console.log('Using default profile values');
       }
     }
   }, [isGapiLoaded]);
