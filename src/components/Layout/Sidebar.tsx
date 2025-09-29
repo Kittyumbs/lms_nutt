@@ -134,13 +134,16 @@ export default function Sidebar() {
               {!collapsed && 'Đăng nhập'}
             </Button>
           ) : (
-            <div className="flex items-center p-2 bg-gray-50 rounded-lg">
-              <Avatar
-                size={32}
-                src={userProfile?.picture}
-                icon={<UserOutlined />}
-                className="bg-[#1C6EA4]"
-              />
+            <div className={`flex items-center p-2 bg-gray-50 rounded-lg ${collapsed ? 'justify-center' : ''}`}>
+              <span title={collapsed ? 'Đăng xuất' : userProfile?.name || 'Tài khoản Google'}>
+                <Avatar
+                  size={32}
+                  src={userProfile?.picture}
+                  icon={<UserOutlined />}
+                  className="bg-[#1C6EA4] cursor-pointer"
+                  onClick={signOut}
+                />
+              </span>
               {!collapsed && (
                 <>
                   <div className="ml-2 flex-1 overflow-hidden">
@@ -160,16 +163,6 @@ export default function Sidebar() {
                     title="Đăng xuất"
                   />
                 </>
-              )}
-              {collapsed && (
-                <Button
-                  type="text"
-                  icon={<SwapOutlined />}
-                  onClick={signOut}
-                  size="small"
-                  className="ml-1 text-gray-500 hover:text-red-500"
-                  title="Đăng xuất"
-                />
               )}
             </div>
           )}
