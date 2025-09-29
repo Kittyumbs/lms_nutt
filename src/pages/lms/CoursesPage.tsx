@@ -1,20 +1,34 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, EllipsisOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useCourses, duplicateCourse, setCourseStatus, type Course, type CourseStatus } from '../../hooks/useCourses';
 import CourseFormDrawer from './components/CourseFormDrawer';
 import CourseQuickView from './components/CourseQuickView';
 import { PageSEO } from '../../utils/seo';
+import useAuth from '../../auth/useAuth';
+import useRole from '../../auth/useRole';
+import { RequireInstructor } from '../../auth/guards';
 
 const { Search } = Input;
 const { Option } = Select;
 
 const CoursesPage: React.FC = () => {
+  const { user } = useAuth();
+  const { role } = useRole();
+
   // filters
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<'All' | CourseStatus>('All');
+
+  // For learners, default to 'Published' filter and disable other options
+  useEffect(() => {
+    if (user && role === 'learner' && statusFilter === 'All') {
+      setStatusFilter('Published');
+    }
+  }, [user, role, statusFilter]);
 
   // drawers
   const [isFormDrawerOpen, setIsFormDrawerOpen] = useState(false);
@@ -75,7 +89,7 @@ const CoursesPage: React.FC = () => {
 
   // Cover + status pill at top-right of the image
   const CoverWithStatus: React.FC<{ course: Course }> = ({ course }) => (
-    <div onClick={() => handleQuickView(course)} style={{ position: 'relative', width: '100%' }}>
+    <Link to={`/lms/course/${course.id}`} style={{ position: 'relative', width: '100%', display: 'block' }}>
       {course.coverUrl ? (
         <img
           alt={course.title}
@@ -128,7 +142,7 @@ const CoursesPage: React.FC = () => {
       >
         {course.status}
       </Tag>
-    </div>
+    </Link>
   );
 
   return (
@@ -138,9 +152,11 @@ const CoursesPage: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Courses</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
-          New Course
-        </Button>
+        <RequireInstructor>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
+            New Course
+          </Button>
+        </RequireInstructor>
       </div>
 
       {/* Filters */}
@@ -202,30 +218,37 @@ const CoursesPage: React.FC = () => {
               hoverable
               className="rounded-xl border border-black/10 hover:shadow-md transition"
               cover={<CoverWithStatus course={course} />}
-              actions={[
-                course.status === 'Published' ? (
-                  <Tooltip title="Unpublish" key="unpub">
-                    <Button type="text" icon={<CloseOutlined />} onClick={() => handleSetStatus(course.id, 'Draft')} />
-                  </Tooltip>
-                ) : (
-                  <Tooltip title="Publish" key="pub">
-                    <Button type="text" icon={<CheckOutlined />} onClick={() => handleSetStatus(course.id, 'Published')} />
-                  </Tooltip>
-                ),
-                <Tooltip title="Edit" key="edit">
-                  <Button type="text" icon={<EditOutlined />} onClick={() => handleEditCourse(course)} />
-                </Tooltip>,
-                <Tooltip title="Duplicate" key="dup">
-                  <Button type="text" icon={<EllipsisOutlined />} onClick={() => handleDuplicateCourse(course.id)} />
-                </Tooltip>,
-              ]}
+              actions={
+                role === 'instructor' || role === 'admin' ? [
+                  course.status === 'Published' ? (
+                    <Tooltip title="Unpublish" key="unpub">
+                      <Button type="text" icon={<CloseOutlined />} onClick={() => handleSetStatus(course.id, 'Draft')} />
+                    </Tooltip>
+                  ) : (
+                    <Tooltip title="Publish" key="pub">
+                      <Button type="text" icon={<CheckOutlined />} onClick={() => handleSetStatus(course.id, 'Published')} />
+                    </Tooltip>
+                  ),
+                  <Tooltip title="Edit" key="edit">
+                    <Button type="text" icon={<EditOutlined />} onClick={() => handleEditCourse(course)} />
+                  </Tooltip>,
+                  <Tooltip title="Duplicate" key="dup">
+                    <Button type="text" icon={<EllipsisOutlined />} onClick={() => handleDuplicateCourse(course.id)} />
+                  </Tooltip>,
+                ] : []
+              }
             >
               <Card.Meta
                 title={
                   <Tooltip title={course.title}>
-                    <div className="font-bold whitespace-nowrap overflow-hidden text-ellipsis" onClick={() => handleQuickView(course)}>
-                      {course.title}
-                    </div>
+                    <Link
+                      to={`/lms/course/${course.id}`}
+                      className="font-bold text-blue-600 hover:text-blue-800 text-inherit"
+                    >
+                      <div className="whitespace-nowrap overflow-hidden text-ellipsis">
+                        {course.title}
+                      </div>
+                    </Link>
                   </Tooltip>
                 }
                 description={

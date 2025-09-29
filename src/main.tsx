@@ -5,8 +5,11 @@ import TaskManageHome from './pages/taskmanage/TaskManageHome';
 import Catalog from './pages/lms/Catalog';
 import Dashboard from './pages/lms/Dashboard';
 import Notes from './pages/lms/Notes';
-import CoursesPage from './pages/lms/CoursesPage'; // Import CoursesPage
-import { ConfigProvider } from 'antd'; // Import ConfigProvider
+import CoursesPage from './pages/lms/CoursesPage';
+import CourseDetailPage from './pages/lms/CourseDetailPage';
+import LessonPlayerPage from './pages/lms/LessonPlayerPage';
+import { ConfigProvider } from 'antd';
+import { AuthProvider } from './auth/AuthProvider';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -23,17 +26,21 @@ createRoot(document.getElementById('root')!).render(
       },
     }}
   >
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/taskmanage" replace />} />
-        <Route element={<AppLayout />}>
-          <Route path="/taskmanage" element={<TaskManageHome />} />
-          <Route path="/lms/courses" element={<CoursesPage />} /> {/* Add CoursesPage route */}
-          <Route path="/lms/catalog" element={<Catalog />} />
-          <Route path="/lms/dashboard" element={<Dashboard />} />
-          <Route path="/lms/notes" element={<Notes />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/taskmanage" replace />} />
+          <Route element={<AppLayout />}>
+            <Route path="/taskmanage" element={<TaskManageHome />} />
+            <Route path="/lms/courses" element={<CoursesPage />} />
+            <Route path="/lms/course/:cid" element={<CourseDetailPage />} />
+            <Route path="/lms/learn/:cid/:lid" element={<LessonPlayerPage />} />
+            <Route path="/lms/catalog" element={<Catalog />} />
+            <Route path="/lms/dashboard" element={<Dashboard />} />
+            <Route path="/lms/notes" element={<Notes />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   </ConfigProvider>
 );
