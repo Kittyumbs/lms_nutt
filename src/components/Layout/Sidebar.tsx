@@ -29,6 +29,7 @@ function Item({ to, label, collapsed, icon }: { to: string; label: string; colla
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [authError, setAuthError] = useState<string>('');
   const { pathname } = useLocation();
   const { user, loading: isAuthLoading, signInWithGoogle, signOut, userProfile } = useAuth();
 
@@ -36,11 +37,23 @@ export default function Sidebar() {
     const raw = localStorage.getItem(LS_KEY);
     setCollapsed(raw === 'true');
   }, []);
+
   useEffect(() => {
     localStorage.setItem(LS_KEY, String(collapsed));
   }, [collapsed]);
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+
+  const handleSignIn = async () => {
+    setAuthError('');
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      setAuthError(error.message || 'Authentication failed');
+    }
+  };
+
+  const clearError = () => setAuthError('');
 
   return (
     <>
@@ -117,22 +130,29 @@ export default function Sidebar() {
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1C6EA4]"></div>
             </div>
           ) : !user ? (
-            <Button
-              type="primary"
-              icon={<GoogleOutlined />}
-              onClick={signInWithGoogle}
-              loading={isAuthLoading}
-              disabled={isAuthLoading}
-              style={{
-                width: collapsed ? '32px' : '100%',
-                borderRadius: '8px',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                padding: collapsed ? '4px' : undefined,
-              }}
-              title={collapsed ? 'Sign in with Google' : undefined}
-            >
-              {!collapsed && 'Sign in'}
-            </Button>
+            <div className="w-full">
+              {authError && (
+                <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                  ⚠️ {authError}
+                </div>
+              )}
+              <Button
+                type="primary"
+                icon={<GoogleOutlined />}
+                onClick={handleSignIn}
+                loading={isAuthLoading}
+                disabled={isAuthLoading}
+                style={{
+                  width: collapsed ? '32px' : '100%',
+                  borderRadius: '8px',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  padding: collapsed ? '4px' : undefined,
+                }}
+                title={collapsed ? 'Sign in with Google' : undefined}
+              >
+                {!collapsed && 'Sign in'}
+              </Button>
+            </div>
           ) : (
             <div className={`flex items-center p-2 bg-gray-50 rounded-lg ${collapsed ? 'justify-center' : ''}`}>
               <span title={collapsed ? 'Sign out' : userProfile?.displayName || 'Google Account'}>
