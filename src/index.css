@@ -8,3 +8,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Bo tròn group */
+.ant-segmented { border-radius: 9999px; }
+
+/* Padding đều 2px để thumb không hở viền */
+.ant-segmented .ant-segmented-group { padding: 2px; }
+
+/* Thumb = nền xanh di chuyển theo tab */
+.ant-segmented .ant-segmented-thumb {
+  background: #77BEF0 !important;
+  border-radius: 9999px;   /* khớp shape */
+  box-shadow: none;
+}
+
+/* Item cũng bo tròn để chữ nằm gọn trong thumb */
+.ant-segmented .ant-segmented-item { border-radius: 9999px; }
+
+/* Màu chữ khi được chọn */
+.ant-segmented .ant-segmented-item-selected { color: #111 !important; }

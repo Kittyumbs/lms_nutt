@@ -18,7 +18,7 @@ createRoot(document.getElementById('root')!).render(
       },
       components: {
         Segmented: {
-          itemSelectedBg: '#FFF9AF', // Accent color for selected segmented item (new light yellow)
+          itemSelectedBg: '#77BEF0', // Accent color for selected segmented item (new light yellow)
         },
       },
     }}
