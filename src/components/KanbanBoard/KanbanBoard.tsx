@@ -31,6 +31,7 @@ import {
   ExclamationCircleOutlined,
   FolderOutlined // Import FolderOutlined for archive icon
 } from "@ant-design/icons";
+import { Space } from "antd"; // Import Space for layout in priority options
 import CreateTicketModal from "./CreateTicketModal";
 import type { TicketFormData } from "./CreateTicketModal";
 import dayjs from 'dayjs';
@@ -39,6 +40,7 @@ import { IssueType, Ticket } from "../../types/kanban"; // Import types from glo
 import PersonnelSelectionModal from "./PersonnelSelectionModal"; // Import PersonnelSelectionModal
 import UsefulDocsDrawer from "../UsefulDocsDrawer"; // Import UsefulDocsDrawer
 import CreateCalendarEventModal from "../CreateCalendarEventModal"; // Import CreateCalendarEventModal
+import { getPriorityIcon } from "../../utils/icons"; // Import getPriorityIcon
 import { CalendarOutlined, SwapOutlined } from "@ant-design/icons"; // Import CalendarOutlined, LogoutOutlined, and SwapOutlined icon
 import { Dropdown } from 'antd'; // Import Dropdown
 import CalendarEventsDrawer from "../CalendarEventsDrawer"; // Import CalendarEventsDrawer
@@ -53,19 +55,6 @@ const getIssueTypeIcon = (issueType: IssueType) => {
       return <BugOutlined className="issue-type-icon" style={{ color: "#ff4d4f" }} />;
     case "Story":
       return <BookOutlined className="issue-type-icon" style={{ color: "#52c41a" }} />;
-    default:
-      return null;
-  }
-};
-
-const getPriorityIcon = (priority: string) => {
-  switch (priority) {
-    case "high":
-      return <div className="priority-icon" style={{ color: "#ff4d4f" }}>●</div>;
-    case "medium":
-      return <div className="priority-icon" style={{ color: "#faad14" }}>●</div>;
-    case "low":
-      return <div className="priority-icon" style={{ color: "#52c41a" }}>●</div>;
     default:
       return null;
   }
@@ -293,9 +282,9 @@ const KanbanBoard: React.FC = () => {
             style={{ width: 200 }}
             onChange={setPriorityFilter}
             options={[
-              { value: "low", label: <span style={{ color: '#52c41a' }}>🟢 Low</span> },
-              { value: "medium", label: <span style={{ color: '#faad14' }}>🟡 Medium</span> },
-              { value: "high", label: <span style={{ color: '#ff4d4f' }}>🔴 High</span> },
+              { value: "low", label: <Space>{getPriorityIcon("low")}Low</Space> },
+              { value: "medium", label: <Space>{getPriorityIcon("medium")}Medium</Space> },
+              { value: "high", label: <Space>{getPriorityIcon("high")}High</Space> },
             ]}
           />
 
