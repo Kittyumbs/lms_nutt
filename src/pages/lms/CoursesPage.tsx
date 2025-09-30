@@ -41,12 +41,7 @@ const CoursesPage: React.FC = () => {
   // data
   const { items: courses, loading, refresh } = useCourses({ search, tags, status: statusFilter });
 
-  console.log('🔍 CoursesPage Role Debug:', {
-    userEmail: user?.email,
-    role,
-    coursesCount: courses.length,
-    canSeeActions: role === 'instructor' || role === 'admin'
-  });
+
 
   // debounce search
   useEffect(() => {
@@ -83,6 +78,29 @@ const CoursesPage: React.FC = () => {
 
   const handleDuplicateCourse = async (id: string) => {
     await duplicateCourse(id);
+    refresh();
+  };
+
+  // Debug function: Create sample course if admin
+  const createSampleCourse = async () => {
+    if (role !== 'admin') return;
+
+    const { getAuth } = await import('firebase/auth');
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    // Import createCourse
+    const { createCourse } = await import('../../hooks/useCourses');
+
+    await createCourse({
+      title: 'Sample Course - Admin Created',
+      desc: 'This is a sample course to test admin functionality',
+      tags: ['React', 'TypeScript'],
+      status: 'Published'
+    });
+
+    console.log('🎯 Sample course created with ownerUid');
     refresh();
   };
 

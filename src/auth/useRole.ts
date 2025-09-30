@@ -28,15 +28,6 @@ export default function useRole() {
     // Set role based on email priority: admin > instructor > learner
     const assignedRole = isAdminEmail ? 'admin' : (isInstructorEmail ? 'instructor' : 'learner');
 
-    console.log('🚨 DEBUG useRole:', {
-      email: user.email,
-      adminEmails,
-      instructorEmails,
-      isAdminEmail,
-      isInstructorEmail,
-      assignedRole
-    });
-
     if (isAdminEmail || isInstructorEmail) {
       // Auto-create user document if admin/instructor email
       const createUserDoc = async () => {
@@ -48,9 +39,8 @@ export default function useRole() {
             displayName: user.displayName,
             createdAt: new Date()
           }, { merge: true }); // merge: true to not overwrite existing fields
-          console.log('✅ Created user doc with role:', assignedRole);
         } catch (error) {
-          console.error('❌ Error creating user doc:', error);
+          console.error('Error creating user doc:', error);
         }
       };
       createUserDoc();
