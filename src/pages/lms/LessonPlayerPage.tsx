@@ -4,47 +4,10 @@ import { Breadcrumb, Button, Card, Alert, Skeleton, message, Space } from 'antd'
 import { HomeOutlined, BookOutlined, CheckCircleOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { useCourseDetail, Lesson } from '../../hooks/useCourseDetail';
+import { useProgress } from '../../hooks/useProgress';
+import { useEnrollment } from '../../hooks/useEnrollment';
 import { PageSEO } from '../../utils/seo';
-
-// Progress tracking utilities
-function getProgress(courseId: string): string[] {
-  const key = `progress:${courseId}`;
-  const stored = localStorage.getItem(key);
-  return stored ? JSON.parse(stored) : [];
-}
-
-function setProgress(courseId: string, lessonIds: string[]) {
-  const key = `progress:${courseId}`;
-  localStorage.setItem(key, JSON.stringify(lessonIds));
-}
-
-function toggleDone(courseId: string, lessonId: string) {
-  const progress = getProgress(courseId);
-  if (progress.includes(lessonId)) {
-    const newProgress = progress.filter(id => id !== lessonId);
-    setProgress(courseId, newProgress);
-  } else {
-    const newProgress = [...progress, lessonId];
-    setProgress(courseId, newProgress);
-  }
-}
-
-function getNextLessonId(courseDetail: any, currentLessonId: string): string | null {
-  if (!courseDetail?.outline?.modules) return null;
-
-  let foundCurrent = false;
-  for (const module of courseDetail.outline.modules) {
-    for (const lesson of module.lessons) {
-      if (foundCurrent) {
-        return lesson.id;
-      }
-      if (lesson.id === currentLessonId) {
-        foundCurrent = true;
-      }
-    }
-  }
-  return null;
-}
+import useAuth from '../../auth/useAuth';
 
 // Lesson content components
 const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
@@ -142,20 +105,20 @@ This lesson covers the fundamental concepts you need to understand. Make sure to
 
 const LessonSidebar: React.FC<{
   courseDetail: any;
+  lessons: Lesson[];
+  modules: any[];
   currentLessonId: string;
-  progress: string[];
+  doneIds: string[];
   onLessonClick: (lessonId: string) => void;
-}> = ({ courseDetail, currentLessonId, progress, onLessonClick }) => {
+}> = ({ courseDetail, lessons, modules, currentLessonId, doneIds, onLessonClick }) => {
 
   // Find current lesson details
   const currentLesson = useMemo(() => {
-    for (const module of courseDetail?.outline?.modules || []) {
-      for (const lesson of module.lessons || []) {
-        if (lesson.id === currentLessonId) return lesson;
-      }
+    for (const lesson of lessons) {
+      if (lesson.id === currentLessonId) return lesson;
     }
     return null;
-  }, [courseDetail, currentLessonId]);
+  }, [lessons, currentLessonId]);
 
   const getLessonTypeIcon = (type: string) => {
     switch (type) {
@@ -179,14 +142,14 @@ const LessonSidebar: React.FC<{
                   {currentLesson.title}
                 </div>
                 <div>
-                  Lesson {currentLesson.order} {currentLesson.duration && ` • ${currentLesson.duration}min`}
+                  Lesson {currentLesson.order}
                 </div>
               </div>
             )}
           </div>
 
           <div className="text-sm text-gray-600">
-            Progress: {progress.length} / {courseDetail?.outline?.totalLessons || 0} lessons
+            Progress: {doneIds.length} / {lessons.length} lessons
           </div>
         </div>
       </Card>
@@ -194,46 +157,74 @@ const LessonSidebar: React.FC<{
       <Card className="shadow-sm">
         <h4 className="font-semibold mb-4">Course Outline</h4>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-          {courseDetail?.outline?.modules.map((module: any) => (
-            <div key={module.id} className="space-y-2">
-              <div className="font-medium text-sm text-gray-800 px-2 py-1 bg-gray-100 rounded">
-                {module.title}
-              </div>
-              <div className="pl-4 space-y-1">
-                {module.lessons.map((lesson: any) => {
-                  const isComplete = progress.includes(lesson.id);
-                  const isCurrent = lesson.id === currentLessonId;
-                  return (
-                    <button
-                      key={lesson.id}
-                      onClick={() => onLessonClick(lesson.id)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center hover:bg-blue-50 transition-colors ${
-                        isCurrent ? 'bg-blue-100 text-blue-800 border border-blue-300' :
-                        isComplete ? 'text-green-700' : 'text-gray-700'
-                      }`}
-                    >
-                      <div className="flex items-center flex-1">
-                        {isComplete && <CheckCircleOutlined className="mr-2 text-green-600" />}
-                        {getLessonTypeIcon(lesson.type) && !isComplete && (
-                          <span className="mr-2 text-gray-500">
-                            {getLessonTypeIcon(lesson.type)}
-                          </span>
-                        )}
-                        <div className="flex-1">
-                          <div className="truncate">Lesson {lesson.order}: {lesson.title}</div>
+          {modules.length > 0 ? (
+            // Display lessons grouped by modules
+            modules.map((module: any) => (
+              <div key={module.id} className="space-y-2">
+                <div className="font-medium text-sm text-gray-800 px-2 py-1 bg-gray-100 rounded">
+                  {module.title}
+                </div>
+                <div className="pl-4 space-y-1">
+                  {module.lessons?.map((lesson: any) => {
+                    const isComplete = doneIds.includes(lesson.id);
+                    const isCurrent = lesson.id === currentLessonId;
+                    return (
+                      <button
+                        key={lesson.id}
+                        onClick={() => onLessonClick(lesson.id)}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center hover:bg-blue-50 transition-colors ${
+                          isCurrent ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                          isComplete ? 'text-green-700' : 'text-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-center flex-1">
+                          {isComplete && <CheckCircleOutlined className="mr-2 text-green-600" />}
+                          {getLessonTypeIcon(lesson.type) && !isComplete && (
+                            <span className="mr-2 text-gray-500">
+                              {getLessonTypeIcon(lesson.type)}
+                            </span>
+                          )}
+                          <div className="flex-1">
+                            <div className="truncate">Lesson {lesson.order}: {lesson.title}</div>
+                          </div>
                         </div>
-                      </div>
-                      {lesson.duration && (
-                        <span className="text-xs text-gray-500 ml-2">
-                          {lesson.duration}m
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            // Fallback: Display all lessons
+            <div className="space-y-1">
+              {lessons.map((lesson) => {
+                const isComplete = doneIds.includes(lesson.id);
+                const isCurrent = lesson.id === currentLessonId;
+                return (
+                  <button
+                    key={lesson.id}
+                    onClick={() => onLessonClick(lesson.id)}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center hover:bg-blue-50 transition-colors ${
+                      isCurrent ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                      isComplete ? 'text-green-700' : 'text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center flex-1">
+                      {isComplete && <CheckCircleOutlined className="mr-2 text-green-600" />}
+                      {getLessonTypeIcon(lesson.type) && !isComplete && (
+                        <span className="mr-2 text-gray-500">
+                          {getLessonTypeIcon(lesson.type)}
                         </span>
                       )}
-                    </button>
-                  );
-                })}
-              </div>
+                      <div className="flex-1">
+                        <div className="truncate">Lesson {lesson.order}: {lesson.title}</div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          ))}
+          )}
         </div>
       </Card>
     </div>
@@ -243,16 +234,12 @@ const LessonSidebar: React.FC<{
 export default function LessonPlayerPage() {
   const { cid, lid } = useParams<{ cid: string; lid: string }>();
   const navigate = useNavigate();
-  const { course: courseDetail, loading, error, isEnrolled } = useCourseDetail(cid || '');
-  const [progress, setProgressLocal] = useState<string[]>([]);
-  const [currentLessonId, setCurrentLessonId] = useState(lid || '');
+  const { course: courseDetail, modules, lessons, loading, error } = useCourseDetail(cid || '');
+  const { enrolled } = useEnrollment(cid || '');
+  const { doneIds, markDone, unmarkDone } = useProgress(cid || '');
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (cid) {
-      const savedProgress = getProgress(cid);
-      setProgressLocal(savedProgress);
-    }
-  }, [cid]);
+  const [currentLessonId, setCurrentLessonId] = useState(lid || '');
 
   useEffect(() => {
     if (lid && lid !== currentLessonId) {
@@ -262,29 +249,33 @@ export default function LessonPlayerPage() {
 
   // Find current lesson
   const currentLesson = useMemo(() => {
-    if (!courseDetail?.outline?.modules) return null;
-    for (const module of courseDetail.outline.modules) {
-      for (const lesson of module.lessons) {
-        if (lesson.id === currentLessonId) return lesson;
-      }
+    for (const lesson of lessons) {
+      if (lesson.id === currentLessonId) return lesson;
     }
     return null;
-  }, [courseDetail, currentLessonId]);
+  }, [lessons, currentLessonId]);
 
-  const handleMarkDone = () => {
-    if (!cid || !currentLessonId) return;
+  // Find next lesson ID
+  const nextLessonId = useMemo(() => {
+    const currentIndex = lessons.findIndex(l => l.id === currentLessonId);
+    if (currentIndex !== -1 && currentIndex < lessons.length - 1) {
+      return lessons[currentIndex + 1].id;
+    }
+    return null;
+  }, [lessons, currentLessonId]);
 
-    toggleDone(cid, currentLessonId);
-    const updatedProgress = getProgress(cid);
-    setProgressLocal(updatedProgress);
+  const handleMarkDone = async () => {
+    if (!currentLessonId || !cid) return;
 
-    message.success('Lesson marked as done!');
-
-    // Check for next lesson
-    const nextLessonId = getNextLessonId(courseDetail, currentLessonId);
-    if (nextLessonId) {
-      // Auto-navigate to next lesson (placeholder)
-      console.log('Next lesson:', nextLessonId);
+    const isDone = doneIds.includes(currentLessonId);
+    try {
+      if (isDone) {
+        await unmarkDone(currentLessonId);
+      } else {
+        await markDone(currentLessonId);
+      }
+    } catch (error) {
+      console.error('Failed to update progress:', error);
     }
   };
 
@@ -309,7 +300,7 @@ export default function LessonPlayerPage() {
   }
 
   // Enrollment guard
-  if (!isEnrolled) {
+  if (!enrolled) {
     return (
       <div className="max-w-full px-6 py-4 space-y-6">
         <Breadcrumb>
@@ -399,17 +390,14 @@ export default function LessonPlayerPage() {
                     <Button
                       type="primary"
                       onClick={handleMarkDone}
-                      icon={progress.includes(currentLessonId) ? <CheckCircleOutlined /> : undefined}
+                      icon={doneIds.includes(currentLessonId) ? <CheckCircleOutlined /> : undefined}
                     >
-                      {progress.includes(currentLessonId) ? 'Marked as Done' : 'Mark as Done'}
+                      {doneIds.includes(currentLessonId) ? 'Marked as Done' : 'Mark as Done'}
                     </Button>
 
-                    {getNextLessonId(courseDetail, currentLessonId) && (
+                    {nextLessonId && (
                       <Button
-                        onClick={() => {
-                          const next = getNextLessonId(courseDetail, currentLessonId);
-                          if (next) handleLessonClick(next);
-                        }}
+                        onClick={() => handleLessonClick(nextLessonId)}
                       >
                         Next Lesson
                       </Button>
@@ -423,8 +411,10 @@ export default function LessonPlayerPage() {
           {/* Sidebar */}
           <LessonSidebar
             courseDetail={courseDetail}
+            lessons={lessons}
+            modules={modules}
             currentLessonId={currentLessonId}
-            progress={progress}
+            doneIds={doneIds}
             onLessonClick={handleLessonClick}
           />
         </div>

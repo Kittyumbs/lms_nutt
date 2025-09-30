@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Breadcrumb, Card, Button, Tag, Tabs, Collapse, Empty, Skeleton, Space } from 'antd';
 import { HomeOutlined, BookOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
+import { useEnrollment } from '../../hooks/useEnrollment';
 import { PageSEO } from '../../utils/seo';
 import useAuth from '../../auth/useAuth';
 
@@ -34,15 +35,10 @@ const getLessonTypeIcon = (type: string) => {
 export default function CourseDetailPage() {
   const { cid } = useParams<{ cid: string }>();
   const { user, signInWithGoogle } = useAuth();
-  const {
-    course,
-    loading,
-    error,
-    isEnrolled,
-    firstLessonId,
-    toggleModuleExpanded,
-    enroll
-  } = useCourseDetail(cid || '');
+  const { course, modules, lessons, loading, error } = useCourseDetail(cid || '');
+  const { enrolled, enroll } = useEnrollment(cid || '');
+
+  const firstLessonId = lessons.length > 0 ? lessons[0]?.id : undefined;
 
   const handleEnroll = () => {
     if (!user) {
@@ -169,7 +165,7 @@ export default function CourseDetailPage() {
               {/* Actions - Only show for Published courses */}
               {course.status === 'Published' && (
                 <div>
-                  {!isEnrolled ? (
+                  {!enrolled ? (
                     <Button
                       type="primary"
                       size="large"
@@ -208,10 +204,10 @@ export default function CourseDetailPage() {
 
                 <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-600">
                   <div>
-                    <strong>{course.outline.totalLessons}</strong> lessons
+                    <strong>{lessons.length}</strong> lessons
                   </div>
                   <div>
-                    <strong>{course.outline.totalDuration}</strong> minutes
+                    <strong>Estimated {Math.ceil(lessons.length * 10)}</strong> minutes
                   </div>
                 </div>
               </div>
@@ -220,16 +216,16 @@ export default function CourseDetailPage() {
             {/* Outline Tab */}
             <Tabs.TabPane tab="Course Outline" key="outline">
               <div className="p-4">
-                {course.outline.modules.length === 0 ? (
+                {modules.length === 0 && lessons.length === 0 ? (
                   <Empty description="Course outline not available" />
                 ) : (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-semibold">
-                        Course Content ({course.outline.totalLessons} lessons)
+                        Course Content ({lessons.length} lessons)
                       </h3>
                       <span className="text-sm text-gray-500">
-                        {course.outline.totalDuration} total minutes
+                        Estimated {Math.ceil(lessons.length * 10)} minutes
                       </span>
                     </div>
 
@@ -238,58 +234,73 @@ export default function CourseDetailPage() {
                       expandIconPosition="end"
                       className="bg-transparent"
                     >
-                      {course.outline.modules.map((module) => (
-                        <Panel
-                          key={module.id}
-                          header={
-                            <div className="flex items-center justify-between w-full">
-                              <span className="font-medium">{module.title}</span>
-                              <span className="text-sm text-gray-500">
-                                {module.lessons.length} lessons
-                              </span>
-                            </div>
-                          }
-                          className="bg-white border border-gray-200 mb-2 rounded-lg"
-                          showArrow
-                          collapsible={module.lessons.length > 0 ? "header" : "disabled"}
-                        >
-                          <div className="space-y-2">
-                            {module.lessons.map((lesson) => (
-                              <div
-                                key={lesson.id}
-                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                                onClick={() => {
-                                  // Navigate to lesson - placeholder for future implementation
-                                  console.log('Navigate to lesson:', lesson.id);
-                                }}
-                              >
-                                <div className="flex items-center space-x-3">
-                                  {getLessonTypeIcon(lesson.type)}
-                                  <span className="text-sm font-medium">
-                                    {lesson.title}
-                                  </span>
-                                </div>
-                                <Space>
-                                  {lesson.duration && (
-                                    <Tag className="text-xs">
-                                      {lesson.duration}min
-                                    </Tag>
-                                  )}
+                      {modules.length > 0 ? (
+                        // Display lessons grouped by modules
+                        modules.map((module) => (
+                          <Panel
+                            key={module.id}
+                            header={
+                              <div className="flex items-center justify-between w-full">
+                                <span className="font-medium">{module.title}</span>
+                                <span className="text-sm text-gray-500">
+                                  {module.lessons.length} lessons
+                                </span>
+                              </div>
+                            }
+                            className="bg-white border border-gray-200 mb-2 rounded-lg"
+                            showArrow
+                            collapsible={module.lessons.length > 0 ? "header" : "disabled"}
+                          >
+                            <div className="space-y-2">
+                              {module.lessons.map((lesson) => (
+                                <div
+                                  key={lesson.id}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                  onClick={() => {
+                                    console.log('Navigate to lesson:', lesson.id);
+                                  }}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    {getLessonTypeIcon(lesson.type)}
+                                    <span className="text-sm font-medium">
+                                      {lesson.title}
+                                    </span>
+                                  </div>
                                   <Tag color="blue" className="text-xs">
                                     {lesson.type}
                                   </Tag>
-                                </Space>
-                              </div>
-                            ))}
-                          </div>
-
-                          {module.description && (
-                            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                              <p className="text-sm text-gray-700">{module.description}</p>
+                                </div>
+                              ))}
                             </div>
-                          )}
-                        </Panel>
-                      ))}
+
+                            {module.description && (
+                              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                                <p className="text-sm text-gray-700">{module.description}</p>
+                              </div>
+                            )}
+                          </Panel>
+                        ))
+                      ) : (
+                        // Fallback: Display all lessons if no modules
+                        <div className="space-y-2">
+                          {lessons.map((lesson) => (
+                            <div
+                              key={lesson.id}
+                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            >
+                              <div className="flex items-center space-x-3">
+                                {getLessonTypeIcon(lesson.type)}
+                                <span className="text-sm font-medium">
+                                  {lesson.title}
+                                </span>
+                              </div>
+                              <Tag color="blue" className="text-xs">
+                                {lesson.type}
+                              </Tag>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </Collapse>
                   </div>
                 )}
