@@ -103,7 +103,7 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({
         onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = 'rgba(0,0,0,.45)'), (e.currentTarget.style.transform = 'translateY(0)'))}
       />
 
-      {/* Nhóm nút góc phải */}
+      {/* Always show edit button clearly */}
       {canEdit && (
         <div
           style={{
@@ -112,47 +112,39 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({
             right: 8,
             zIndex: 2,
             display: 'flex',
-            gap: 8,
+            gap: 6,
           }}
         >
           <Tooltip title="Edit">
             <Button
-              aria-label="Edit"
-              icon={<EditOutlined style={{ color: '#fff', fontSize: 16 }} />}
+              shape="round"
+              type="primary"
+              size="small"
+              icon={<EditOutlined style={{ fontSize: 14 }} />}
               onClick={() => onEdit(course)}
               style={{
-                border: 'none',
-                backgroundColor: 'rgba(0,0,0,.45)',
-                backdropFilter: 'saturate(120%) blur(2px)',
-                width: 36,
-                height: 36,
-                borderRadius: 999,
-                boxShadow: '0 2px 6px rgba(0,0,0,.2)',
-                transition: 'background-color .15s ease, transform .15s ease',
+                boxShadow: '0 2px 6px rgba(0,0,0,.15)',
+                fontSize: '12px',
+                fontWeight: 500,
               }}
-              onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = '#057EC8'), (e.currentTarget.style.transform = 'translateY(-1px)'))}
-              onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = 'rgba(0,0,0,.45)'), (e.currentTarget.style.transform = 'translateY(0)'))}
-            />
+            >
+              Edit
+            </Button>
           </Tooltip>
 
           {course.status === 'Published' ? (
             <Tooltip title="Unpublish">
               <Button
-                icon={<CloseOutlined style={{ color: '#fff' }} />}
+                shape="round"
+                danger
+                size="small"
+                icon={<CloseOutlined style={{ fontSize: 12 }} />}
                 onClick={() => onSetStatus(course.id, 'Draft')}
                 style={{
-                  border: 'none',
-                  backgroundColor: 'rgba(0,0,0,.45)',
-                  backdropFilter: 'saturate(120%) blur(2px)',
-                  height: 36,
-                  borderRadius: 999,
-                  paddingInline: 12,
-                  color: '#fff',
-                  boxShadow: '0 2px 6px rgba(0,0,0,.2)',
-                  transition: 'background-color .15s ease, transform .15s ease',
+                  boxShadow: '0 2px 6px rgba(0,0,0,.15)',
+                  fontSize: '12px',
+                  fontWeight: 500,
                 }}
-                onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = '#057EC8'), (e.currentTarget.style.transform = 'translateY(-1px)'))}
-                onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = 'rgba(0,0,0,.45)'), (e.currentTarget.style.transform = 'translateY(0)'))}
               >
                 Unpublish
               </Button>
@@ -160,21 +152,18 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({
           ) : (
             <Tooltip title="Publish">
               <Button
-                icon={<CheckOutlined style={{ color: '#fff' }} />}
+                shape="round"
+                type="primary"
+                size="small"
+                icon={<CheckOutlined style={{ fontSize: 12 }} />}
                 onClick={() => onSetStatus(course.id, 'Published')}
+                className="bg-green-500 hover:bg-green-600 border-green-500"
                 style={{
-                  border: 'none',
-                  backgroundColor: 'rgba(0,0,0,.45)',
-                  backdropFilter: 'saturate(120%) blur(2px)',
-                  height: 36,
-                  borderRadius: 999,
-                  paddingInline: 12,
-                  color: '#fff',
-                  boxShadow: '0 2px 6px rgba(0,0,0,.2)',
-                  transition: 'background-color .15s ease, transform .15s ease',
+                  boxShadow: '0 2px 6px rgba(0,0,0,.15)',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  borderColor: '#10b981'
                 }}
-                onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = '#057EC8'), (e.currentTarget.style.transform = 'translateY(-1px)'))}
-                onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = 'rgba(0,0,0,.45)'), (e.currentTarget.style.transform = 'translateY(0)'))}
               >
                 Publish
               </Button>

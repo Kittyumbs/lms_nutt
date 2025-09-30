@@ -17,15 +17,8 @@ const CoursesPage: React.FC = () => {
   const { user } = useAuth();
   const { role } = useRole();
 
-  // Debug role and user state
+  // Check permissions
   const canSeeActions = role === 'instructor' || role === 'admin';
-
-  console.log('🔍 COURSES PAGE DEBUG:', {
-    userEmail: user?.email,
-    role,
-    canSeeActions,
-    userId: user?.uid
-  });
 
   // filters
   const [search, setSearch] = useState('');
@@ -51,12 +44,7 @@ const CoursesPage: React.FC = () => {
   // data
   const { items: courses, loading, refresh } = useCourses({ search, tags, status: statusFilter });
 
-  if (!loading) {
-    console.log('📚 COURSES DATA DEBUG:', {
-      coursesCount: courses.length,
-      courseIds: courses.map(c => ({ id: c.id, title: c.title.substring(0, 20), ownerUid: c.ownerUid }))
-    });
-  }
+
 
 
 
@@ -263,31 +251,33 @@ const CoursesPage: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {courses.map((course) => (
-            <Card
-              key={course.id}
-              hoverable
-              className="rounded-xl border border-black/10 hover:shadow-md transition"
-              cover={<CoverWithStatus course={course} />}
-              actions={
-                role === 'instructor' || role === 'admin' ? [
-                  course.status === 'Published' ? (
-                    <Tooltip title="Unpublish" key="unpub">
-                      <Button type="text" icon={<CloseOutlined />} onClick={() => handleSetStatus(course.id, 'Draft')} />
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title="Publish" key="pub">
-                      <Button type="text" icon={<CheckOutlined />} onClick={() => handleSetStatus(course.id, 'Published')} />
-                    </Tooltip>
-                  ),
-                  <Tooltip title="Edit" key="edit">
-                    <Button type="text" icon={<EditOutlined />} onClick={() => handleEditCourse(course)} />
-                  </Tooltip>,
-                  <Tooltip title="Duplicate" key="dup">
-                    <Button type="text" icon={<EllipsisOutlined />} onClick={() => handleDuplicateCourse(course.id)} />
-                  </Tooltip>,
-                ] : []
-              }
+          {courses.map((course) => {
+            const isAuthorized = role === 'instructor' || role === 'admin';
+            return (
+              <Card
+                key={course.id}
+                hoverable
+                className="rounded-xl border border-black/10 hover:shadow-md transition"
+                cover={<CoverWithStatus course={course} />}
+                actions={
+                  isAuthorized ? [
+                    course.status === 'Published' ? (
+                      <Tooltip title="Unpublish" key="unpub">
+                        <Button type="text" danger icon={<CloseOutlined />} onClick={() => handleSetStatus(course.id, 'Draft')} />
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Publish" key="pub">
+                        <Button type="text" type="primary" icon={<CheckOutlined />} onClick={() => handleSetStatus(course.id, 'Published')} />
+                      </Tooltip>
+                    ),
+                    <Tooltip title="Edit" key="edit">
+                      <Button type="text" icon={<EditOutlined />} onClick={() => handleEditCourse(course)} />
+                    </Tooltip>,
+                    <Tooltip title="Duplicate" key="dup">
+                      <Button type="text" icon={<EllipsisOutlined />} onClick={() => handleDuplicateCourse(course.id)} />
+                    </Tooltip>,
+                  ] : []
+                }
             >
               <Card.Meta
                 title={
