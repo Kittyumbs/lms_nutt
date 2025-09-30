@@ -18,11 +18,12 @@ const CoursesPage: React.FC = () => {
   const { role } = useRole();
 
   // Debug role and user state
+  const canSeeActions = role === 'instructor' || role === 'admin';
+
   console.log('🔍 COURSES PAGE DEBUG:', {
     userEmail: user?.email,
     role,
-    roleType: typeof role,
-    canSeeActions: role === 'instructor' || role === 'admin',
+    canSeeActions,
     userId: user?.uid
   });
 
@@ -49,6 +50,13 @@ const CoursesPage: React.FC = () => {
 
   // data
   const { items: courses, loading, refresh } = useCourses({ search, tags, status: statusFilter });
+
+  if (!loading) {
+    console.log('📚 COURSES DATA DEBUG:', {
+      coursesCount: courses.length,
+      courseIds: courses.map(c => ({ id: c.id, title: c.title.substring(0, 20), ownerUid: c.ownerUid }))
+    });
+  }
 
 
 
@@ -186,11 +194,18 @@ const CoursesPage: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Courses</h2>
-        <RequireInstructor>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
-            New Course
-          </Button>
-        </RequireInstructor>
+        <Space>
+          {role === 'admin' && (
+            <Button type="default" onClick={createSampleCourse}>
+              Create Sample Course
+            </Button>
+          )}
+          <RequireInstructor>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
+              New Course
+            </Button>
+          </RequireInstructor>
+        </Space>
       </div>
 
       {/* Filters */}
