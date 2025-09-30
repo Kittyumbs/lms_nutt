@@ -41,6 +41,13 @@ const CoursesPage: React.FC = () => {
   // data
   const { items: courses, loading, refresh } = useCourses({ search, tags, status: statusFilter });
 
+  console.log('🔍 CoursesPage Role Debug:', {
+    userEmail: user?.email,
+    role,
+    coursesCount: courses.length,
+    canSeeActions: role === 'instructor' || role === 'admin'
+  });
+
   // debounce search
   useEffect(() => {
     const t = window.setTimeout(() => setSearch(searchInput.trim()), 300);
