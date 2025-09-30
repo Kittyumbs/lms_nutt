@@ -50,7 +50,7 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
       width={520}
       onClose={onClose}
       open={open}
-      bodyStyle={{ paddingBottom: 80 }}
+      styles={{ body: { paddingBottom: 80 } }}
       extra={
         <Space>
           <Button onClick={onClose}>Cancel</Button>
