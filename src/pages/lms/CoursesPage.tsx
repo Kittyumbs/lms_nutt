@@ -44,7 +44,12 @@ const CoursesPage: React.FC = () => {
   // data
   const { items: courses, loading, refresh } = useCourses({ search, tags, status: statusFilter });
 
-
+  if (!loading && role === 'admin') {
+    console.log('📚 COURSES DATA DEBUG:', {
+      coursesCount: courses.length,
+      courseIds: courses.map(c => ({ id: c.id, title: c.title.substring(0, 20), ownerUid: c.ownerUid }))
+    });
+  }
 
 
 
@@ -260,54 +265,57 @@ const CoursesPage: React.FC = () => {
                 className="rounded-xl border border-black/10 hover:shadow-md transition"
                 cover={<CoverWithStatus course={course} />}
                 actions={
-                  isAuthorized ? [
-                    course.status === 'Published' ? (
-                      <Tooltip title="Unpublish" key="unpub">
-                        <Button type="text" danger icon={<CloseOutlined />} onClick={() => handleSetStatus(course.id, 'Draft')} />
-                      </Tooltip>
-                    ) : (
-                      <Tooltip title="Publish" key="pub">
-                        <Button type="text" type="primary" icon={<CheckOutlined />} onClick={() => handleSetStatus(course.id, 'Published')} />
-                      </Tooltip>
-                    ),
-                    <Tooltip title="Edit" key="edit">
-                      <Button type="text" icon={<EditOutlined />} onClick={() => handleEditCourse(course)} />
-                    </Tooltip>,
-                    <Tooltip title="Duplicate" key="dup">
-                      <Button type="text" icon={<EllipsisOutlined />} onClick={() => handleDuplicateCourse(course.id)} />
-                    </Tooltip>,
-                  ] : []
+                  isAuthorized
+                    ? [
+                        course.status === 'Published' ? (
+                          <Tooltip title="Unpublish" key="unpub">
+                            <Button type="text" danger icon={<CloseOutlined />} onClick={() => handleSetStatus(course.id, 'Draft')} />
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Publish" key="pub">
+                            <Button type="primary" icon={<CheckOutlined />} onClick={() => handleSetStatus(course.id, 'Published')} />
+                          </Tooltip>
+                        ),
+                        <Tooltip title="Edit" key="edit">
+                          <Button type="text" icon={<EditOutlined />} onClick={() => handleEditCourse(course)} />
+                        </Tooltip>,
+                        <Tooltip title="Duplicate" key="dup">
+                          <Button type="text" icon={<EllipsisOutlined />} onClick={() => handleDuplicateCourse(course.id)} />
+                        </Tooltip>,
+                      ]
+                    : []
                 }
-            >
-              <Card.Meta
-                title={
-                  <Tooltip title={course.title}>
-                    <Link
-                      to={`/lms/course/${course.id}`}
-                      className="font-bold text-blue-600 hover:text-blue-800 text-inherit"
-                    >
-                      <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-                        {course.title}
+              >
+                <Card.Meta
+                  title={
+                    <Tooltip title={course.title}>
+                      <Link
+                        to={`/lms/course/${course.id}`}
+                        className="font-bold text-blue-600 hover:text-blue-800 text-inherit"
+                      >
+                        <div className="whitespace-nowrap overflow-hidden text-ellipsis">
+                          {course.title}
+                        </div>
+                      </Link>
+                    </Tooltip>
+                  }
+                  description={
+                    <div className="flex flex-col">
+                      <p className="line-clamp-2 text-sm text-gray-600">{course.desc || 'No description provided.'}</p>
+                      <div className="mt-2">
+                        <Space wrap size={[0, 8]}>
+                          {course.tags.slice(0, 3).map((tag) => (
+                            <Tag key={tag} className="rounded-full">{tag}</Tag>
+                          ))}
+                          {course.tags.length > 3 && <Tag className="rounded-full">+{course.tags.length - 3}</Tag>}
+                        </Space>
                       </div>
-                    </Link>
-                  </Tooltip>
-                }
-                description={
-                  <div className="flex flex-col">
-                    <p className="line-clamp-2 text-sm text-gray-600">{course.desc || 'No description provided.'}</p>
-                    <div className="mt-2">
-                      <Space wrap size={[0, 8]}>
-                        {course.tags.slice(0, 3).map((tag) => (
-                          <Tag key={tag} className="rounded-full">{tag}</Tag>
-                        ))}
-                        {course.tags.length > 3 && <Tag className="rounded-full">+{course.tags.length - 3}</Tag>}
-                      </Space>
                     </div>
-                  </div>
-                }
-              />
-            </Card>
-          ))}
+                  }
+                />
+              </Card>
+            );
+          })}
         </div>
       )}
 
