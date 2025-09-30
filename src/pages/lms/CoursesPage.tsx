@@ -17,6 +17,15 @@ const CoursesPage: React.FC = () => {
   const { user } = useAuth();
   const { role } = useRole();
 
+  // Debug role and user state
+  console.log('🔍 COURSES PAGE DEBUG:', {
+    userEmail: user?.email,
+    role,
+    roleType: typeof role,
+    canSeeActions: role === 'instructor' || role === 'admin',
+    userId: user?.uid
+  });
+
   // filters
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
