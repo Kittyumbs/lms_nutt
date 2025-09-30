@@ -12,7 +12,7 @@ service cloud.firestore {
     function isInstructorOrAdmin() {
       return authed() && get(/databases/$(db)/documents/users/$(userId())).data.role in ['instructor','admin'];
     }
-    function isOwner(courses, cid) {
+    function isOwner(collection, cid) {
       return get(/databases/$(db)/documents/courses/$(cid)).data.ownerUid == userId();
     }
     match /courses/{cid} {

@@ -99,8 +99,18 @@ export function useCourses(params: { search?: string; tags?: string[]; status?: 
 
 export async function createCourse(input: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>): Promise<Course> {
   try {
+    // Import getAuth to get current user
+    const { getAuth } = await import('firebase/auth');
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
     const docRef = await addDoc(collection(db, COURSES_COLLECTION), {
       ...input,
+      ownerUid: currentUser.uid,  // Set owner to current user
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       tags: input.tags || [],
@@ -108,7 +118,7 @@ export async function createCourse(input: Omit<Course, 'id' | 'createdAt' | 'upd
     });
     // Return the created course with the Firestore-generated ID and server timestamps
     // Note: serverTimestamp() is an object, so we use Date.now() for immediate client-side display
-    return { id: docRef.id, ...input, createdAt: Date.now(), updatedAt: Date.now() } as Course;
+    return { id: docRef.id, ...input, ownerUid: currentUser.uid, createdAt: Date.now(), updatedAt: Date.now() } as Course;
   } catch (error) {
     console.error('Error creating course:', error);
     throw error;

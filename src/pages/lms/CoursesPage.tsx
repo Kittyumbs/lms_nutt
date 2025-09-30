@@ -206,7 +206,9 @@ const CoursesPage: React.FC = () => {
           description={
             <span>
               No courses yet <br />
-              <Button type="link" onClick={handleNewCourse}>Create a new course</Button>
+              {(role === 'instructor' || role === 'admin') && (
+                <Button type="link" onClick={handleNewCourse}>Create a new course</Button>
+              )}
             </span>
           }
         />
