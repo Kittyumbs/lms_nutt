@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Drawer, List, Avatar, Tag, Spin, message, Button, Space } from 'antd';
 import { UserOutlined, CheckCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined, SyncOutlined } from '@ant-design/icons';
+import { Drawer, List, Avatar, Tag, Spin, message, Button, Space } from 'antd';
 import dayjs from 'dayjs';
+import React, { useEffect, useState, useCallback } from 'react';
+
 import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 
 interface CalendarEventsDrawerProps {

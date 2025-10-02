@@ -1,13 +1,10 @@
 import React, { useState, useCallback, useMemo } from "react";
+
 import "./KanbanBoard.css";
 import {
   DragDropContext,
   Droppable,
-  Draggable,
-  DropResult,
-  DraggableProvided,
-  DroppableProvided,
-  DroppableStateSnapshot
+  Draggable
 } from "react-beautiful-dnd";
 import {
   Button,
@@ -32,19 +29,35 @@ import {
   FolderOutlined // Import FolderOutlined for archive icon
 } from "@ant-design/icons";
 import { Space } from "antd"; // Import Space for layout in priority options
-import CreateTicketModal from "./CreateTicketModal";
-import type { TicketFormData } from "./CreateTicketModal";
-import dayjs from 'dayjs';
+
+import { useGoogleCalendar } from "../../hooks/useGoogleCalendar"; // Import useGoogleCalendar hook
 import { useKanbanBoard } from "../../hooks/useKanbanBoard"; // Import the hook
-import { IssueType, Ticket } from "../../types/kanban"; // Import types from global definition
-import PersonnelSelectionModal from "./PersonnelSelectionModal"; // Import PersonnelSelectionModal
-import UsefulDocsDrawer from "../UsefulDocsDrawer"; // Import UsefulDocsDrawer
-import CreateCalendarEventModal from "../CreateCalendarEventModal"; // Import CreateCalendarEventModal
 import { getPriorityIcon } from "../../utils/icons"; // Import getPriorityIcon
+import CalendarEventsDrawer from "../CalendarEventsDrawer"; // Import CalendarEventsDrawer
+import CreateCalendarEventModal from "../CreateCalendarEventModal"; // Import CreateCalendarEventModal
+import UsefulDocsDrawer from "../UsefulDocsDrawer"; // Import UsefulDocsDrawer
+
+import CreateTicketModal from "./CreateTicketModal";
+import PersonnelSelectionModal from "./PersonnelSelectionModal"; // Import PersonnelSelectionModal
+
+import type { TicketFormData } from "./CreateTicketModal";
+
+import dayjs from 'dayjs';
+
+import type { IssueType, Ticket } from "../../types/kanban"; // Import types from global definition
+
+
+
 import { CalendarOutlined, SwapOutlined } from "@ant-design/icons"; // Import CalendarOutlined, LogoutOutlined, and SwapOutlined icon
 import { Dropdown } from 'antd'; // Import Dropdown
-import CalendarEventsDrawer from "../CalendarEventsDrawer"; // Import CalendarEventsDrawer
-import { useGoogleCalendar } from "../../hooks/useGoogleCalendar"; // Import useGoogleCalendar hook
+
+
+import type {
+  DropResult,
+  DraggableProvided,
+  DroppableProvided,
+  DroppableStateSnapshot
+} from "react-beautiful-dnd";
 
 
 const getIssueTypeIcon = (issueType: IssueType) => {

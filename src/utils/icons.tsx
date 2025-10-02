@@ -1,4 +1,5 @@
 import * as Icons from '@ant-design/icons';
+
 import type { IssueType } from '../types/kanban';
 
 export const getIssueTypeIcon = (issueType: IssueType) => {

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Modal, Select, Button, Input, Space, Form, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import { Modal, Select, Button, Input, Space, Form, message } from "antd";
+import React, { useState, useEffect } from "react";
+
 import { usePersonnel } from "../../hooks/usePersonnel";
 
 interface PersonnelSelectionModalProps {

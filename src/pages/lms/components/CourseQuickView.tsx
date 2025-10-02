@@ -1,8 +1,10 @@
-import React from 'react';
-import { Drawer, Button, Tag, Space, Tabs, Tooltip } from 'antd';
 import { EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Course, CourseStatus } from '../../../hooks/useCourses';
+import { Drawer, Button, Tag, Space, Tabs, Tooltip } from 'antd';
+import React from 'react';
+
 import useRole from '../../../auth/useRole';
+
+import type { Course, CourseStatus } from '../../../hooks/useCourses';
 
 interface CourseQuickViewProps {
   open: boolean;

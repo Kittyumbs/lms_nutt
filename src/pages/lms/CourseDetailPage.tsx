@@ -1,11 +1,12 @@
+import { HomeOutlined, BookOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Breadcrumb, Card, Button, Tag, Tabs, Collapse, Empty, Skeleton, Space } from 'antd';
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Breadcrumb, Card, Button, Tag, Tabs, Collapse, Empty, Skeleton, Space } from 'antd';
-import { HomeOutlined, BookOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+
+import useAuth from '../../auth/useAuth';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
 import { useEnrollment } from '../../hooks/useEnrollment';
 import { PageSEO } from '../../utils/seo';
-import useAuth from '../../auth/useAuth';
 
 const { Panel } = Collapse;
 

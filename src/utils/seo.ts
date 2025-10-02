@@ -8,7 +8,7 @@ export function setMeta({ title, desc, url }:{
   if (typeof document === "undefined") return;
   const d = document;
   const set = (sel: string, attr: string, val: string) => {
-    let el = d.querySelector(sel) as HTMLMetaElement | HTMLLinkElement | null;
+    let el = d.querySelector(sel);
     if (!el) {
       el = sel.startsWith('link')
         ? d.createElement('link')

@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { db } from "../lib/firebase";
 import { collection, onSnapshot, addDoc, query, orderBy } from "firebase/firestore";
+import { useState, useEffect, useCallback } from "react";
+
+import { db } from "../lib/firebase";
 
 export interface Personnel {
   id: string;

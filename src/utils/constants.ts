@@ -1,4 +1,4 @@
-import { Column } from "../types/kanban";
+import type { Column } from "../types/kanban";
 
 export const initialColumns: Column[] = [
   {

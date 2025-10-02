@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Segmented } from 'antd';
 import { PlusOutlined, LinkOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Segmented } from 'antd';
 import {
   collection,
   addDoc,
@@ -11,7 +10,9 @@ import {
   deleteDoc,
   doc,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import React, { useEffect, useState } from 'react';
+
+import { db } from '../lib/firebase';
 
 type ResourceLink = {
   id?: string;

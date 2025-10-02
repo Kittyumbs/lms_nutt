@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Breadcrumb, Button, Card, Alert, Skeleton, message, Space } from 'antd';
 import { HomeOutlined, BookOutlined, CheckCircleOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Breadcrumb, Button, Card, Alert, Skeleton, message, Space } from 'antd';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { useCourseDetail, Lesson } from '../../hooks/useCourseDetail';
-import { useProgress } from '../../hooks/useProgress';
-import { useEnrollment } from '../../hooks/useEnrollment';
-import { PageSEO } from '../../utils/seo';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+
 import useAuth from '../../auth/useAuth';
+import { useCourseDetail } from '../../hooks/useCourseDetail';
+import { useEnrollment } from '../../hooks/useEnrollment';
+import { useProgress } from '../../hooks/useProgress';
+import { PageSEO } from '../../utils/seo';
+
+import type { Lesson } from '../../hooks/useCourseDetail';
 
 // Lesson content components
 const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {

@@ -1,6 +1,9 @@
-import React, { useEffect } from 'react';
 import { Drawer, Form, Input, Button, Select, Space, message } from 'antd';
-import { Course, CourseStatus, createCourse, updateCourse } from '../../../hooks/useCourses';
+import React, { useEffect } from 'react';
+
+import { CourseStatus, createCourse, updateCourse } from '../../../hooks/useCourses';
+
+import type { Course} from '../../../hooks/useCourses';
 
 interface CourseFormDrawerProps {
   open: boolean;

@@ -1,14 +1,16 @@
+import { PlusOutlined, EditOutlined, EllipsisOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag } from 'antd';
-import { PlusOutlined, EditOutlined, EllipsisOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { useCourses, duplicateCourse, setCourseStatus, type Course, type CourseStatus } from '../../hooks/useCourses';
-import CourseFormDrawer from './components/CourseFormDrawer';
-import CourseQuickView from './components/CourseQuickView';
-import { PageSEO } from '../../utils/seo';
+
+import { RequireInstructor } from '../../auth/guards';
 import useAuth from '../../auth/useAuth';
 import useRole from '../../auth/useRole';
-import { RequireInstructor } from '../../auth/guards';
+import { useCourses, duplicateCourse, setCourseStatus, type Course, type CourseStatus } from '../../hooks/useCourses';
+import { PageSEO } from '../../utils/seo';
+
+import CourseFormDrawer from './components/CourseFormDrawer';
+import CourseQuickView from './components/CourseQuickView';
 
 const { Search } = Input;
 const { Option } = Select;

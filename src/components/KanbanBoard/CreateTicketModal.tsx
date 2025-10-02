@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Modal, Form, Input, Select, Button, Space, DatePicker } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
-import { getIssueTypeIcon, getPriorityIcon } from "../../utils/icons";
+import { Modal, Form, Input, Select, Button, Space, DatePicker } from "antd";
 import dayjs from "dayjs";
-import { IssueType } from "../../types/kanban"; // Import IssueType from global definition
+import React, { useState, useEffect } from "react";
+
+import { getIssueTypeIcon, getPriorityIcon } from "../../utils/icons";
+
+import type { IssueType } from "../../types/kanban"; // Import IssueType from global definition
 
 export interface TicketFormData {
   title: string;

@@ -1,9 +1,9 @@
 import js from "@eslint/js";
-import tseslint from "typescript-eslint";
+import importPlugin from "eslint-plugin-import";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
-import jsxA11y from "eslint-plugin-jsx-a11y";
-import importPlugin from "eslint-plugin-import";
+import tseslint from "typescript-eslint";
 
 export default [
   {

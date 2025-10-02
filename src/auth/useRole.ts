@@ -1,14 +1,42 @@
-import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import useAuth from './useAuth';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
 
-import { setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+
+import useAuth from './useAuth';
 
 export default function useRole() {
   const { user } = useAuth();
   const [role, setRole] = useState<'learner' | 'instructor' | 'admin'>('learner');
   const [loadingRole, setLoadingRole] = useState(false);
+
+  // Get role from email configuration
+  const getRoleFromEmail = useCallback((email: string): 'learner' | 'instructor' | 'admin' => {
+    const adminEmailsStr = import.meta.env.VITE_ADMIN_EMAILS as string | undefined;
+    const instructorEmailsStr = import.meta.env.VITE_INSTRUCTOR_EMAILS as string | undefined;
+    
+    const adminEmails = adminEmailsStr?.split(',').map(e => e.trim()) || [];
+    const instructorEmails = instructorEmailsStr?.split(',').map(e => e.trim()) || [];
+    
+    if (adminEmails.includes(email)) return 'admin';
+    if (instructorEmails.includes(email)) return 'instructor';
+    return 'learner';
+  }, []);
+
+  // Create user document in Firestore
+  const createUserDocument = useCallback(async (userEmail: string, userRole: string, displayName: string) => {
+    try {
+      const userRef = doc(db, 'users', user!.uid);
+      await setDoc(userRef, {
+        email: userEmail,
+        role: userRole,
+        displayName: displayName,
+        createdAt: new Date()
+      }, { merge: true });
+    } catch (error) {
+      console.error('Error creating user document:', error);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -17,68 +45,45 @@ export default function useRole() {
       return;
     }
 
-    // Check admin emails first (highest priority)
-    const adminEmails = import.meta.env.VITE_ADMIN_EMAILS?.split(',') || [];
-    const isAdminEmail = adminEmails.includes(user.email || '');
-
-    // Check instructor emails
-    const instructorEmails = import.meta.env.VITE_INSTRUCTOR_EMAILS?.split(',') || [];
-    const isInstructorEmail = instructorEmails.includes(user.email || '');
-
-    // Set role based on email priority: admin > instructor > learner
-    const assignedRole = isAdminEmail ? 'admin' : (isInstructorEmail ? 'instructor' : 'learner');
-
-    if (isAdminEmail || isInstructorEmail) {
-      // Auto-create user document if admin/instructor email
-      const createUserDoc = async () => {
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, {
-            email: user.email,
-            role: assignedRole,
-            displayName: user.displayName,
-            createdAt: new Date()
-          }, { merge: true }); // merge: true to not overwrite existing fields
-        } catch (error) {
-          console.error('Error creating user doc:', error);
-        }
-      };
-      createUserDoc();
-    }
-
-    // Check Firestore for user role
+    const userEmail = user.email || '';
+    const emailBasedRole = getRoleFromEmail(userEmail);
+    
     setLoadingRole(true);
     const userRef = doc(db, 'users', user.uid);
 
-    const unsubscribe = onSnapshot(userRef, (doc) => {
-      if (doc.exists()) {
-        const userData = doc.data();
-        // Priority: admin email > instructor email > firestore role > learner
-        const firestoreRole = userData?.role;
-        const finalRole = assignedRole !== 'learner' ? assignedRole : (firestoreRole || 'learner');
-        setRole(finalRole);
-      } else {
-        // Auto-create document for new users with email-based role
-        const finalRole = assignedRole;
-        setRole(finalRole);
-        if (isAdminEmail || isInstructorEmail) {
-          setDoc(userRef, {
-            email: user.email,
-            role: finalRole,
-            displayName: user.displayName,
-            createdAt: new Date()
-          }).catch(error => console.error('Error creating user doc:', error));
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+      try {
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          const firestoreRole = userData?.role as 'learner' | 'instructor' | 'admin' | undefined;
+          
+          // Priority: email-based role > firestore role > learner
+          const finalRole = emailBasedRole !== 'learner' ? emailBasedRole : (firestoreRole || 'learner');
+          setRole(finalRole);
+          
+          // Update document if email-based role is higher priority
+          if (emailBasedRole !== 'learner' && emailBasedRole !== firestoreRole) {
+            void createUserDocument(userEmail, emailBasedRole, user.displayName || '');
+          }
+        } else {
+          // Document doesn't exist, create it
+          setRole(emailBasedRole);
+          void createUserDocument(userEmail, emailBasedRole, user.displayName || '');
         }
+      } catch (error) {
+        console.error('Error in role snapshot:', error);
+        setRole(emailBasedRole); // Fallback to email-based role
+      } finally {
+        setLoadingRole(false);
       }
-      setLoadingRole(false);
     }, (error) => {
       console.error('Error fetching user role:', error);
-      setRole(assignedRole); // Fallback with env check
+      setRole(getRoleFromEmail(userEmail));
       setLoadingRole(false);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, getRoleFromEmail, createUserDocument]);
 
   return { role, loadingRole };
 }

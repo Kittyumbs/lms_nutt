@@ -1,5 +1,3 @@
-import { useState, useEffect, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import {
   collection,
   query,
@@ -15,6 +13,9 @@ import {
   limit,
   startAfter,
 } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
 import { db } from '../lib/firebase'; // Import the Firestore instance
 
 export type CourseStatus = 'Draft' | 'Published' | 'Archived';

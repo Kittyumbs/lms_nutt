@@ -1,15 +1,16 @@
+import { ConfigProvider } from 'antd';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import AppLayout from './components/Layout/AppLayout';
-import TaskManageHome from './pages/taskmanage/TaskManageHome';
-import Catalog from './pages/lms/Catalog';
-import Dashboard from './pages/lms/Dashboard';
-import Notes from './pages/lms/Notes';
-import CoursesPage from './pages/lms/CoursesPage';
-import CourseDetailPage from './pages/lms/CourseDetailPage';
-import LessonPlayerPage from './pages/lms/LessonPlayerPage';
-import { ConfigProvider } from 'antd';
+
 import { AuthProvider } from './auth/AuthProvider';
+import AppLayout from './components/Layout/AppLayout';
+import Catalog from './pages/lms/Catalog';
+import CourseDetailPage from './pages/lms/CourseDetailPage';
+import CoursesPage from './pages/lms/CoursesPage';
+import Dashboard from './pages/lms/Dashboard';
+import LessonPlayerPage from './pages/lms/LessonPlayerPage';
+import Notes from './pages/lms/Notes';
+import TaskManageHome from './pages/taskmanage/TaskManageHome';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(

@@ -1,6 +1,7 @@
-import React from 'react';
-import { Button, Result, Spin } from 'antd';
 import { GoogleOutlined } from '@ant-design/icons';
+import { Button, Result, Spin } from 'antd';
+import React from 'react';
+
 import useAuth from './useAuth';
 import useRole from './useRole';
 

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc, collection, query, orderBy, getDocs } from 'firebase/firestore';
+import React, { useState, useEffect, useMemo } from 'react';
+
 import { db } from '../lib/firebase';
 
 export interface Lesson {

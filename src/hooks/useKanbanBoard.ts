@@ -1,8 +1,10 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Column, Ticket, TicketFormData } from "../types/kanban";
-import { initialColumns } from "../utils/constants";
-import { db } from "../lib/firebase";
 import { collection, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy, setDoc, getDocs, where, documentId, deleteField, serverTimestamp, type UpdateData } from "firebase/firestore"; // Import deleteField
+import { useState, useRef, useCallback, useEffect } from "react";
+
+import { db } from "../lib/firebase";
+import { initialColumns } from "../utils/constants";
+
+import type { Column, Ticket, TicketFormData } from "../types/kanban";
 export const useKanbanBoard = () => {
   const [columns, setColumns] = useState<Column[]>(initialColumns);
   const existingTicketIds = useRef<Set<string>>(new Set()); // Store existing 5-digit IDs
