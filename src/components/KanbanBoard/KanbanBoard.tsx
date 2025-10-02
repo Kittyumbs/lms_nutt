@@ -597,8 +597,6 @@ const KanbanBoard: React.FC = () => {
       <CreateCalendarEventModal
         isOpen={activeModal === 'createCalendar'}
         onClose={() => setActiveModal('none')}
-        isSignedIn={isSignedIn}
-        handleAuthClick={handleAuthClick}
       />
 
       <CalendarEventsDrawer

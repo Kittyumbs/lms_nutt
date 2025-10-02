@@ -1,25 +1,24 @@
-import { Modal, Form, Input, Button, DatePicker, message } from 'antd';
+import { Modal, Form, Input, Button, DatePicker, message, Alert, Space } from 'antd';
+import { GoogleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 
+import useAuth from '../auth/useAuth';
 import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 
 interface CreateCalendarEventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isSignedIn: boolean;
-  handleAuthClick: () => void;
 }
 
 const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
   isOpen,
   onClose,
-  isSignedIn,
-  handleAuthClick,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-const { isGapiLoaded, error, createCalendarEvent } = useGoogleCalendar();
+  const { user, isGoogleCalendarAuthed, signInWithGoogleCalendar } = useAuth();
+  const { isSignedIn, isGapiLoaded, error, createCalendarEvent, handleAuthClick } = useGoogleCalendar();
 
   useEffect(() => {
     if (isOpen) {
@@ -77,7 +76,10 @@ const { isGapiLoaded, error, createCalendarEvent } = useGoogleCalendar();
     );
   }
 
-  if (!isSignedIn) {
+  // Show unified authentication status
+  const showAuthRequired = !user || (!isSignedIn && !isGoogleCalendarAuthed);
+  
+  if (showAuthRequired) {
     return (
       <Modal
         title="Tạo lịch nhắc hẹn Google Calendar"
@@ -86,11 +88,49 @@ const { isGapiLoaded, error, createCalendarEvent } = useGoogleCalendar();
         footer={null}
       >
         <div style={{ textAlign: 'center', padding: '20px' }}>
-          <p>Vui lòng đăng nhập Google để tạo lịch.</p>
-          <Button type="primary" onClick={handleAuthClick}>
-            Đăng nhập Google
-          </Button>
-          {error && <p style={{ color: 'red', marginTop: 8 }}>Lỗi: {error}</p>}
+          {!user ? (
+            <>
+              <Alert
+                message="Cần đăng nhập"
+                description="Vui lòng đăng nhập vào hệ thống trước để tạo sự kiện lịch."
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+              <p>Bạn có thể đăng nhập từ sidebar bên trái.</p>
+            </>
+          ) : (
+            <>
+              <Alert
+                message="Cần cấp quyền Google Calendar"
+                description="Để tạo sự kiện lịch, vui lòng cấp quyền truy cập Google Calendar."
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+              <Space direction="vertical">
+                <Button 
+                  type="primary" 
+                  icon={<GoogleOutlined />}
+                  onClick={async () => {
+                    try {
+                      await signInWithGoogleCalendar();
+                    } catch (err) {
+                      const errorMessage = err instanceof Error ? err.message : 'Lỗi không xác định';
+                      void message.error(errorMessage);
+                    }
+                  }}
+                  size="large"
+                >
+                  Cấp quyền Google Calendar
+                </Button>
+                <Button onClick={handleAuthClick}>
+                  Hoặc đăng nhập lại
+                </Button>
+              </Space>
+            </>
+          )}
+          {error && <Alert message={error} type="error" style={{ marginTop: 16 }} />}
         </div>
       </Modal>
     );

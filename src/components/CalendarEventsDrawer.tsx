@@ -1,8 +1,9 @@
-import { UserOutlined, CheckCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined, SyncOutlined } from '@ant-design/icons';
-import { Drawer, List, Avatar, Tag, Spin, message, Button, Space } from 'antd';
+import { UserOutlined, CheckCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined, SyncOutlined, GoogleOutlined } from '@ant-design/icons';
+import { Drawer, List, Avatar, Tag, Spin, message, Button, Space, Alert } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState, useCallback } from 'react';
 
+import useAuth from '../auth/useAuth';
 import { useGoogleCalendar } from '../hooks/useGoogleCalendar';
 
 interface CalendarEventsDrawerProps {
@@ -35,7 +36,8 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
-const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
+  const { user, isGoogleCalendarAuthed, signInWithGoogleCalendar } = useAuth();
+  const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
 
   console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn, "isAuthLoading:", isAuthLoading); // Debugging line
 
@@ -101,7 +103,10 @@ const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchC
     );
   }
 
-  if (!isSignedIn) {
+  // Show unified authentication status
+  const showAuthRequired = !user || (!isSignedIn && !isGoogleCalendarAuthed);
+  
+  if (showAuthRequired) {
     return (
       <Drawer
         title="Sự kiện Google Calendar"
@@ -111,11 +116,49 @@ const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchC
         onClose={onClose}
       >
         <div style={{ textAlign: 'center', padding: '20px' }}>
-          <p>Vui lòng đăng nhập Google để xem các sự kiện lịch.</p>
-          <Button type="primary" onClick={handleAuthClick}>
-            Đăng nhập Google
-          </Button>
-          {error && <p style={{ color: 'red', marginTop: 8 }}>Lỗi: {error}</p>}
+          {!user ? (
+            <>
+              <Alert
+                message="Cần đăng nhập"
+                description="Vui lòng đăng nhập vào hệ thống trước để sử dụng Google Calendar."
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+              <p>Bạn có thể đăng nhập từ sidebar bên trái.</p>
+            </>
+          ) : (
+            <>
+              <Alert
+                message="Cần cấp quyền Google Calendar"
+                description="Để xem và tạo sự kiện lịch, vui lòng cấp quyền truy cập Google Calendar."
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+              <Space direction="vertical">
+                <Button 
+                  type="primary" 
+                  icon={<GoogleOutlined />}
+                  onClick={async () => {
+                    try {
+                      await signInWithGoogleCalendar();
+                    } catch (err) {
+                      const errorMessage = err instanceof Error ? err.message : 'Lỗi không xác định';
+                      void message.error(errorMessage);
+                    }
+                  }}
+                  size="large"
+                >
+                  Cấp quyền Google Calendar
+                </Button>
+                <Button onClick={handleAuthClick}>
+                  Hoặc đăng nhập lại
+                </Button>
+              </Space>
+            </>
+          )}
+          {error && <Alert message={error} type="error" style={{ marginTop: 16 }} />}
         </div>
       </Drawer>
     );

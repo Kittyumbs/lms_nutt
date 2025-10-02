@@ -1,5 +1,5 @@
-import { CheckSquareOutlined, BookOutlined, AppstoreOutlined, BarChartOutlined, FileTextOutlined, UserOutlined, SwapOutlined, GoogleOutlined } from '@ant-design/icons';
-import { Avatar, Button } from 'antd';
+import { CheckSquareOutlined, BookOutlined, AppstoreOutlined, BarChartOutlined, FileTextOutlined, UserOutlined, SwapOutlined, GoogleOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Avatar, Button, Tag, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
@@ -32,7 +32,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [authError, setAuthError] = useState<string>('');
   // const { pathname } = useLocation();
-  const { user, loading: isAuthLoading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading: isAuthLoading, isGoogleCalendarAuthed, signInWithGoogle, signInWithGoogleCalendar, signOut } = useAuth();
 
   useEffect(() => {
     const raw = localStorage.getItem(LS_KEY);
@@ -174,6 +174,39 @@ export default function Sidebar() {
                     </div>
                     <div className="text-xs text-gray-500 truncate">
                       {user?.email || ''}
+                    </div>
+                    <div className="mt-1 flex items-center gap-1">
+                      <Tooltip title={isGoogleCalendarAuthed ? 'Google Calendar đã kết nối' : 'Chưa kết nối Google Calendar'}>
+                        <Tag 
+                          icon={<CalendarOutlined />} 
+                          color={isGoogleCalendarAuthed ? 'success' : 'default'}
+                          style={{ fontSize: '10px', margin: 0 }}
+                        >
+                          Calendar
+                        </Tag>
+                      </Tooltip>
+                      {!isGoogleCalendarAuthed && (
+                        <Button
+                          type="link"
+                          size="small"
+                          onClick={async () => {
+                            try {
+                              await signInWithGoogleCalendar();
+                            } catch (err) {
+                              const errorMessage = err instanceof Error ? err.message : 'Lỗi không xác định';
+                              setAuthError(errorMessage);
+                            }
+                          }}
+                          style={{ 
+                            padding: '0 4px', 
+                            height: 'auto', 
+                            fontSize: '10px',
+                            color: '#1890ff'
+                          }}
+                        >
+                          Kết nối
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <Button
