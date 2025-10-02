@@ -15,7 +15,7 @@ import {
   limit,
   startAfter,
 } from 'firebase/firestore';
-import { db } from '../firebase'; // Import the Firestore instance
+import { db } from '../lib/firebase'; // Import the Firestore instance
 
 export type CourseStatus = 'Draft' | 'Published' | 'Archived';
 

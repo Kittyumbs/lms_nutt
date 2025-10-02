@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Column, Ticket, TicketFormData } from "../types/kanban";
 import { initialColumns } from "../utils/constants";
-import { db } from "../firebase";
+import { db } from "../lib/firebase";
 import { collection, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy, setDoc, getDocs, where, documentId, deleteField, serverTimestamp, type UpdateData } from "firebase/firestore"; // Import deleteField
 export const useKanbanBoard = () => {
   const [columns, setColumns] = useState<Column[]>(initialColumns);
