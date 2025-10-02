@@ -48,7 +48,7 @@ import type { IssueType, Ticket } from "../../types/kanban"; // Import types fro
 
 
 
-import { CalendarOutlined, SwapOutlined } from "@ant-design/icons"; // Import CalendarOutlined, LogoutOutlined, and SwapOutlined icon
+import { CalendarOutlined } from "@ant-design/icons"; // Import CalendarOutlined icon
 import { Dropdown } from 'antd'; // Import Dropdown
 
 
@@ -75,7 +75,7 @@ const getIssueTypeIcon = (issueType: IssueType) => {
 
 const KanbanBoard: React.FC = () => {   
   const { columns, addTicket, updateTicket, deleteTicket, archiveTicket, moveTicket, handleDragEnd } = useKanbanBoard();
-  const { isSignedIn, handleAuthClick, signOut } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
+  const { isSignedIn, handleAuthClick } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
 
   console.log("KanbanBoard - isSignedIn:", isSignedIn); // Debugging line
 
@@ -312,16 +312,6 @@ const KanbanBoard: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
-          {isSignedIn && (
-            <Button
-              type="text"
-              icon={<SwapOutlined style={{ fontSize: '20px', color: '#ff4d4f' }} />} // Changed to SwapOutlined with red color
-              onClick={signOut}
-              className="ant-btn-icon-only"
-              style={{ marginRight: '8px' }}
-              title={`Thoát tài khoản Google`} // Updated title for clarity
-            />
-          )}
           <Dropdown
             menu={{
               items: [

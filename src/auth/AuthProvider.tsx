@@ -76,7 +76,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
               });
 
-              // Check existing token
+              // Check existing token from localStorage first
+              const savedToken = localStorage.getItem('google_calendar_token');
+              if (savedToken) {
+                try {
+                  const tokenData = JSON.parse(savedToken);
+                  // Check if token is still valid (not expired)
+                  if (tokenData.expires_at && Date.now() < tokenData.expires_at) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                    window.gapi.client.setToken({ access_token: tokenData.access_token });
+                    setIsGoogleCalendarAuthed(true);
+                  } else {
+                    // Token expired, remove it
+                    localStorage.removeItem('google_calendar_token');
+                  }
+                } catch (error) {
+                  console.error('Error parsing saved token:', error);
+                  localStorage.removeItem('google_calendar_token');
+                }
+              }
+
+              // Also check current token from gapi
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
               const existingToken = window.gapi.client.getToken();
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -89,11 +109,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               const tc = window.google?.accounts?.oauth2?.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
                 scope: GOOGLE_SCOPE,
-                callback: (response: { access_token?: string; error?: string }) => {
+                callback: (response: { access_token?: string; expires_in?: number; error?: string }) => {
                   if (response.access_token) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                     window.gapi.client.setToken({ access_token: response.access_token });
                     setIsGoogleCalendarAuthed(true);
+                    
+                    // Save token to localStorage with expiration
+                    const expiresIn = response.expires_in || 3600; // Default 1 hour
+                    const expiresAt = Date.now() + (expiresIn * 1000);
+                    const tokenData = {
+                      access_token: response.access_token,
+                      expires_at: expiresAt,
+                      created_at: Date.now()
+                    };
+                    localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
                   }
                 }
               });
@@ -117,6 +147,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     void initGoogleAPI();
   }, []);
+
+  // Auto-refresh token when it's about to expire
+  useEffect(() => {
+    const checkTokenExpiration = () => {
+      const savedToken = localStorage.getItem('google_calendar_token');
+      if (savedToken) {
+        try {
+          const tokenData = JSON.parse(savedToken);
+          const timeUntilExpiry = tokenData.expires_at - Date.now();
+          
+          // If token expires in less than 5 minutes, try to refresh
+          if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
+            console.log('Token expiring soon, attempting refresh...');
+            if (tokenClient) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+              tokenClient.requestAccessToken({ prompt: '' });
+            }
+          } else if (timeUntilExpiry <= 0) {
+            // Token expired
+            localStorage.removeItem('google_calendar_token');
+            setIsGoogleCalendarAuthed(false);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            window.gapi?.client?.setToken(null);
+          }
+        } catch (error) {
+          console.error('Error checking token expiration:', error);
+          localStorage.removeItem('google_calendar_token');
+          setIsGoogleCalendarAuthed(false);
+        }
+      }
+    };
+
+    // Check every minute
+    const interval = setInterval(checkTokenExpiration, 60000);
+    
+    // Also check immediately
+    checkTokenExpiration();
+
+    return () => clearInterval(interval);
+  }, [tokenClient]);
 
   // Sign in with Google (Firebase + Calendar)
   const signInWithGoogle = async () => {
@@ -179,6 +249,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           window.gapi.client.setToken(null);
           setIsGoogleCalendarAuthed(false);
         }
+        // Remove token from localStorage
+        localStorage.removeItem('google_calendar_token');
       } catch (calendarError) {
         console.error('Error signing out from Google Calendar:', calendarError);
         // Don't throw here, Firebase signout is more important
