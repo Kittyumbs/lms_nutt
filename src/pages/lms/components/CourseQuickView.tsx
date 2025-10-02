@@ -21,9 +21,9 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({
   onEdit,
   onSetStatus,
 }) => {
-  if (!course) return null;
-
   const { role } = useRole();
+  
+  if (!course) return null;
 
   const getStatusColor = (status: CourseStatus) => {
     switch (status) {

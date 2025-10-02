@@ -149,6 +149,7 @@ export async function duplicateCourse(id: string): Promise<Course> {
 
     // Omit id from courseToDuplicate before creating new input
     const { id: _originalId, ...restOfCourse } = courseToDuplicate;
+    // _originalId is intentionally unused as we generate a new ID
     const duplicatedCourseInput: Omit<Course, 'id' | 'createdAt' | 'updatedAt'> = {
       ...restOfCourse,
       title: `${courseToDuplicate.title} (Copy)`,

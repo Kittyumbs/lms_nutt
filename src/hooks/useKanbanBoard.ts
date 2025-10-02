@@ -19,20 +19,27 @@ export const useKanbanBoard = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const tickets: Ticket[] = snapshot.docs.map(doc => {
         const data = doc.data();
+        
+        // Add null checks for required fields
+        if (!data.title || !data.status || !data.createdAt) {
+          console.warn(`Ticket ${doc.id} missing required fields:`, data);
+          return null;
+        }
+        
         return {
           id: doc.id,
-          title: data.title,
-          description: data.description,
-          priority: data.priority,
-          issueType: data.issueType,
-          status: data.status,
-          createdAt: data.createdAt.toDate(),
-          urls: data.urls || [],
-          deadline: data.deadline ? data.deadline.toDate() : undefined,
-          personnel: data.personnel || undefined, // Include personnel field
-          completedAt: data.completedAt ? data.completedAt.toDate() : undefined, // Include completedAt field
-        };
-      });
+          title: data.title as string,
+          description: data.description as string || '',
+          priority: data.priority as string || 'medium',
+          issueType: data.issueType as string || 'Task',
+          status: data.status as string,
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          urls: Array.isArray(data.urls) ? data.urls : [],
+          deadline: data.deadline?.toDate?.() || undefined,
+          personnel: data.personnel as string || undefined,
+          completedAt: data.completedAt?.toDate?.() || undefined,
+        } as Ticket;
+      }).filter((ticket): ticket is Ticket => ticket !== null);
 
       const updatedColumns = initialColumns.map(col => ({
         ...col,

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 
-import useAuth from '../../auth/useAuth';
+// import useAuth from '../../auth/useAuth';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
 import { useEnrollment } from '../../hooks/useEnrollment';
 import { useProgress } from '../../hooks/useProgress';

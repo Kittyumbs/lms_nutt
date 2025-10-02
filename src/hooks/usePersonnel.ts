@@ -21,12 +21,19 @@ export const usePersonnel = () => {
       (snapshot) => {
         const fetchedPersonnel: Personnel[] = snapshot.docs.map((doc) => {
           const data = doc.data();
+          
+          // Add null checks for required fields
+          if (!data.name || !data.createdAt) {
+            console.warn(`Personnel ${doc.id} missing required fields:`, data);
+            return null;
+          }
+          
           return {
             id: doc.id,
-            name: data.name,
-            createdAt: data.createdAt.toDate(),
-          };
-        });
+            name: data.name as string,
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+          } as Personnel;
+        }).filter((person): person is Personnel => person !== null);
         setPersonnel(fetchedPersonnel);
         setLoading(false);
       },

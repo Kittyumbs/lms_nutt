@@ -92,9 +92,22 @@ export function useGoogleCalendar() {
     };
 
     document.body.append(gsi, api);
+    
     return () => {
-      gsi.remove();
-      api.remove();
+      try {
+        // Clean up scripts
+        if (gsi.parentNode) gsi.remove();
+        if (api.parentNode) api.remove();
+        
+        // Clean up global references if needed
+        if (typeof window !== 'undefined') {
+          // Clear any remaining intervals or timeouts
+          setIsAuthLoading(false);
+          setError(null);
+        }
+      } catch (error) {
+        console.error('Error during script cleanup:', error);
+      }
     };
   }, []);
 
@@ -124,45 +137,64 @@ export function useGoogleCalendar() {
     checkTokenStatus();
     
     // Reduced polling frequency from 200ms to 2000ms (2 seconds)
-    intervalId = setInterval(checkTokenStatus, 2000);
+    const intervalId = setInterval(checkTokenStatus, 2000);
 
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
   }, [isGapiLoaded]);
 
-  // Window event for additional synchronization
+  // Window event for additional synchronization - with proper cleanup
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'google_auth_state') {
         const newState = e.newValue === 'signed_in';
-        console.log("useGoogleCalendar: Storage change detected. Setting isSignedIn to:", newState);
         setIsSignedIn(newState);
       }
     };
 
     const handleAuthStateChange = () => {
-      const token = window.gapi?.client?.getToken();
-      const hasToken = !!token?.access_token;
-      console.log("useGoogleCalendar: Auth state change detected. hasToken:", hasToken);
-      setIsSignedIn(hasToken);
-      setUserProfile(null); // Reset profile temporarily
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        const token = window.gapi?.client?.getToken();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const hasToken = !!token?.access_token;
+        setIsSignedIn(hasToken);
+        if (!hasToken) {
+          setUserProfile(null);
+        }
+      } catch (error) {
+        console.error('Error in auth state change handler:', error);
+        setIsSignedIn(false);
+        setUserProfile(null);
+      }
     };
 
     const handleSignOutEvent = () => {
-      console.log("useGoogleCalendar: Sign out event detected. Setting isSignedIn to false.");
       setIsSignedIn(false);
       setUserProfile(null);
+      setError(null);
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('gapi_auth_changed', handleAuthStateChange as EventListener);
-    window.addEventListener('gapi_auth_signout', handleSignOutEvent);
+    // Add event listeners with proper error handling
+    try {
+      window.addEventListener('storage', handleStorageChange, { passive: true });
+      window.addEventListener('gapi_auth_changed', handleAuthStateChange as EventListener, { passive: true });
+      window.addEventListener('gapi_auth_signout', handleSignOutEvent, { passive: true });
+    } catch (error) {
+      console.error('Error adding event listeners:', error);
+    }
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('gapi_auth_changed', handleAuthStateChange as EventListener);
-      window.removeEventListener('gapi_auth_signout', handleSignOutEvent);
+      try {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('gapi_auth_changed', handleAuthStateChange as EventListener);
+        window.removeEventListener('gapi_auth_signout', handleSignOutEvent);
+      } catch (error) {
+        console.error('Error removing event listeners:', error);
+      }
     };
   }, []);
 
@@ -323,7 +355,7 @@ export function useGoogleCalendar() {
   // Fetch user profile when sign in state changes
   useEffect(() => {
     if (isSignedIn && isGapiLoaded) {
-      fetchUserProfile();
+      void fetchUserProfile().catch(console.error);
     } else {
       setUserProfile(null);
     }

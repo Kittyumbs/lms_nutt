@@ -438,12 +438,14 @@ const KanbanBoard: React.FC = () => {
                                   boxShadow: 'none'
                                 }}
                               >
-                                <div className="text-xs text-gray-500 mb-1">ID: {ticket.id}
+                                <div className="text-xs text-gray-500 mb-1">ID: {ticket?.id || 'Unknown'}
                                 </div>
                                 <div className="text-sm font-medium mb-2">
-                                  {ticket.title}
+                                  {ticket?.title || 'Untitled'}
                                 </div>
-                                {ticket.urls?.map((u, idx) => {
+                                {ticket?.urls && Array.isArray(ticket.urls) && ticket.urls.map((u, idx) => {
+                                  if (!u || typeof u !== 'object' || !u.url) return null;
+                                  
                                   let isUrl = false;
                                   try {
                                     isUrl = !!u.url && /^https?:\/\//.test(u.url) && Boolean(new URL(u.url));
@@ -467,19 +469,19 @@ const KanbanBoard: React.FC = () => {
                                       )}
                                     </div>
                                   );
-                                })}
+                                }).filter(Boolean)}
                                 <div className="flex justify-between items-center">
                                   <div className="icon-wrapper">
                                     {getIssueTypeIcon(ticket.issueType)}
                                     {getPriorityIcon(ticket.priority)}
-                                    {ticket.status === 'done' && ticket.completedAt ? (
+                                    {ticket?.status === 'done' && ticket?.completedAt ? (
                                       <div className="mt-2">
                                         <Tag color="green">
                                           Complete: {dayjs(ticket.completedAt).format("YYYY-MM-DD")}
                                         </Tag>
                                       </div>
                                     ) : (
-                                      ticket.deadline && (
+                                      ticket?.deadline && (
                                         <div className="mt-2">
                                           <Tag
                                             color={
@@ -497,7 +499,7 @@ const KanbanBoard: React.FC = () => {
                                     )}
                                   </div>
                                   {/* Display Implementation Personnel */}
-                                  {ticket.personnel && (
+                                  {ticket?.personnel && (
                                     <div className="text-xs text-gray-500 mt-1">
                                       Personnel: {ticket.personnel}
                                     </div>

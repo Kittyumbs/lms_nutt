@@ -78,7 +78,7 @@ const CoursesPage: React.FC = () => {
     refresh();
   };
 
-  const handleQuickView = (course: Course) => {
+  const _handleQuickView = (course: Course) => {
     setQuickViewCourse(course);
     setIsQuickViewOpen(true);
   };
