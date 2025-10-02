@@ -40,7 +40,7 @@ const PersonnelSelectionModal: React.FC<PersonnelSelectionModalProps> = ({
       message.success(`Personnel "${newPersonnelName.trim()}" added.`);
       setNewPersonnelName("");
       setIsAddingNew(false);
-    } catch (err) {
+      } catch {
       message.error("Failed to add personnel.");
     }
   };

@@ -1,5 +1,5 @@
 import { doc, getDoc, collection, query, orderBy, getDocs } from 'firebase/firestore';
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { db } from '../lib/firebase';
 
@@ -103,7 +103,7 @@ export function useCourseDetail(courseId: string): {
         // Create outline with lessons grouped by modules
         const modulesWithLessons = modulesData.map(module => ({
           ...module,
-          lessons: lessonsData.filter(lesson => {
+          lessons: lessonsData.filter(() => {
             // If modules and lessons have a relationship, filter accordingly
             // For now, assume all lessons belong to course, and we'll organize by module if needed
             return true; // All lessons for this course
@@ -137,12 +137,12 @@ export function useCourseDetail(courseId: string): {
       }
     };
 
-    loadCourseDetail();
+    void loadCourseDetail();
   }, [courseId]);
 
-  const memoizedFirstLessonId = useMemo(() => {
+      // const memoizedFirstLessonId = useMemo(() => {
     return lessons.length > 0 ? lessons[0]?.id : undefined;
-  }, [lessons]);
+      // }, [lessons]);
 
   return {
     course,

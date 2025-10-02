@@ -1,23 +1,33 @@
 /// <reference types="gapi" />
 /// <reference types="gapi.client" />
 /// <reference types="gapi.client.calendar" />
-import { message } from "antd"; // Import message from antd
-import { useEffect, useState, useCallback } from "react";
+import { message } from "antd";
+import { useCallback, useEffect, useState } from "react";
 
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CALENDAR_CLIENT_ID!;
-const API_KEY   = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY!;
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CALENDAR_CLIENT_ID as string;
+const API_KEY = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY as string;
 const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
 const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
 type GEvent = gapi.client.calendar.Event;
 
+interface TokenClient {
+  requestAccessToken: (options?: { prompt?: string }) => void;
+}
+
+interface UserProfile {
+  email: string;
+  name: string;
+  picture: string;
+}
+
 export function useGoogleCalendar() {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isGapiLoaded, setIsGapiLoaded] = useState(false);
-  const [tokenClient, setTokenClient] = useState<any>(null);
+  const [tokenClient, setTokenClient] = useState<TokenClient | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true); // New state for authentication loading
-  const [userProfile, setUserProfile] = useState<{ email: string; name: string; picture: string } | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   // Load GIS + gapi scripts in browser only
   useEffect(() => {
@@ -34,45 +44,44 @@ export function useGoogleCalendar() {
     api.async = true;
 
     api.onload = () => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       window.gapi.load("client:auth2", async () => {
         try {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           await window.gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY });
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           await window.gapi.client.load("calendar", "v3");
           setIsGapiLoaded(true);
-          console.log("useGoogleCalendar: gapi client loaded. isGapiLoaded:", true);
 
-          // Check for existing token immediately after gapi client is loaded
+          // Check for existing token
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           const existingToken = window.gapi.client.getToken();
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           if (existingToken?.access_token) {
             setIsSignedIn(true);
-            console.log("useGoogleCalendar: Existing token found on load. isSignedIn:", true);
-          } else {
-            console.log("useGoogleCalendar: No existing token found on load.");
           }
 
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           const tc = window.google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPE,
-            callback: (resp: any) => {
-              console.log("useGoogleCalendar: tokenClient callback fired. resp:", resp);
+            callback: (resp: { access_token?: string; error?: string }) => {
               if (resp?.access_token) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                 window.gapi.client.setToken({ access_token: resp.access_token });
                 setIsSignedIn(true);
-                console.log("useGoogleCalendar: Access token received from callback. isSignedIn:", true);
+                setError(null);
               } else {
-                setError("No access token from GIS");
-                console.error("useGoogleCalendar: No access token from GIS callback.");
+                setError(resp?.error || "No access token from Google");
               }
             },
           });
-          setTokenClient(tc);
-          console.log("useGoogleCalendar: tokenClient initialized.");
-        } catch (e: any) {
-          setError(e?.message ?? "Failed to init Google API client");
-          console.error("useGoogleCalendar: Error during gapi client init:", e);
+          setTokenClient(tc as TokenClient);
+        } catch (e) {
+          const errorMessage = e instanceof Error ? e.message : "Failed to init Google API client";
+          setError(errorMessage);
         } finally {
-          setIsAuthLoading(false); // Authentication loading is complete
-          console.log("useGoogleCalendar: Authentication loading complete. isAuthLoading:", false);
+          setIsAuthLoading(false);
         }
       });
     };
@@ -89,22 +98,37 @@ export function useGoogleCalendar() {
     };
   }, []);
 
-  // More robust synchronization with continuous polling
+  // Optimized token synchronization - reduced polling frequency
   useEffect(() => {
-    if (isGapiLoaded) {
-      const intervalId = setInterval(() => {
+    if (!isGapiLoaded) return;
+
+    let intervalId: NodeJS.Timeout;
+    
+    const checkTokenStatus = () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         const currentToken = window.gapi?.client?.getToken();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const hasToken = !!currentToken?.access_token;
-
-        // Update isSignedIn based on token existence
+        
         setIsSignedIn(hasToken);
-
-        // Update loading state if needed
         setIsAuthLoading(false);
-      }, 200); // Check every 200ms for better responsiveness
+      } catch (error) {
+        console.error('Error checking token status:', error);
+        setIsSignedIn(false);
+        setIsAuthLoading(false);
+      }
+    };
 
-      return () => clearInterval(intervalId);
-    }
+    // Initial check
+    checkTokenStatus();
+    
+    // Reduced polling frequency from 200ms to 2000ms (2 seconds)
+    intervalId = setInterval(checkTokenStatus, 2000);
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isGapiLoaded]);
 
   // Window event for additional synchronization
@@ -143,9 +167,18 @@ export function useGoogleCalendar() {
   }, []);
 
   const handleAuthClick = useCallback(() => {
-    if (!tokenClient) { setError("Auth not ready"); return; }
-    // Attempt to use existing session/token first
-    tokenClient.requestAccessToken({ prompt: "" });
+    if (!tokenClient) {
+      setError("Authentication not ready. Please wait and try again.");
+      return;
+    }
+    
+    try {
+      setError(null);
+      tokenClient.requestAccessToken({ prompt: "" });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Authentication failed";
+      setError(errorMessage);
+    }
   }, [tokenClient]);
 
   const ensureSignedIn = useCallback(async () => {
@@ -192,43 +225,69 @@ export function useGoogleCalendar() {
   }, [isSignedIn, tokenClient]);
 
   const fetchCalendarEvents = useCallback(async (): Promise<GEvent[]> => {
-    if (!isGapiLoaded) throw new Error("API not ready");
-    await ensureSignedIn();
-    const now = new Date().toISOString();
-    const r = await window.gapi.client.calendar.events.list({
-      calendarId: "primary",
-      timeMin: now,
-      singleEvents: true,
-      orderBy: "startTime",
-      maxResults: 50,
-    });
-    return r.result.items ?? [];
+    if (!isGapiLoaded) {
+      throw new Error("Google Calendar API not ready");
+    }
+    
+    try {
+      await ensureSignedIn();
+      const now = new Date().toISOString();
+      
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const response = await window.gapi.client.calendar.events.list({
+        calendarId: "primary",
+        timeMin: now,
+        singleEvents: true,
+        orderBy: "startTime",
+        maxResults: 50,
+      });
+      
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+      return response.result.items ?? [];
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch calendar events";
+      throw new Error(errorMessage);
+    }
   }, [isGapiLoaded, ensureSignedIn]);
 
   const createCalendarEvent = useCallback(async (event: GEvent) => {
-    if (!isGapiLoaded) throw new Error("API not ready");
-    await ensureSignedIn();
-    const r = await window.gapi.client.calendar.events.insert({
-      calendarId: "primary",
-      sendUpdates: "all",
-      resource: event as any,
-    });
-    return r.result;
+    if (!isGapiLoaded) {
+      throw new Error("Google Calendar API not ready");
+    }
+    
+    try {
+      await ensureSignedIn();
+      
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const response = await window.gapi.client.calendar.events.insert({
+        calendarId: "primary",
+        sendUpdates: "all",
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        resource: event as any,
+      });
+      
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+      return response.result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to create calendar event";
+      throw new Error(errorMessage);
+    }
   }, [isGapiLoaded, ensureSignedIn]);
 
   const fetchUserProfile = useCallback(async () => {
     if (!isGapiLoaded) return;
 
-    const token = window.gapi?.client?.getToken()?.access_token;
-    if (!token) {
-      console.error('No access token available for profile fetch');
-      return;
-    }
-
     try {
-      console.log('Fetching user profile using fetch with Bearer token...');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const tokenData = window.gapi?.client?.getToken();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const token = tokenData?.access_token as string | undefined;
+      
+      if (!token) {
+        console.error('No access token available for profile fetch');
+        return;
+      }
 
-      // Use fetch directly with the access token
       const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         method: 'GET',
         headers: {
@@ -241,50 +300,23 @@ export function useGoogleCalendar() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const userInfo = await response.json();
+      const userInfo = await response.json() as {
+        email?: string;
+        name?: string;
+        picture?: string;
+      };
+      
       const email = userInfo.email || '';
       const name = userInfo.name || userInfo.email || 'Google User';
       const picture = userInfo.picture || '';
 
       setUserProfile({ email, name, picture });
-      console.log('Profile fetched successfully:', {
-        email: email.slice(0, 3) + '...',
-        name: name.slice(0, 10) + (name.length > 10 ? '...' : ''),
-        hasPicture: !!picture
-      });
 
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
-
-      // Fallback: try using gapi auth2 method if available
-      try {
-        console.log('Trying gapi auth2 fallback...');
-        if (window.gapi.auth2?.getAuthInstance()) {
-          const auth2 = window.gapi.auth2.getAuthInstance();
-          const currentUser = auth2.currentUser.get();
-          const profile = currentUser.getBasicProfile();
-
-          if (profile) {
-            const email = profile.getEmail();
-            const name = profile.getName();
-            const picture = profile.getImageUrl();
-
-            setUserProfile({ email, name, picture });
-            console.log('Profile fetched from gapi.auth2:', {
-              email: email.slice(0, 3) + '...',
-              name: name.slice(0, 10) + (name.length > 10 ? '...' : ''),
-              hasPicture: !!picture
-            });
-            return;
-          }
-        }
-        throw new Error('gapi.auth2 not available or no profile');
-
-      } catch (auth2Error) {
-        console.error('gapi.auth2 fallback also failed:', auth2Error);
-        setUserProfile({ email: '', name: 'Google Account', picture: '' });
-        console.log('Using default profile values');
-      }
+      
+      // Fallback to default profile
+      setUserProfile({ email: '', name: 'Google Account', picture: '' });
     }
   }, [isGapiLoaded]);
 
@@ -298,22 +330,33 @@ export function useGoogleCalendar() {
   }, [isSignedIn, isGapiLoaded, fetchUserProfile]);
 
   const signOut = useCallback(() => {
-    // Clear current token and session without revoking app permissions
-    if (window.gapi.client.getToken()) {
-      window.gapi.client.setToken(null);
-      setIsSignedIn(false);
-      setUserProfile(null);
-      setError(null); // Clear any previous errors
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const currentToken = window.gapi?.client?.getToken();
+      
+      if (currentToken) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        window.gapi.client.setToken(null);
+        setIsSignedIn(false);
+        setUserProfile(null);
+        setError(null);
 
-      // Trigger custom event for synchronization
-      window.dispatchEvent(new CustomEvent('gapi_auth_signout'));
+        // Trigger custom event for synchronization
+        window.dispatchEvent(new CustomEvent('gapi_auth_signout'));
 
-      message.success("Đã thoát tài khoản Google hiện tại.");
-    } else {
+        void message.success("Đã thoát tài khoản Google hiện tại.");
+      } else {
+        setIsSignedIn(false);
+        setUserProfile(null);
+        setError(null);
+        void message.info("Bạn chưa đăng nhập Google.");
+      }
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Force reset state even if there's an error
       setIsSignedIn(false);
       setUserProfile(null);
       setError(null);
-      message.info("Bạn chưa đăng nhập Google.");
     }
   }, []);
 

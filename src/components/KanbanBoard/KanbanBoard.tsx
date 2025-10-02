@@ -516,7 +516,7 @@ const KanbanBoard: React.FC = () => {
                                         icon={<LeftOutlined style={{ fontSize: '16px', color: '#1890ff' }} />}
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleMoveTicket(ticket.id, 'left');
+                                          void handleMoveTicket(ticket.id, 'left');
                                         }}
                                       />
                                     )}
@@ -527,7 +527,7 @@ const KanbanBoard: React.FC = () => {
                                         icon={<FolderOutlined style={{ fontSize: '16px', color: '#faad14' }} />}
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleArchiveTicket(ticket.id);
+                                          void handleArchiveTicket(ticket.id);
                                         }}
                                       />
                                     )}
@@ -547,7 +547,7 @@ const KanbanBoard: React.FC = () => {
                                         icon={<RightOutlined style={{ fontSize: '16px', color: '#1890ff' }} />}
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleMoveTicket(ticket.id, 'right');
+                                          void handleMoveTicket(ticket.id, 'right');
                                         }}
                                       />
                                     )}

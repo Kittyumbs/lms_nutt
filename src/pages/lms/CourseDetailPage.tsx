@@ -1,5 +1,5 @@
 import { HomeOutlined, BookOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { Breadcrumb, Card, Button, Tag, Tabs, Collapse, Empty, Skeleton, Space } from 'antd';
+import { Breadcrumb, Card, Button, Tag, Tabs, Collapse, Empty, Skeleton } from 'antd';
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 
@@ -44,10 +44,10 @@ export default function CourseDetailPage() {
   const handleEnroll = () => {
     if (!user) {
       // Prompt sign-in if not authenticated
-      signInWithGoogle();
+      void signInWithGoogle();
     } else {
       // Directly enroll if authenticated
-      enroll();
+      void enroll();
     }
   };
 

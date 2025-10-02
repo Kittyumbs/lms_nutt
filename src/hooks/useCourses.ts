@@ -7,14 +7,14 @@ import {
   addDoc,
   updateDoc,
   doc,
-  deleteDoc,
+  // deleteDoc,
   onSnapshot,
   serverTimestamp,
-  limit,
-  startAfter,
+  // limit,
+  // startAfter,
 } from 'firebase/firestore';
 import { useState, useEffect, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '../lib/firebase'; // Import the Firestore instance
 
@@ -37,7 +37,7 @@ const COURSES_COLLECTION = 'courses';
 export function useCourses(params: { search?: string; tags?: string[]; status?: 'All' | CourseStatus; pageSize?: number }): {
   items: Course[]; loading: boolean; hasMore: boolean; loadMore: () => void; refresh: () => void;
 } {
-  const { search, tags, status, pageSize = 10 } = params;
+  const { search, tags, status } = params;
   const [items, setItems] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
@@ -148,7 +148,7 @@ export async function duplicateCourse(id: string): Promise<Course> {
     const courseToDuplicate = originalDoc.docs[0].data() as Course;
 
     // Omit id from courseToDuplicate before creating new input
-    const { id: _, ...restOfCourse } = courseToDuplicate;
+    const { id, ...restOfCourse } = courseToDuplicate;
     const duplicatedCourseInput: Omit<Course, 'id' | 'createdAt' | 'updatedAt'> = {
       ...restOfCourse,
       title: `${courseToDuplicate.title} (Copy)`,

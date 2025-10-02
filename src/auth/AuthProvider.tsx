@@ -42,17 +42,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error signing in with Google:', error);
+      
+      // Type-safe error handling
+      const firebaseError = error as { code?: string; message?: string };
+      
       // Show user-friendly error message
-      if (error?.code === 'auth/configuration-not-found') {
+      if (firebaseError?.code === 'auth/configuration-not-found') {
         throw new Error('❌ Firebase Authentication setup required:\n\n1. Go to Firebase Console → Authentication → Get started\n2. Enable Google Sign-in\n3. Add "localhost" to authorized domains\n4. Try again');
-      } else if (error?.code === 'auth/popup-blocked') {
+      } else if (firebaseError?.code === 'auth/popup-blocked') {
         throw new Error('Sign-in popup was blocked by browser. Please allow popups and try again.');
-      } else if (error?.code === 'auth/popup-closed-by-user') {
+      } else if (firebaseError?.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled.');
       } else {
-        throw new Error(`Authentication failed: ${error?.message || 'Unknown error'}`);
+        const errorMessage = firebaseError?.message || (error instanceof Error ? error.message : 'Unknown error');
+        throw new Error(`Authentication failed: ${errorMessage}`);
       }
     }
   };

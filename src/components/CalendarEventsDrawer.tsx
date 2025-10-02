@@ -52,11 +52,12 @@ const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchC
 
       const fetched = await fetchCalendarEvents();
       const valid = (fetched ?? []).filter(e => !!(e.id && e.summary));
-      setEvents(valid as any);
-      message.success('Đã tải sự kiện lịch.');
-    } catch (err: any) {
+      setEvents(valid as GoogleCalendarEvent[]);
+      void message.success('Đã tải sự kiện lịch.');
+    } catch (err) {
       console.error('Error fetching calendar events:', err);
-      message.error(error || err.message || 'Không thể tải sự kiện lịch.');
+      const errorMessage = err instanceof Error ? err.message : 'Không thể tải sự kiện lịch.';
+      void message.error(error || errorMessage);
     } finally {
       setLoading(false);
     }
@@ -64,7 +65,7 @@ const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchC
 
   useEffect(() => {
     if (isOpen && isSignedIn && isGapiLoaded) {
-      loadEvents();
+      void loadEvents();
     }
   }, [isOpen, isSignedIn, isGapiLoaded, loadEvents]);
 

@@ -1,6 +1,6 @@
 import { message } from 'antd';
 import { collection, query, where, onSnapshot, setDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import useAuth from '../auth/useAuth';
 import { db } from '../lib/firebase';

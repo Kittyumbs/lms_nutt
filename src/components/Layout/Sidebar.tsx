@@ -1,7 +1,7 @@
 import { CheckSquareOutlined, BookOutlined, AppstoreOutlined, BarChartOutlined, FileTextOutlined, UserOutlined, SwapOutlined, GoogleOutlined } from '@ant-design/icons';
 import { Avatar, Button } from 'antd';
 import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import useAuth from '../../auth/useAuth';
 
@@ -49,8 +49,9 @@ export default function Sidebar() {
     setAuthError('');
     try {
       await signInWithGoogle();
-    } catch (error: any) {
-      setAuthError(error.message || 'Authentication failed');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+      setAuthError(errorMessage);
     }
   };
 

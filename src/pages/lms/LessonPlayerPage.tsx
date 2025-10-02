@@ -1,5 +1,5 @@
 import { HomeOutlined, BookOutlined, CheckCircleOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Card, Alert, Skeleton, message, Space } from 'antd';
+import { Breadcrumb, Button, Card, Alert, Skeleton, Space } from 'antd';
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -240,7 +240,7 @@ export default function LessonPlayerPage() {
   const { course: courseDetail, modules, lessons, loading, error } = useCourseDetail(cid || '');
   const { enrolled } = useEnrollment(cid || '');
   const { doneIds, markDone, unmarkDone } = useProgress(cid || '');
-  const { user } = useAuth();
+  // const { user } = useAuth();
 
   const [currentLessonId, setCurrentLessonId] = useState(lid || '');
 
@@ -283,7 +283,7 @@ export default function LessonPlayerPage() {
   };
 
   const handleLessonClick = (lessonId: string) => {
-    navigate(`/lms/learn/${cid}/${lessonId}`);
+    void navigate(`/lms/learn/${cid}/${lessonId}`);
   };
 
   if (loading) {

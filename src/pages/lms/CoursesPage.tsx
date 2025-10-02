@@ -20,7 +20,7 @@ const CoursesPage: React.FC = () => {
   const { role } = useRole();
 
   // Check permissions
-  const canSeeActions = role === 'instructor' || role === 'admin';
+  // const canSeeActions = role === 'instructor' || role === 'admin';
 
   // filters
   const [search, setSearch] = useState('');

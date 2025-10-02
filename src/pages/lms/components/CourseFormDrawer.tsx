@@ -1,7 +1,7 @@
 import { Drawer, Form, Input, Button, Select, Space, message } from 'antd';
 import React, { useEffect } from 'react';
 
-import { CourseStatus, createCourse, updateCourse } from '../../../hooks/useCourses';
+import { createCourse, updateCourse } from '../../../hooks/useCourses';
 
 import type { Course} from '../../../hooks/useCourses';
 
