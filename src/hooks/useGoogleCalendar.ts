@@ -114,8 +114,6 @@ export function useGoogleCalendar() {
   // Optimized token synchronization - reduced polling frequency
   useEffect(() => {
     if (!isGapiLoaded) return;
-
-    let intervalId: number;
     
     const checkTokenStatus = () => {
       try {
