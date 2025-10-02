@@ -102,7 +102,7 @@ export function useGoogleCalendar() {
   useEffect(() => {
     if (!isGapiLoaded) return;
 
-    let intervalId: NodeJS.Timeout;
+    let intervalId: number;
     
     const checkTokenStatus = () => {
       try {

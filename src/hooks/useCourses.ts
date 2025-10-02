@@ -148,7 +148,7 @@ export async function duplicateCourse(id: string): Promise<Course> {
     const courseToDuplicate = originalDoc.docs[0].data() as Course;
 
     // Omit id from courseToDuplicate before creating new input
-    const { id, ...restOfCourse } = courseToDuplicate;
+    const { id: _originalId, ...restOfCourse } = courseToDuplicate;
     const duplicatedCourseInput: Omit<Course, 'id' | 'createdAt' | 'updatedAt'> = {
       ...restOfCourse,
       title: `${courseToDuplicate.title} (Copy)`,

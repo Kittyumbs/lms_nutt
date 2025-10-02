@@ -140,9 +140,9 @@ export function useCourseDetail(courseId: string): {
     void loadCourseDetail();
   }, [courseId]);
 
-      // const memoizedFirstLessonId = useMemo(() => {
-    return lessons.length > 0 ? lessons[0]?.id : undefined;
-      // }, [lessons]);
+  // const memoizedFirstLessonId = useMemo(() => {
+  //   return lessons.length > 0 ? lessons[0]?.id : undefined;
+  // }, [lessons]);
 
   return {
     course,
