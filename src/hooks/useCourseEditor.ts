@@ -38,7 +38,7 @@ export interface Lesson {
 // Module Management
 export async function createModule(courseId: string, data: Omit<Module, 'id' | 'courseId' | 'createdAt' | 'updatedAt'>): Promise<Module> {
   try {
-    const moduleRef = await addDoc(collection(db, 'courses', courseId, 'modules'), {
+    const moduleRef = await addDoc(collection(db, 'modules'), {
       ...data,
       courseId,
       createdAt: serverTimestamp(),
@@ -60,7 +60,7 @@ export async function createModule(courseId: string, data: Omit<Module, 'id' | '
 
 export async function updateModule(courseId: string, moduleId: string, data: Partial<Module>): Promise<void> {
   try {
-    await updateDoc(doc(db, 'courses', courseId, 'modules', moduleId), {
+    await updateDoc(doc(db, 'modules', moduleId), {
       ...data,
       updatedAt: serverTimestamp(),
     });
@@ -73,17 +73,17 @@ export async function updateModule(courseId: string, moduleId: string, data: Par
 export async function deleteModule(courseId: string, moduleId: string): Promise<void> {
   try {
     // First, delete all lessons in this module
-    const lessonsQuery = query(collection(db, 'courses', courseId, 'lessons'));
+    const lessonsQuery = query(collection(db, 'lessons'));
     const lessonsSnap = await getDocs(lessonsQuery);
     
     const deletePromises = lessonsSnap.docs
-      .filter(doc => doc.data().moduleId === moduleId)
+      .filter(doc => doc.data().moduleId === moduleId && doc.data().courseId === courseId)
       .map(doc => deleteDoc(doc.ref));
     
     await Promise.all(deletePromises);
     
     // Then delete the module
-    await deleteDoc(doc(db, 'courses', courseId, 'modules', moduleId));
+    await deleteDoc(doc(db, 'modules', moduleId));
   } catch (error) {
     console.error('Error deleting module:', error);
     throw error;
@@ -93,7 +93,7 @@ export async function deleteModule(courseId: string, moduleId: string): Promise<
 // Lesson Management
 export async function createLesson(courseId: string, data: Omit<Lesson, 'id' | 'courseId' | 'createdAt' | 'updatedAt'>): Promise<Lesson> {
   try {
-    const lessonRef = await addDoc(collection(db, 'courses', courseId, 'lessons'), {
+    const lessonRef = await addDoc(collection(db, 'lessons'), {
       ...data,
       courseId,
       createdAt: serverTimestamp(),
@@ -115,7 +115,7 @@ export async function createLesson(courseId: string, data: Omit<Lesson, 'id' | '
 
 export async function updateLesson(courseId: string, lessonId: string, data: Partial<Lesson>): Promise<void> {
   try {
-    await updateDoc(doc(db, 'courses', courseId, 'lessons', lessonId), {
+    await updateDoc(doc(db, 'lessons', lessonId), {
       ...data,
       updatedAt: serverTimestamp(),
     });
@@ -127,7 +127,7 @@ export async function updateLesson(courseId: string, lessonId: string, data: Par
 
 export async function deleteLesson(courseId: string, lessonId: string): Promise<void> {
   try {
-    await deleteDoc(doc(db, 'courses', courseId, 'lessons', lessonId));
+    await deleteDoc(doc(db, 'lessons', lessonId));
   } catch (error) {
     console.error('Error deleting lesson:', error);
     throw error;
@@ -138,7 +138,7 @@ export async function deleteLesson(courseId: string, lessonId: string): Promise<
 export async function reorderModules(courseId: string, moduleOrders: { id: string; order: number }[]): Promise<void> {
   try {
     const updatePromises = moduleOrders.map(({ id, order }) =>
-      updateDoc(doc(db, 'courses', courseId, 'modules', id), {
+      updateDoc(doc(db, 'modules', id), {
         order,
         updatedAt: serverTimestamp(),
       })
@@ -154,7 +154,7 @@ export async function reorderModules(courseId: string, moduleOrders: { id: strin
 export async function reorderLessons(courseId: string, lessonOrders: { id: string; order: number }[]): Promise<void> {
   try {
     const updatePromises = lessonOrders.map(({ id, order }) =>
-      updateDoc(doc(db, 'courses', courseId, 'lessons', id), {
+      updateDoc(doc(db, 'lessons', id), {
         order,
         updatedAt: serverTimestamp(),
       })

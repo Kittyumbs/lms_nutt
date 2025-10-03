@@ -73,38 +73,51 @@ export function useCourseDetail(courseId: string): {
 
       // Load modules
       const modulesQuery = query(
-        collection(db, 'courses', courseId, 'modules'),
+        collection(db, 'modules'),
         orderBy('order', 'asc')
       );
       const modulesSnap = await getDocs(modulesQuery);
-      const modulesData: Module[] = modulesSnap.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title || '',
-          description: data.description,
-          order: data.order || 0,
-          lessons: [], // Initialize empty lessons array
-          isExpanded: data.isExpanded
-        } as Module;
-      });
+      const modulesData: Module[] = modulesSnap.docs
+        .filter(doc => doc.data().courseId === courseId)
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title || '',
+            description: data.description,
+            order: data.order || 0,
+            lessons: [], // Initialize empty lessons array
+            isExpanded: data.isExpanded
+          } as Module;
+        });
 
       // Load lessons
       const lessonsQuery = query(
-        collection(db, 'courses', courseId, 'lessons'),
+        collection(db, 'lessons'),
         orderBy('order', 'asc')
       );
       const lessonsSnap = await getDocs(lessonsQuery);
-      const lessonsData: Lesson[] = lessonsSnap.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title || '',
-          type: data.type || 'text',
-          content: data.content,
-          order: data.order || 0,
-          moduleId: data.moduleId
-        } as Lesson;
+      const lessonsData: Lesson[] = lessonsSnap.docs
+        .filter(doc => doc.data().courseId === courseId)
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title || '',
+            type: data.type || 'text',
+            content: data.content,
+            order: data.order || 0,
+            moduleId: data.moduleId
+          } as Lesson;
+        });
+
+      // Debug logs
+      console.log('📚 Course Detail Debug:', {
+        courseId,
+        modulesCount: modulesData.length,
+        lessonsCount: lessonsData.length,
+        modules: modulesData.map(m => ({ id: m.id, title: m.title, order: m.order })),
+        lessons: lessonsData.map(l => ({ id: l.id, title: l.title, moduleId: l.moduleId, order: l.order }))
       });
 
       // Group lessons by modules
