@@ -9,6 +9,7 @@ export interface Lesson {
   type: 'video' | 'text' | 'quiz' | 'pdf';
   content?: string;
   order: number;
+  moduleId?: string;
 }
 
 export interface Module {
@@ -45,12 +46,102 @@ export function useCourseDetail(courseId: string): {
   lessons: Lesson[];
   loading: boolean;
   error: string | null;
+  refresh: () => void;
 } {
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const loadCourseDetail = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load course data
+      const courseSnap = await getDoc(doc(db, 'courses', courseId));
+      if (!courseSnap.exists()) {
+        throw new Error('Course not found');
+      }
+
+      const courseData = courseSnap.data() as Omit<CourseDetail, 'id'>;
+      const fullCourse: CourseDetail = {
+        id: courseSnap.id,
+        ...courseData,
+      };
+
+      // Load modules
+      const modulesQuery = query(
+        collection(db, 'courses', courseId, 'modules'),
+        orderBy('order', 'asc')
+      );
+      const modulesSnap = await getDocs(modulesQuery);
+      const modulesData: Module[] = modulesSnap.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title || '',
+          description: data.description,
+          order: data.order || 0,
+          lessons: [], // Initialize empty lessons array
+          isExpanded: data.isExpanded
+        } as Module;
+      });
+
+      // Load lessons
+      const lessonsQuery = query(
+        collection(db, 'courses', courseId, 'lessons'),
+        orderBy('order', 'asc')
+      );
+      const lessonsSnap = await getDocs(lessonsQuery);
+      const lessonsData: Lesson[] = lessonsSnap.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title || '',
+          type: data.type || 'text',
+          content: data.content,
+          order: data.order || 0,
+          moduleId: data.moduleId
+        } as Lesson;
+      });
+
+      // Group lessons by modules
+      const modulesWithLessons = modulesData.map(module => ({
+        ...module,
+        lessons: lessonsData.filter(lesson => lesson.moduleId === module.id)
+      }));
+
+      const outline: Outline = {
+        modules: modulesWithLessons,
+        totalLessons: lessonsData.length,
+      };
+
+      // Set first lesson ID
+      const firstLessonId = lessonsData.length > 0 ? lessonsData[0].id : undefined;
+
+      setCourse({
+        ...fullCourse,
+        outline,
+        firstLessonId,
+      });
+      setModules(modulesWithLessons);
+      setLessons(lessonsData);
+    } catch (err: any) {
+      console.error('Error loading course detail:', err);
+      setError(err.message || 'Failed to load course');
+      setCourse(null);
+      setModules([]);
+      setLessons([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refresh = () => {
+    void loadCourseDetail();
+  };
 
   useEffect(() => {
     if (!courseId) {
@@ -61,94 +152,15 @@ export function useCourseDetail(courseId: string): {
       return;
     }
 
-    const loadCourseDetail = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Load course data
-        const courseSnap = await getDoc(doc(db, 'courses', courseId));
-        if (!courseSnap.exists()) {
-          throw new Error('Course not found');
-        }
-
-        const courseData = courseSnap.data() as Omit<CourseDetail, 'id'>;
-        const fullCourse: CourseDetail = {
-          id: courseSnap.id,
-          ...courseData,
-        };
-
-        // Load modules
-        const modulesQuery = query(
-          collection(db, 'courses', courseId, 'modules'),
-          orderBy('order', 'asc')
-        );
-        const modulesSnap = await getDocs(modulesQuery);
-        const modulesData: Module[] = modulesSnap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        } as Module));
-
-        // Load lessons
-        const lessonsQuery = query(
-          collection(db, 'courses', courseId, 'lessons'),
-          orderBy('order', 'asc')
-        );
-        const lessonsSnap = await getDocs(lessonsQuery);
-        const lessonsData: Lesson[] = lessonsSnap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        } as Lesson));
-
-        // Create outline with lessons grouped by modules
-        const modulesWithLessons = modulesData.map(module => ({
-          ...module,
-          lessons: lessonsData.filter(() => {
-            // If modules and lessons have a relationship, filter accordingly
-            // For now, assume all lessons belong to course, and we'll organize by module if needed
-            return true; // All lessons for this course
-          }).sort((a, b) => a.order - b.order),
-        }));
-
-        const outline: Outline = {
-          modules: modulesWithLessons,
-          totalLessons: lessonsData.length,
-        };
-
-        // Set first lesson ID
-        const firstLessonId = lessonsData.length > 0 ? lessonsData[0].id : undefined;
-
-        setCourse({
-          ...fullCourse,
-          outline,
-          firstLessonId,
-        });
-        setModules(modulesWithLessons);
-        setLessons(lessonsData);
-
-      } catch (err) {
-        console.error('Error loading course detail:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load course details');
-        setCourse(null);
-        setModules([]);
-        setLessons([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     void loadCourseDetail();
   }, [courseId]);
-
-  // const memoizedFirstLessonId = useMemo(() => {
-  //   return lessons.length > 0 ? lessons[0]?.id : undefined;
-  // }, [lessons]);
 
   return {
     course,
     modules,
     lessons,
     loading,
-    error
+    error,
+    refresh
   };
 }

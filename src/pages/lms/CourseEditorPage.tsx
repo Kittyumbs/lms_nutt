@@ -31,7 +31,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 import useRole from '../../auth/useRole';
-import { useCourseDetail } from '../../hooks/useCourseDetail';
+import { useCourseDetail, type Module, type Lesson } from '../../hooks/useCourseDetail';
 import { useCourseEditor } from '../../hooks/useCourseEditor';
 import { PageSEO } from '../../utils/seo';
 
@@ -39,23 +39,6 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 const { TabPane } = Tabs;
-
-interface Module {
-  id: string;
-  title: string;
-  description?: string;
-  order: number;
-  lessons: Lesson[];
-}
-
-interface Lesson {
-  id: string;
-  title: string;
-  type: 'video' | 'text' | 'quiz' | 'pdf';
-  content?: string;
-  order: number;
-  moduleId: string;
-}
 
 export default function CourseEditorPage() {
   const { cid } = useParams<{ cid: string }>();
@@ -133,6 +116,7 @@ export default function CourseEditorPage() {
 
   const handleEditModule = (module: Module) => {
     setEditingModule(module);
+    form.setFieldsValue(module);
     setIsModuleModalOpen(true);
   };
 
