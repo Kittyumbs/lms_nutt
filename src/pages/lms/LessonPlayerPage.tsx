@@ -14,91 +14,122 @@ import type { Lesson } from '../../hooks/useCourseDetail';
 
 // Lesson content components
 const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
+  // Debug log to check lesson content
+  console.log('🎓 Lesson Content Debug:', {
+    lessonId: lesson.id,
+    title: lesson.title,
+    type: lesson.type,
+    hasContent: !!lesson.content,
+    contentLength: lesson.content?.length || 0,
+    contentPreview: lesson.content?.substring(0, 100) + '...'
+  });
   if (lesson.type === 'video') {
-    // Mock YouTube embed with responsive 16:9
-    return (
-      <div className="relative w-full" style={{ aspectRatio: '16 / 9' }}>
-        <iframe
-          src={`https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0`} // Placeholder YouTube video
-          className="w-full h-full rounded-lg"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title={lesson.title}
-        />
-      </div>
-    );
+    // Use actual video URL from database
+    const videoUrl = lesson.content || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+    
+    // Extract video ID from YouTube URL
+    const getYouTubeVideoId = (url: string) => {
+      const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+      return match ? match[1] : null;
+    };
+    
+    const videoId = getYouTubeVideoId(videoUrl);
+    
+    if (videoId) {
+      return (
+        <div className="relative w-full" style={{ aspectRatio: '16 / 9' }}>
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
+            className="w-full h-full rounded-lg"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={lesson.title}
+          />
+        </div>
+      );
+    }
+    
+    // Fallback to markdown content if video URL is invalid
+    const content = `# Video: ${lesson.title}\n\n**Video URL:** ${videoUrl}\n\n[Click here to watch the video](${videoUrl})`;
+    return <div className="prose max-w-none"><ReactMarkdown>{content}</ReactMarkdown></div>;
   }
 
   if (lesson.type === 'text') {
-    // Mock markdown content
-    const mockContent = `
-# ${lesson.title}
-
-This is a sample text lesson content with **markdown formatting**.
-
-You can include:
-- Lists
-- **Bold text**
-- *Italic text*
-- \`\`\`code blocks\`\`\`
-
-## Key Concepts
-
-Learn about important topics in this section. Practice the skills you've learned and experiment with different approaches.
-
-## Summary
-
-This lesson covers the fundamental concepts you need to understand. Make sure to complete the quiz at the end to test your knowledge.
-    `;
-    return <div className="prose max-w-none"><ReactMarkdown>{mockContent}</ReactMarkdown></div>;
+    // Use actual content from database
+    const content = lesson.content || `# ${lesson.title}\n\nNội dung bài học chưa được cập nhật.`;
+    return <div className="prose max-w-none"><ReactMarkdown>{content}</ReactMarkdown></div>;
   }
 
   if (lesson.type === 'quiz') {
-    // Mock quiz content
-    return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold mb-4">Quiz: {lesson.title}</h2>
-
-        <div className="space-y-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Question 1</h3>
-            <p className="mb-3">What is the capital of France?</p>
-            <div className="space-y-2">
-              {['London', 'Berlin', 'Paris', 'Madrid'].map((option, idx) => (
-                <label key={idx} className="flex items-center">
-                  <input type="radio" name="q1" value={idx} className="mr-2" />
-                  {option}
-                </label>
-              ))}
+    // Use actual quiz content from database
+    try {
+      const quizData = lesson.content ? JSON.parse(lesson.content) : null;
+      
+      if (quizData && quizData.question) {
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Quiz: {lesson.title}</h2>
+            
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="font-semibold mb-4 text-lg">{quizData.question}</h3>
+              <div className="space-y-3">
+                {quizData.options?.map((option: string, idx: number) => (
+                  <label key={idx} className="flex items-center p-3 bg-white rounded border hover:bg-gray-50 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="quiz" 
+                      value={idx} 
+                      className="mr-3" 
+                    />
+                    <span>{option}</span>
+                  </label>
+                ))}
+              </div>
+              
+              {quizData.explanation && (
+                <div className="mt-4 p-4 bg-blue-50 rounded border-l-4 border-blue-400">
+                  <p className="text-sm text-blue-800">
+                    <strong>Giải thích:</strong> {quizData.explanation}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Question 2</h3>
-            <p className="mb-3">Which programming language is used for web development?</p>
-            <div className="space-y-2">
-              {['Python', 'JavaScript', 'Java', 'PHP'].map((option, idx) => (
-                <label key={idx} className="flex items-center">
-                  <input type="radio" name="q2" value={idx} className="mr-2" />
-                  {option}
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+        );
+      }
+    } catch (error) {
+      console.error('Error parsing quiz content:', error);
+    }
+    
+    // Fallback to markdown content if quiz parsing fails
+    const content = lesson.content || `# Quiz: ${lesson.title}\n\nNội dung quiz chưa được cập nhật.`;
+    return <div className="prose max-w-none"><ReactMarkdown>{content}</ReactMarkdown></div>;
   }
 
   if (lesson.type === 'pdf') {
-    // Mock PDF embed
+    // Use actual PDF URL from database
+    const pdfUrl = lesson.content || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    
     return (
       <div className="h-[80vh] w-full">
         <iframe
-          src="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" // Placeholder PDF
+          src={pdfUrl}
           className="w-full h-full border rounded-lg"
           title="PDF Viewer"
         />
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-600 mb-2">
+            <strong>PDF Link:</strong> 
+          </p>
+          <a 
+            href={pdfUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            {pdfUrl}
+          </a>
+        </div>
       </div>
     );
   }
