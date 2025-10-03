@@ -21,7 +21,7 @@ function Item({ to, label, collapsed, icon }: { to: string; label: string; colla
             }`
       }
       title={label}
-      end
+      end={to === '/taskmanage'} // Only use 'end' for TaskManage, not for Courses
     >
       {collapsed ? icon : <span className="font-medium">{label}</span>}
     </NavLink>

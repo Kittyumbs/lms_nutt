@@ -7,9 +7,9 @@ import {
   FileTextOutlined,
   QuestionCircleOutlined,
   FilePdfOutlined,
-  SaveOutlined,
   ArrowLeftOutlined
 } from '@ant-design/icons';
+import MDEditor from '@uiw/react-md-editor';
 import { 
   Button, 
   Card, 
@@ -63,6 +63,7 @@ export default function CourseEditorPage() {
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [selectedLessonType, setSelectedLessonType] = useState<string>('text');
   const [form] = Form.useForm();
   const [lessonForm] = Form.useForm();
 
@@ -133,12 +134,23 @@ export default function CourseEditorPage() {
   const handleCreateLesson = (moduleId: string) => {
     setSelectedModuleId(moduleId);
     setEditingLesson(null);
+    
+    // Auto-suggest next order number
+    const moduleLessons = lessons.filter(lesson => lesson.moduleId === moduleId);
+    const nextOrder = moduleLessons.length > 0 ? Math.max(...moduleLessons.map(l => l.order)) + 1 : 1;
+    
     lessonForm.resetFields();
+    lessonForm.setFieldsValue({ 
+      type: 'text', 
+      order: nextOrder 
+    });
+    setSelectedLessonType('text');
     setIsLessonModalOpen(true);
   };
 
   const handleEditLesson = (lesson: Lesson) => {
     setEditingLesson(lesson);
+    setSelectedLessonType(lesson.type);
     lessonForm.setFieldsValue(lesson);
     setIsLessonModalOpen(true);
   };
@@ -207,40 +219,8 @@ export default function CourseEditorPage() {
               <Text type="secondary">{course.title}</Text>
             </div>
           </div>
-          <Button type="primary" icon={<SaveOutlined />}>
-            Lưu thay đổi
-          </Button>
         </div>
 
-        {/* Hướng dẫn sử dụng */}
-        <Card className="mb-6" style={{ background: '#f0f9ff', border: '1px solid #0ea5e9' }}>
-          <div className="space-y-3">
-            <Title level={4} style={{ color: '#0369a1', margin: 0 }}>
-              📚 Hướng dẫn sử dụng
-            </Title>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <Text strong style={{ color: '#0369a1' }}>👨‍🏫 Cho người chỉnh sửa:</Text>
-                <ul className="mt-2 space-y-1 text-gray-700">
-                  <li>• <strong>Thêm chương:</strong> Click "Thêm chương" để tạo chương mới</li>
-                  <li>• <strong>Thêm bài học:</strong> Click "Thêm bài học" trong từng chương</li>
-                  <li>• <strong>Sắp xếp:</strong> Kéo thả để thay đổi thứ tự chương/bài học</li>
-                  <li>• <strong>Chỉnh sửa:</strong> Click icon ✏️ để sửa nội dung</li>
-                  <li>• <strong>Xóa:</strong> Click icon 🗑️ để xóa (cẩn thận!)</li>
-                </ul>
-              </div>
-              <div>
-                <Text strong style={{ color: '#0369a1' }}>👨‍🎓 Cho người học:</Text>
-                <ul className="mt-2 space-y-1 text-gray-700">
-                  <li>• <strong>Xem nội dung:</strong> Click vào tiêu đề bài học</li>
-                  <li>• <strong>Tiến độ:</strong> Hệ thống tự động lưu tiến độ học</li>
-                  <li>• <strong>Loại bài học:</strong> Video, Text, Quiz, PDF</li>
-                  <li>• <strong>Hoàn thành:</strong> Đánh dấu hoàn thành sau mỗi bài</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </Card>
 
         {/* Course Modules */}
         <Card 
@@ -413,9 +393,18 @@ export default function CourseEditorPage() {
         {/* Module Modal */}
         <Modal
           title={
-            <div className="flex items-center space-x-2">
-              <span className="text-xl">📖</span>
-              <span>{editingModule ? 'Chỉnh sửa chương học' : 'Tạo chương học mới'}</span>
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <FileTextOutlined className="text-green-600" />
+                <span className="text-lg font-semibold">
+                  {editingModule ? 'Chỉnh sửa chương học' : 'Tạo chương học mới'}
+                </span>
+              </div>
+              {editingModule && (
+                <div className="text-sm text-gray-600 ml-6">
+                  Chương: <span className="font-medium">{editingModule.title}</span>
+                </div>
+              )}
             </div>
           }
           open={isModuleModalOpen}
@@ -491,9 +480,18 @@ export default function CourseEditorPage() {
         {/* Lesson Modal */}
         <Modal
           title={
-            <div className="flex items-center space-x-2">
-              <span className="text-xl">📝</span>
-              <span>{editingLesson ? 'Chỉnh sửa bài học' : 'Tạo bài học mới'}</span>
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <FileTextOutlined className="text-blue-600" />
+                <span className="text-lg font-semibold">
+                  {editingLesson ? 'Chỉnh sửa bài học' : 'Tạo bài học mới'}
+                </span>
+              </div>
+              {editingLesson && (
+                <div className="text-sm text-gray-600 ml-6">
+                  Bài học: <span className="font-medium">{editingLesson.title}</span>
+                </div>
+              )}
             </div>
           }
           open={isLessonModalOpen}
@@ -509,10 +507,33 @@ export default function CourseEditorPage() {
             layout="vertical"
             onFinish={async (values) => {
               try {
+                let content = values.content;
+                
+                // Handle different lesson types
+                if (values.type === 'video' && values.videoUrls) {
+                  content = JSON.stringify({
+                    description: values.content,
+                    videoUrls: values.videoUrls
+                  });
+                } else if (values.type === 'pdf' && values.pdfUrls) {
+                  content = JSON.stringify({
+                    description: values.content,
+                    pdfUrls: values.pdfUrls
+                  });
+                } else if (values.type === 'quiz') {
+                  // Content is already JSON from the form
+                  content = values.content;
+                }
+
                 const lessonData = {
                   ...values,
+                  content,
                   moduleId: selectedModuleId || editingLesson?.moduleId,
                 };
+
+                // Remove extra fields that shouldn't be saved
+                delete lessonData.videoUrls;
+                delete lessonData.pdfUrls;
 
                 if (editingLesson) {
                   await updateLesson(editingLesson.id, lessonData);
@@ -523,12 +544,13 @@ export default function CourseEditorPage() {
                 }
                 setIsLessonModalOpen(false);
                 lessonForm.resetFields();
+                setSelectedLessonType('text');
                 refresh();
               } catch (error) {
                 message.error('❌ Không thể lưu bài học. Vui lòng thử lại!');
               }
             }}
-            initialValues={editingLesson || { type: 'text', order: 1 }}
+            initialValues={editingLesson || { type: 'text' }}
           >
             <Form.Item
               name="title"
@@ -543,29 +565,32 @@ export default function CourseEditorPage() {
               label="Loại bài học"
               rules={[{ required: true, message: 'Vui lòng chọn loại bài học' }]}
             >
-              <Select placeholder="Chọn loại bài học">
+              <Select 
+                placeholder="Chọn loại bài học"
+                onChange={(value) => setSelectedLessonType(value)}
+              >
                 <Option value="text">
                   <div className="flex items-center space-x-2">
                     <FileTextOutlined />
-                    <span>📝 Bài học văn bản</span>
+                    <span>Bài học văn bản</span>
                   </div>
                 </Option>
                 <Option value="video">
                   <div className="flex items-center space-x-2">
                     <PlayCircleOutlined />
-                    <span>🎥 Bài học video</span>
+                    <span>Bài học video</span>
                   </div>
                 </Option>
                 <Option value="quiz">
                   <div className="flex items-center space-x-2">
                     <QuestionCircleOutlined />
-                    <span>❓ Bài trắc nghiệm</span>
+                    <span>Bài trắc nghiệm</span>
                   </div>
                 </Option>
                 <Option value="pdf">
                   <div className="flex items-center space-x-2">
                     <FilePdfOutlined />
-                    <span>📄 Tài liệu PDF</span>
+                    <span>Tài liệu PDF</span>
                   </div>
                 </Option>
               </Select>
@@ -583,15 +608,171 @@ export default function CourseEditorPage() {
               />
             </Form.Item>
 
-            <Form.Item
-              name="content"
-              label="Nội dung bài học"
-            >
-              <TextArea 
-                rows={6} 
-                placeholder="Nhập nội dung chi tiết của bài học... (có thể là link video, nội dung text, câu hỏi trắc nghiệm, v.v.)" 
-              />
-            </Form.Item>
+            {/* Dynamic content based on lesson type */}
+            {selectedLessonType === 'text' && (
+              <Form.Item
+                name="content"
+                label="Nội dung bài học"
+                rules={[{ required: true, message: 'Vui lòng nhập nội dung bài học' }]}
+              >
+                <div data-color-mode="light">
+                  <MDEditor
+                    value={lessonForm.getFieldValue('content') || ''}
+                    onChange={(value) => lessonForm.setFieldValue('content', value || '')}
+                    height={300}
+                    data-color-mode="light"
+                  />
+                </div>
+              </Form.Item>
+            )}
+
+            {selectedLessonType === 'video' && (
+              <>
+                <Form.Item
+                  name="content"
+                  label="Nội dung mô tả"
+                  rules={[{ required: true, message: 'Vui lòng nhập mô tả video' }]}
+                >
+                  <div data-color-mode="light">
+                    <MDEditor
+                      value={lessonForm.getFieldValue('content') || ''}
+                      onChange={(value) => lessonForm.setFieldValue('content', value || '')}
+                      height={200}
+                      data-color-mode="light"
+                    />
+                  </div>
+                </Form.Item>
+                <Form.Item
+                  name="videoUrls"
+                  label="Link video (có thể nhiều link)"
+                  rules={[{ required: true, message: 'Vui lòng nhập ít nhất 1 link video' }]}
+                >
+                  <Select
+                    mode="tags"
+                    placeholder="Nhập link video YouTube, Vimeo, v.v. (Enter để thêm)"
+                    style={{ width: '100%' }}
+                  />
+                </Form.Item>
+              </>
+            )}
+
+            {selectedLessonType === 'pdf' && (
+              <>
+                <Form.Item
+                  name="content"
+                  label="Nội dung mô tả"
+                  rules={[{ required: true, message: 'Vui lòng nhập mô tả tài liệu' }]}
+                >
+                  <div data-color-mode="light">
+                    <MDEditor
+                      value={lessonForm.getFieldValue('content') || ''}
+                      onChange={(value) => lessonForm.setFieldValue('content', value || '')}
+                      height={200}
+                      data-color-mode="light"
+                    />
+                  </div>
+                </Form.Item>
+                <Form.Item
+                  name="pdfUrls"
+                  label="Link PDF (có thể nhiều link)"
+                  rules={[{ required: true, message: 'Vui lòng nhập ít nhất 1 link PDF' }]}
+                >
+                  <Select
+                    mode="tags"
+                    placeholder="Nhập link PDF (Enter để thêm)"
+                    style={{ width: '100%' }}
+                  />
+                </Form.Item>
+              </>
+            )}
+
+            {selectedLessonType === 'quiz' && (
+              <Form.Item
+                name="content"
+                label="Nội dung câu hỏi trắc nghiệm"
+                rules={[{ required: true, message: 'Vui lòng nhập nội dung câu hỏi' }]}
+              >
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-semibold text-blue-800 mb-2">Hướng dẫn tạo câu hỏi trắc nghiệm:</h4>
+                    <div className="text-sm text-blue-700 space-y-1">
+                      <p>• <strong>Câu hỏi:</strong> Viết câu hỏi rõ ràng, dễ hiểu</p>
+                      <p>• <strong>Đáp án:</strong> Tạo ít nhất 2 đáp án, tối đa 6 đáp án</p>
+                      <p>• <strong>Đáp án đúng:</strong> Chỉ có 1 đáp án đúng</p>
+                      <p>• <strong>Giải thích:</strong> Thêm giải thích cho đáp án đúng</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Input 
+                      placeholder="Câu hỏi của bạn..." 
+                      onChange={(e) => {
+                        const currentContent = lessonForm.getFieldValue('content') || '{}';
+                        try {
+                          const quiz = JSON.parse(currentContent);
+                          quiz.question = e.target.value;
+                          lessonForm.setFieldValue('content', JSON.stringify(quiz, null, 2));
+                        } catch {
+                          lessonForm.setFieldValue('content', JSON.stringify({ question: e.target.value, options: [], correctAnswer: 0, explanation: '' }, null, 2));
+                        }
+                      }}
+                    />
+                    
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium">Đáp án:</label>
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <input 
+                            type="radio" 
+                            name="correctAnswer" 
+                            value={index}
+                            onChange={(e) => {
+                              const currentContent = lessonForm.getFieldValue('content') || '{}';
+                              try {
+                                const quiz = JSON.parse(currentContent);
+                                quiz.correctAnswer = parseInt(e.target.value);
+                                lessonForm.setFieldValue('content', JSON.stringify(quiz, null, 2));
+                              } catch {
+                                lessonForm.setFieldValue('content', JSON.stringify({ question: '', options: [], correctAnswer: parseInt(e.target.value), explanation: '' }, null, 2));
+                              }
+                            }}
+                          />
+                          <Input 
+                            placeholder={`Đáp án ${String.fromCharCode(65 + index)}`}
+                            onChange={(e) => {
+                              const currentContent = lessonForm.getFieldValue('content') || '{}';
+                              try {
+                                const quiz = JSON.parse(currentContent);
+                                if (!quiz.options) quiz.options = [];
+                                quiz.options[index] = e.target.value;
+                                lessonForm.setFieldValue('content', JSON.stringify(quiz, null, 2));
+                              } catch {
+                                lessonForm.setFieldValue('content', JSON.stringify({ question: '', options: [e.target.value], correctAnswer: 0, explanation: '' }, null, 2));
+                              }
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <TextArea 
+                      placeholder="Giải thích cho đáp án đúng..."
+                      rows={3}
+                      onChange={(e) => {
+                        const currentContent = lessonForm.getFieldValue('content') || '{}';
+                        try {
+                          const quiz = JSON.parse(currentContent);
+                          quiz.explanation = e.target.value;
+                          lessonForm.setFieldValue('content', JSON.stringify(quiz, null, 2));
+                        } catch {
+                          lessonForm.setFieldValue('content', JSON.stringify({ question: '', options: [], correctAnswer: 0, explanation: e.target.value }, null, 2));
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </Form.Item>
+            )}
 
             <div className="flex justify-end space-x-2">
               <Button onClick={() => setIsLessonModalOpen(false)}>

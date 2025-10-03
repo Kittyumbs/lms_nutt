@@ -1,10 +1,11 @@
-import { HomeOutlined, BookOutlined, CheckCircleOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { HomeOutlined, BookOutlined, CheckCircleOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Card, Alert, Skeleton, Space } from 'antd';
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 
 // import useAuth from '../../auth/useAuth';
+import useRole from '../../auth/useRole';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
 import { useEnrollment } from '../../hooks/useEnrollment';
 import { useProgress } from '../../hooks/useProgress';
@@ -195,8 +196,11 @@ const LessonSidebar: React.FC<{
             // Display lessons grouped by modules
             modules.map((module: any) => (
               <div key={module.id} className="space-y-2">
-                <div className="font-medium text-sm text-gray-800 px-2 py-1 bg-gray-100 rounded">
-                  {module.title}
+                <div className="font-medium text-sm text-gray-800 px-2 py-1 bg-gray-100 rounded flex items-center justify-between">
+                  <span>{module.title}</span>
+                  <span className="text-xs text-gray-500">
+                    {module.lessons?.length || 0} bài học
+                  </span>
                 </div>
                 <div className="pl-4 space-y-1">
                   {module.lessons?.map((lesson: any) => {
@@ -268,18 +272,40 @@ const LessonSidebar: React.FC<{
 export default function LessonPlayerPage() {
   const { cid, lid } = useParams<{ cid: string; lid: string }>();
   const navigate = useNavigate();
+  const { role } = useRole();
   const { course: courseDetail, modules, lessons, loading, error } = useCourseDetail(cid || '');
   const { enrolled } = useEnrollment(cid || '');
   const { doneIds, markDone, unmarkDone } = useProgress(cid || '');
   // const { user } = useAuth();
 
   const [currentLessonId, setCurrentLessonId] = useState(lid || '');
+  const [showScrollButtons, setShowScrollButtons] = useState(false);
 
   useEffect(() => {
     if (lid && lid !== currentLessonId) {
       setCurrentLessonId(lid);
     }
   }, [lid, currentLessonId]);
+
+  // Scroll detection
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setShowScrollButtons(scrollTop > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Scroll functions
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToBottom = () => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
 
   // Find current lesson
   const currentLesson = useMemo(() => {
@@ -333,17 +359,13 @@ export default function LessonPlayerPage() {
     );
   }
 
-  // Enrollment guard
-  if (!enrolled) {
+  // Enrollment guard - Admin and Instructor can access without enrollment
+  const canAccess = enrolled || role === 'admin' || role === 'instructor';
+  
+  if (!canAccess) {
     return (
       <div className="max-w-full px-6 py-4 space-y-6">
         <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/" className="text-gray-600 hover:text-blue-600">
-              <HomeOutlined className="mr-1" />
-              Home
-            </Link>
-          </Breadcrumb.Item>
           <Breadcrumb.Item>
             <Link to="/lms/courses" className="text-gray-600 hover:text-blue-600">
               <BookOutlined className="mr-1" />
@@ -374,40 +396,49 @@ export default function LessonPlayerPage() {
     <>
       <PageSEO title={`${courseDetail.title} - ${currentLesson?.title || 'Lesson'}`} />
 
-      <div className="max-w-full px-6 py-4">
-        {/* Breadcrumb */}
-        <Breadcrumb className="mb-6">
-          <Breadcrumb.Item>
-            <Link to="/" className="text-gray-600 hover:text-blue-600">
-              <HomeOutlined className="mr-1" />
-              Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to="/lms/courses" className="text-gray-600 hover:text-blue-600">
-              <BookOutlined className="mr-1" />
-              Courses
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to={`/lms/course/${cid}`} className="text-gray-600 hover:text-blue-600">
-              {courseDetail.title}
-            </Link>
-          </Breadcrumb.Item>
-          {currentLesson && (
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-full px-6 py-4">
+          <Breadcrumb className="mb-4">
             <Breadcrumb.Item>
-              {currentLesson.title}
+              <Link to="/lms/courses" className="text-gray-600 hover:text-blue-600">
+                <BookOutlined className="mr-1" />
+                Courses
+              </Link>
             </Breadcrumb.Item>
-          )}
-        </Breadcrumb>
-
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">{courseDetail.title}</h1>
-          {currentLesson && (
-            <p className="text-lg text-gray-600 mt-2">{currentLesson.title}</p>
-          )}
+            <Breadcrumb.Item>
+              <Link to={`/lms/course/${cid}`} className="text-gray-600 hover:text-blue-600">
+                {courseDetail.title}
+              </Link>
+            </Breadcrumb.Item>
+            {currentLesson && (
+              <Breadcrumb.Item>
+                {currentLesson.title}
+              </Breadcrumb.Item>
+            )}
+          </Breadcrumb>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">{courseDetail.title}</h1>
+              {currentLesson && (
+                <p className="text-base text-gray-600 mt-1">{currentLesson.title}</p>
+              )}
+            </div>
+            
+            {/* Course Progress */}
+            <div className="text-sm text-gray-500">
+              {lessons.length > 0 && (
+                <span>
+                  {lessons.findIndex(l => l.id === currentLessonId) + 1} / {lessons.length} bài học
+                </span>
+              )}
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="max-w-full px-6 py-4">
 
         {/* Main Layout */}
         <div className="flex gap-6">
@@ -453,6 +484,28 @@ export default function LessonPlayerPage() {
           />
         </div>
       </div>
+
+      {/* Scroll Buttons */}
+      {showScrollButtons && (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2">
+          <Button
+            type="primary"
+            shape="circle"
+            icon={<VerticalAlignTopOutlined />}
+            onClick={scrollToTop}
+            title="Lên đầu trang"
+            className="shadow-lg"
+          />
+          <Button
+            type="default"
+            shape="circle"
+            icon={<VerticalAlignBottomOutlined />}
+            onClick={scrollToBottom}
+            title="Xuống cuối trang"
+            className="shadow-lg"
+          />
+        </div>
+      )}
     </>
   );
 }

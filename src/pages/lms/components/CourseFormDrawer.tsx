@@ -1,5 +1,8 @@
 import { Drawer, Form, Input, Button, Select, Space, message } from 'antd';
 import React, { useEffect } from 'react';
+import MDEditor from '@uiw/react-md-editor';
+
+const { Option } = Select;
 
 import { createCourse, updateCourse } from '../../../hooks/useCourses';
 
@@ -14,7 +17,6 @@ interface CourseFormDrawerProps {
 }
 
 const { TextArea } = Input;
-const { Option } = Select;
 
 const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial, onClose, onSaved }) => {
   const [form] = Form.useForm();
@@ -72,7 +74,14 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
           <Input placeholder="Enter course title" />
         </Form.Item>
         <Form.Item name="desc" label="Description">
-          <TextArea rows={3} autoSize={{ minRows: 3, maxRows: 6 }} placeholder="Enter course description" />
+          <div data-color-mode="light">
+            <MDEditor
+              value={form.getFieldValue('desc') || ''}
+              onChange={(value) => form.setFieldValue('desc', value || '')}
+              height={200}
+              data-color-mode="light"
+            />
+          </div>
         </Form.Item>
         <Form.Item name="tags" label="Tags">
           <Select mode="tags" placeholder="Select or create tags" />

@@ -4,6 +4,7 @@ import {
   orderBy,
   where,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   doc,
@@ -141,23 +142,88 @@ export async function updateCourse(id: string, patch: Partial<Course>): Promise<
 
 export async function duplicateCourse(id: string): Promise<Course> {
   try {
-    const originalDoc = await getDocs(query(collection(db, COURSES_COLLECTION), where('id', '==', id)));
-    if (originalDoc.empty) {
+    // Get original course
+    const courseDoc = await getDoc(doc(db, COURSES_COLLECTION, id));
+    if (!courseDoc.exists()) {
       throw new Error('Course not found for duplication');
     }
-    const courseToDuplicate = originalDoc.docs[0].data() as Course;
+    const courseData = courseDoc.data() as Omit<Course, 'id'>;
 
-    // Omit id from courseToDuplicate before creating new input
-    const { id: _originalId, ...restOfCourse } = courseToDuplicate;
-    // _originalId is intentionally unused as we generate a new ID
+    // Create duplicated course
     const duplicatedCourseInput: Omit<Course, 'id' | 'createdAt' | 'updatedAt'> = {
-      ...restOfCourse,
-      title: `${courseToDuplicate.title} (Copy)`,
+      ...courseData,
+      title: `${courseData.title} (Copy)`,
       status: 'Draft', // Duplicated courses start as Draft
     };
-    return await createCourse(duplicatedCourseInput);
+    const newCourse = await createCourse(duplicatedCourseInput);
+
+    // Duplicate modules and lessons
+    await duplicateModulesAndLessons(id, newCourse.id);
+
+    return newCourse;
   } catch (error) {
     console.error('Error duplicating course:', error);
+    throw error;
+  }
+}
+
+async function duplicateModulesAndLessons(originalCourseId: string, newCourseId: string) {
+  try {
+    // Get original modules
+    const modulesQuery = query(
+      collection(db, 'modules'),
+      orderBy('order', 'asc')
+    );
+    const modulesSnap = await getDocs(modulesQuery);
+    const originalModules = modulesSnap.docs
+      .filter(doc => doc.data().courseId === originalCourseId)
+      .map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Get original lessons
+    const lessonsQuery = query(
+      collection(db, 'lessons'),
+      orderBy('order', 'asc')
+    );
+    const lessonsSnap = await getDocs(lessonsQuery);
+    const originalLessons = lessonsSnap.docs
+      .filter(doc => doc.data().courseId === originalCourseId)
+      .map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Create module mapping (oldId -> newId)
+    const moduleMapping: { [key: string]: string } = {};
+
+    // Duplicate modules
+    for (const module of originalModules) {
+      const { id: oldId, ...moduleData } = module;
+      const newModuleRef = await addDoc(collection(db, 'modules'), {
+        ...moduleData,
+        courseId: newCourseId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      moduleMapping[oldId] = newModuleRef.id;
+    }
+
+    // Duplicate lessons
+    for (const lesson of originalLessons) {
+      const { id: oldId, ...lessonData } = lesson;
+      await addDoc(collection(db, 'lessons'), {
+        ...lessonData,
+        courseId: newCourseId,
+        moduleId: moduleMapping[(lessonData as any).moduleId] || (lessonData as any).moduleId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    console.log('✅ Duplicated course with modules and lessons:', {
+      originalCourseId,
+      newCourseId,
+      modulesCount: originalModules.length,
+      lessonsCount: originalLessons.length
+    });
+  } catch (error) {
+    console.error('Error duplicating modules and lessons:', error);
     throw error;
   }
 }

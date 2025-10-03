@@ -86,12 +86,6 @@ export default function CourseDetailPage() {
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
           <Breadcrumb.Item>
-            <Link to="/" className="text-gray-600 hover:text-blue-600">
-              <HomeOutlined className="mr-1" />
-              Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
             <Link to="/lms/courses" className="text-gray-600 hover:text-blue-600">
               <BookOutlined className="mr-1" />
               Courses
