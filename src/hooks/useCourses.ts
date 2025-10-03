@@ -250,7 +250,34 @@ React là một thư viện JavaScript được phát triển bởi Facebook đ�
 - Xây dựng Single Page Applications (SPA)
 - Ứng dụng có nhiều tương tác người dùng
 - Cần hiệu suất cao
-- Team có kinh nghiệm JavaScript`,
+- Team có kinh nghiệm JavaScript
+
+## Bài tập thực hành
+
+**Nhiệm vụ**: Tạo một component React đơn giản hiển thị "Hello, World!"
+
+**Hướng dẫn**:
+1. Mở file App.js trong dự án React
+2. Thay thế nội dung bằng code sau:
+
+\`\`\`jsx
+import React from 'react';
+
+function App() {
+  return (
+    <div className="App">
+      <h1>Hello, World!</h1>
+      <p>Chào mừng bạn đến với React!</p>
+    </div>
+  );
+}
+
+export default App;
+\`\`\`
+
+3. Lưu file và xem kết quả trong browser
+
+**Kết quả mong đợi**: Trang web hiển thị "Hello, World!" và "Chào mừng bạn đến với React!"`,
             order: 1,
           },
           {
@@ -314,13 +341,49 @@ my-app/
 - Prettier - Code formatter
 - ESLint
 - Auto Rename Tag
-- Bracket Pair Colorizer`,
+- Bracket Pair Colorizer
+
+## Bài tập thực hành
+
+**Nhiệm vụ**: Tạo dự án React đầu tiên của bạn
+
+**Hướng dẫn từng bước**:
+
+1. **Kiểm tra Node.js**:
+   \`\`\`bash
+   node --version
+   npm --version
+   \`\`\`
+
+2. **Tạo dự án mới**:
+   \`\`\`bash
+   npx create-react-app my-first-react-app
+   cd my-first-react-app
+   \`\`\`
+
+3. **Chạy dự án**:
+   \`\`\`bash
+   npm start
+   \`\`\`
+
+4. **Mở browser** và truy cập http://localhost:3000
+
+**Kết quả mong đợi**: 
+- Trang web React mặc định hiển thị
+- Logo React xoay
+- Text "Edit src/App.js and save to reload"
+- Link "Learn React"
+
+**Lưu ý**: Nếu gặp lỗi, hãy kiểm tra:
+- Node.js đã cài đặt chưa
+- Kết nối internet ổn định
+- Port 3000 chưa được sử dụng`,
             order: 2,
           },
           {
             title: 'Video: Tạo component đầu tiên',
             type: 'video',
-            content: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            content: 'https://www.youtube.com/watch?v=Ke90Tje7VS0',
             order: 3,
           },
         ],
@@ -408,7 +471,58 @@ const element = (
 
 // ✅ Đúng
 <img src="image.jpg" />
-\`\`\``,
+\`\`\`
+
+## Bài tập thực hành
+
+**Nhiệm vụ**: Tạo một component JSX hiển thị thông tin cá nhân
+
+**Hướng dẫn**:
+1. Mở file App.js
+2. Thay thế nội dung bằng code sau:
+
+\`\`\`jsx
+import React from 'react';
+
+function App() {
+  const name = 'Nguyễn Văn A';
+  const age = 25;
+  const city = 'Hồ Chí Minh';
+  const isStudent = true;
+
+  return (
+    <div className="App">
+      <h1>Thông tin cá nhân</h1>
+      <div className="profile">
+        <h2>Tên: {name}</h2>
+        <p>Tuổi: {age}</p>
+        <p>Thành phố: {city}</p>
+        <p>Trạng thái: {isStudent ? 'Sinh viên' : 'Đã tốt nghiệp'}</p>
+      </div>
+      
+      <div className="skills">
+        <h3>Kỹ năng:</h3>
+        <ul>
+          <li>JavaScript</li>
+          <li>React</li>
+          <li>HTML/CSS</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+\`\`\`
+
+3. Lưu file và xem kết quả
+
+**Kết quả mong đợi**: 
+- Hiển thị thông tin cá nhân với tên, tuổi, thành phố
+- Hiển thị trạng thái sinh viên
+- Hiển thị danh sách kỹ năng
+
+**Thử thách**: Thay đổi các giá trị biến và xem kết quả thay đổi như thế nào!`,
             order: 1,
           },
           {
@@ -490,7 +604,134 @@ class Clock extends React.Component {
     );
   }
 }
-\`\`\``,
+\`\`\`
+
+## Bài tập thực hành
+
+**Nhiệm vụ**: Tạo một component Card hiển thị thông tin sản phẩm
+
+**Hướng dẫn**:
+1. Tạo file mới: \`src/components/ProductCard.js\`
+2. Thêm code sau:
+
+\`\`\`jsx
+import React from 'react';
+
+function ProductCard({ product }) {
+  return (
+    <div className="product-card">
+      <img src={product.image} alt={product.name} />
+      <h3>{product.name}</h3>
+      <p className="price">\${product.price}</p>
+      <p className="description">{product.description}</p>
+      <button className="buy-button">Mua ngay</button>
+    </div>
+  );
+}
+
+export default ProductCard;
+\`\`\`
+
+3. Sử dụng component trong App.js:
+
+\`\`\`jsx
+import React from 'react';
+import ProductCard from './components/ProductCard';
+
+function App() {
+  const products = [
+    {
+      id: 1,
+      name: 'iPhone 15',
+      price: 999,
+      description: 'Điện thoại thông minh mới nhất',
+      image: 'https://via.placeholder.com/200x200'
+    },
+    {
+      id: 2,
+      name: 'MacBook Pro',
+      price: 1999,
+      description: 'Laptop chuyên nghiệp',
+      image: 'https://via.placeholder.com/200x200'
+    }
+  ];
+
+  return (
+    <div className="App">
+      <h1>Danh sách sản phẩm</h1>
+      <div className="products">
+        {products.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+\`\`\`
+
+4. Thêm CSS để làm đẹp:
+
+\`\`\`css
+.product-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.product-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.product-card h3 {
+  margin: 12px 0;
+  color: #333;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #e74c3c;
+  margin: 8px 0;
+}
+
+.buy-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.buy-button:hover {
+  background-color: #2980b9;
+}
+
+.products {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+\`\`\`
+
+**Kết quả mong đợi**: 
+- Hiển thị 2 sản phẩm với hình ảnh, tên, giá, mô tả
+- Mỗi sản phẩm có nút "Mua ngay"
+- Layout đẹp với CSS
+
+**Thử thách**: 
+- Thêm thêm sản phẩm vào mảng
+- Thay đổi style CSS
+- Thêm chức năng click vào nút "Mua ngay"`,
             order: 2,
           },
           {
@@ -587,7 +828,176 @@ function Welcome({ name, age, isActive = false }: WelcomeProps) {
     </div>
   );
 }
-\`\`\``,
+\`\`\`
+
+## Bài tập thực hành
+
+**Nhiệm vụ**: Tạo component UserCard hiển thị thông tin người dùng
+
+**Hướng dẫn**:
+1. Tạo file \`src/components/UserCard.js\`:
+
+\`\`\`jsx
+import React from 'react';
+
+function UserCard({ user, onEdit, onDelete }) {
+  return (
+    <div className="user-card">
+      <div className="avatar">
+        <img src={user.avatar} alt={user.name} />
+      </div>
+      <div className="user-info">
+        <h3>{user.name}</h3>
+        <p className="email">{user.email}</p>
+        <p className="role">Role: {user.role}</p>
+        <p className="status">
+          Status: <span className={user.isActive ? 'active' : 'inactive'}>
+            {user.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </p>
+      </div>
+      <div className="actions">
+        <button onClick={() => onEdit(user.id)}>Edit</button>
+        <button onClick={() => onDelete(user.id)}>Delete</button>
+      </div>
+    </div>
+  );
+}
+
+export default UserCard;
+\`\`\`
+
+2. Sử dụng trong App.js:
+
+\`\`\`jsx
+import React, { useState } from 'react';
+import UserCard from './components/UserCard';
+
+function App() {
+  const [users] = useState([
+    {
+      id: 1,
+      name: 'Nguyễn Văn A',
+      email: 'a@example.com',
+      role: 'Admin',
+      isActive: true,
+      avatar: 'https://via.placeholder.com/100x100'
+    },
+    {
+      id: 2,
+      name: 'Trần Thị B',
+      email: 'b@example.com',
+      role: 'User',
+      isActive: false,
+      avatar: 'https://via.placeholder.com/100x100'
+    }
+  ]);
+
+  const handleEdit = (userId) => {
+    console.log('Edit user:', userId);
+  };
+
+  const handleDelete = (userId) => {
+    console.log('Delete user:', userId);
+  };
+
+  return (
+    <div className="App">
+      <h1>Danh sách người dùng</h1>
+      <div className="users">
+        {users.map(user => (
+          <UserCard 
+            key={user.id} 
+            user={user} 
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+\`\`\`
+
+3. Thêm CSS:
+
+\`\`\`css
+.user-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.avatar img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-right: 16px;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-info h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.user-info p {
+  margin: 4px 0;
+  color: #666;
+}
+
+.active {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.inactive {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.actions button {
+  margin-left: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.actions button:first-child {
+  background-color: #3498db;
+  color: white;
+}
+
+.actions button:last-child {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.users {
+  display: flex;
+  flex-wrap: wrap;
+}
+\`\`\`
+
+**Kết quả mong đợi**: 
+- Hiển thị 2 user card với avatar, thông tin, và nút action
+- User active có màu xanh, inactive có màu đỏ
+- Click nút Edit/Delete sẽ log ra console
+
+**Thử thách**: 
+- Thêm thêm user vào mảng
+- Thay đổi style CSS
+- Thêm chức năng thực sự cho nút Edit/Delete`,
             order: 1,
           },
           {
@@ -670,7 +1080,284 @@ function TodoList() {
     </div>
   );
 }
-\`\`\``,
+\`\`\`
+
+## Bài tập thực hành
+
+**Nhiệm vụ**: Tạo ứng dụng Todo List hoàn chỉnh
+
+**Hướng dẫn**:
+1. Tạo file \`src/components/TodoApp.js\`:
+
+\`\`\`jsx
+import React, { useState } from 'react';
+
+function TodoApp() {
+  const [todos, setTodos] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+  const [filter, setFilter] = useState('all');
+
+  const addTodo = () => {
+    if (inputValue.trim()) {
+      const newTodo = {
+        id: Date.now(),
+        text: inputValue,
+        completed: false,
+        createdAt: new Date()
+      };
+      setTodos([...todos, newTodo]);
+      setInputValue('');
+    }
+  };
+
+  const toggleTodo = (id) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    ));
+  };
+
+  const deleteTodo = (id) => {
+    setTodos(todos.filter(todo => todo.id !== id));
+  };
+
+  const filteredTodos = todos.filter(todo => {
+    if (filter === 'active') return !todo.completed;
+    if (filter === 'completed') return todo.completed;
+    return true;
+  });
+
+  const completedCount = todos.filter(todo => todo.completed).length;
+  const totalCount = todos.length;
+
+  return (
+    <div className="todo-app">
+      <h1>Todo List</h1>
+      
+      <div className="add-todo">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && addTodo()}
+          placeholder="Thêm công việc mới..."
+        />
+        <button onClick={addTodo}>Thêm</button>
+      </div>
+
+      <div className="filters">
+        <button 
+          className={filter === 'all' ? 'active' : ''}
+          onClick={() => setFilter('all')}
+        >
+          Tất cả ({totalCount})
+        </button>
+        <button 
+          className={filter === 'active' ? 'active' : ''}
+          onClick={() => setFilter('active')}
+        >
+          Chưa hoàn thành ({totalCount - completedCount})
+        </button>
+        <button 
+          className={filter === 'completed' ? 'active' : ''}
+          onClick={() => setFilter('completed')}
+        >
+          Đã hoàn thành ({completedCount})
+        </button>
+      </div>
+
+      <div className="todo-list">
+        {filteredTodos.length === 0 ? (
+          <p className="empty">Không có công việc nào</p>
+        ) : (
+          filteredTodos.map(todo => (
+            <div key={todo.id} className={\`todo-item \${todo.completed ? 'completed' : ''}\`}>
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={() => toggleTodo(todo.id)}
+              />
+              <span className="todo-text">{todo.text}</span>
+              <button 
+                className="delete-btn"
+                onClick={() => deleteTodo(todo.id)}
+              >
+                Xóa
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {totalCount > 0 && (
+        <div className="stats">
+          <p>Tổng cộng: {totalCount} công việc</p>
+          <p>Đã hoàn thành: {completedCount} công việc</p>
+          <p>Tiến độ: {Math.round((completedCount / totalCount) * 100)}%</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default TodoApp;
+\`\`\`
+
+2. Thêm CSS:
+
+\`\`\`css
+.todo-app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.todo-app h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.add-todo {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-todo input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.add-todo button {
+  padding: 12px 24px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.add-todo button:hover {
+  background-color: #45a049;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filters button {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.filters button.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.todo-list {
+  margin-bottom: 20px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background-color: white;
+}
+
+.todo-item.completed {
+  opacity: 0.6;
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+}
+
+.todo-item input[type="checkbox"] {
+  margin-right: 12px;
+  transform: scale(1.2);
+}
+
+.todo-text {
+  flex: 1;
+  font-size: 16px;
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.delete-btn:hover {
+  background-color: #da190b;
+}
+
+.empty {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 40px;
+}
+
+.stats {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.stats p {
+  margin: 5px 0;
+  color: #666;
+}
+\`\`\`
+
+3. Sử dụng trong App.js:
+
+\`\`\`jsx
+import React from 'react';
+import TodoApp from './components/TodoApp';
+
+function App() {
+  return (
+    <div className="App">
+      <TodoApp />
+    </div>
+  );
+}
+
+export default App;
+\`\`\`
+
+**Kết quả mong đợi**: 
+- Ứng dụng Todo List hoàn chỉnh với thêm, xóa, đánh dấu hoàn thành
+- Filter theo trạng thái (tất cả, chưa hoàn thành, đã hoàn thành)
+- Thống kê tiến độ hoàn thành
+- Giao diện đẹp và responsive
+
+**Thử thách**: 
+- Thêm chức năng sửa todo
+- Thêm chức năng lưu vào localStorage
+- Thêm chức năng sắp xếp theo ngày tạo`,
             order: 2,
           },
           {
@@ -891,7 +1578,7 @@ const [searchTerm, setSearchTerm] = useState('');
           {
             title: 'Video: Xây dựng Todo App',
             type: 'video',
-            content: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            content: 'https://www.youtube.com/watch?v=Ke90Tje7VS0',
             order: 2,
           },
           {
@@ -906,7 +1593,7 @@ const [searchTerm, setSearchTerm] = useState('');
     "useReducer"
   ],
   "correctAnswer": 0,
-  "explanation": "useState là hook cơ bản nhất để quản lý state trong function component."
+  "explanation": "useState là hook cơ bản nhất để quản lý state trong function component. Nó cho phép bạn thêm state vào function component và trả về một mảng với 2 phần tử: giá trị hiện tại của state và function để cập nhật state."
 }`,
             order: 3,
           },
