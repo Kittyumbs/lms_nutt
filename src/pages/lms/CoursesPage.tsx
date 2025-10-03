@@ -1,4 +1,4 @@
-import { PlusOutlined, EditOutlined, CopyOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, CopyOutlined, CheckOutlined, CloseOutlined, RocketOutlined } from '@ant-design/icons';
 import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { RequireInstructor } from '../../auth/guards';
 import useAuth from '../../auth/useAuth';
 import useRole from '../../auth/useRole';
-import { useCourses, duplicateCourse, setCourseStatus, type Course, type CourseStatus } from '../../hooks/useCourses';
+import { useCourses, duplicateCourse, setCourseStatus, createTemplateCourse, type Course, type CourseStatus } from '../../hooks/useCourses';
 import { PageSEO } from '../../utils/seo';
 
 import CourseFormDrawer from './components/CourseFormDrawer';
@@ -93,6 +93,15 @@ const CoursesPage: React.FC = () => {
     refresh();
   };
 
+  const handleCreateTemplateCourse = async () => {
+    try {
+      await createTemplateCourse();
+      refresh();
+    } catch (error) {
+      console.error('Error creating template course:', error);
+    }
+  };
+
 
   const getStatusColor = (status: CourseStatus) => {
     switch (status) {
@@ -169,6 +178,19 @@ const CoursesPage: React.FC = () => {
         <h2 className="text-xl font-semibold">Courses</h2>
         <Space>
           <RequireInstructor>
+            <Button 
+              type="default" 
+              icon={<RocketOutlined />} 
+              onClick={handleCreateTemplateCourse}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                color: 'white',
+                fontWeight: 'bold'
+              }}
+            >
+              Create Template Course
+            </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
               New Course
             </Button>
