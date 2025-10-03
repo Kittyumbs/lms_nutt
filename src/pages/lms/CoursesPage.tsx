@@ -235,15 +235,14 @@ const CoursesPage: React.FC = () => {
             const isAuthorized = role === 'instructor' || role === 'admin';
             
             // Debug log để kiểm tra
-            if (role === 'admin' || role === 'instructor') {
-              console.log('🔧 Course Card Debug:', {
-                courseId: course.id,
-                courseTitle: course.title,
-                role,
-                isAuthorized,
-                courseStatus: course.status
-              });
-            }
+            console.log('🔧 Course Card Debug:', {
+              courseId: course.id,
+              courseTitle: course.title,
+              role,
+              isAuthorized,
+              courseStatus: course.status,
+              willShowButtons: isAuthorized
+            });
             
             return (
               <Card
@@ -257,11 +256,16 @@ const CoursesPage: React.FC = () => {
                         course.status === 'Published' ? (
                           <Tooltip title="Unpublish" key="unpub">
                             <Button 
-                              type="text" 
+                              type="default" 
                               danger 
                               icon={<CloseOutlined />} 
                               onClick={() => handleSetStatus(course.id, 'Draft')}
-                              style={{ fontSize: '16px' }}
+                              size="small"
+                              style={{ 
+                                fontSize: '14px',
+                                border: '1px solid #ff4d4f',
+                                color: '#ff4d4f'
+                              }}
                             />
                           </Tooltip>
                         ) : (
@@ -270,24 +274,35 @@ const CoursesPage: React.FC = () => {
                               type="primary" 
                               icon={<CheckOutlined />} 
                               onClick={() => handleSetStatus(course.id, 'Published')}
-                              style={{ fontSize: '16px' }}
+                              size="small"
+                              style={{ fontSize: '14px' }}
                             />
                           </Tooltip>
                         ),
                         <Tooltip title="Edit" key="edit">
                           <Button 
-                            type="text" 
+                            type="default" 
                             icon={<EditOutlined />} 
                             onClick={() => handleEditCourse(course)}
-                            style={{ fontSize: '16px' }}
+                            size="small"
+                            style={{ 
+                              fontSize: '14px',
+                              border: '1px solid #d9d9d9',
+                              color: '#1890ff'
+                            }}
                           />
                         </Tooltip>,
                         <Tooltip title="Duplicate" key="dup">
                           <Button 
-                            type="text" 
+                            type="default" 
                             icon={<CopyOutlined />} 
                             onClick={() => handleDuplicateCourse(course.id)}
-                            style={{ fontSize: '16px' }}
+                            size="small"
+                            style={{ 
+                              fontSize: '14px',
+                              border: '1px solid #d9d9d9',
+                              color: '#52c41a'
+                            }}
                           />
                         </Tooltip>,
                       ]
