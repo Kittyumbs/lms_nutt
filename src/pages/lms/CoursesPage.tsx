@@ -250,64 +250,6 @@ const CoursesPage: React.FC = () => {
                 hoverable
                 className="rounded-xl border border-black/10 hover:shadow-md transition"
                 cover={<CoverWithStatus course={course} />}
-                actions={
-                  isAuthorized
-                    ? [
-                        course.status === 'Published' ? (
-                          <Tooltip title="Unpublish" key="unpub">
-                            <Button 
-                              type="default" 
-                              danger 
-                              icon={<CloseOutlined />} 
-                              onClick={() => handleSetStatus(course.id, 'Draft')}
-                              size="small"
-                              style={{ 
-                                fontSize: '14px',
-                                border: '1px solid #ff4d4f',
-                                color: '#ff4d4f'
-                              }}
-                            />
-                          </Tooltip>
-                        ) : (
-                          <Tooltip title="Publish" key="pub">
-                            <Button 
-                              type="primary" 
-                              icon={<CheckOutlined />} 
-                              onClick={() => handleSetStatus(course.id, 'Published')}
-                              size="small"
-                              style={{ fontSize: '14px' }}
-                            />
-                          </Tooltip>
-                        ),
-                        <Tooltip title="Edit" key="edit">
-                          <Button 
-                            type="default" 
-                            icon={<EditOutlined />} 
-                            onClick={() => handleEditCourse(course)}
-                            size="small"
-                            style={{ 
-                              fontSize: '14px',
-                              border: '1px solid #d9d9d9',
-                              color: '#1890ff'
-                            }}
-                          />
-                        </Tooltip>,
-                        <Tooltip title="Duplicate" key="dup">
-                          <Button 
-                            type="default" 
-                            icon={<CopyOutlined />} 
-                            onClick={() => handleDuplicateCourse(course.id)}
-                            size="small"
-                            style={{ 
-                              fontSize: '14px',
-                              border: '1px solid #d9d9d9',
-                              color: '#52c41a'
-                            }}
-                          />
-                        </Tooltip>,
-                      ]
-                    : []
-                }
               >
                 <Card.Meta
                   title={
@@ -333,6 +275,66 @@ const CoursesPage: React.FC = () => {
                           {course.tags.length > 3 && <Tag className="rounded-full">+{course.tags.length - 3}</Tag>}
                         </Space>
                       </div>
+                      
+                      {/* Action Buttons - Only for authorized users */}
+                      {isAuthorized && (
+                        <div className="mt-4 flex justify-end space-x-2">
+                          {course.status === 'Published' ? (
+                            <Tooltip title="Unpublish">
+                              <Button 
+                                type="default" 
+                                danger 
+                                icon={<CloseOutlined />} 
+                                onClick={() => handleSetStatus(course.id, 'Draft')}
+                                size="small"
+                                style={{ 
+                                  fontSize: '12px',
+                                  border: '1px solid #ff4d4f',
+                                  color: '#ff4d4f'
+                                }}
+                              />
+                            </Tooltip>
+                          ) : (
+                            <Tooltip title="Publish">
+                              <Button 
+                                type="primary" 
+                                icon={<CheckOutlined />} 
+                                onClick={() => handleSetStatus(course.id, 'Published')}
+                                size="small"
+                                style={{ fontSize: '12px' }}
+                              />
+                            </Tooltip>
+                          )}
+                          
+                          <Tooltip title="Edit">
+                            <Button 
+                              type="default" 
+                              icon={<EditOutlined />} 
+                              onClick={() => handleEditCourse(course)}
+                              size="small"
+                              style={{ 
+                                fontSize: '12px',
+                                border: '1px solid #d9d9d9',
+                                color: '#1890ff'
+                              }}
+                            />
+                          </Tooltip>
+                          
+                          <Tooltip title="Duplicate">
+                            <Button 
+                              type="default" 
+                              icon={<CopyOutlined />} 
+                              onClick={() => handleDuplicateCourse(course.id)}
+                              size="small"
+                              style={{ 
+                                fontSize: '12px',
+                                border: '1px solid #d9d9d9',
+                                color: '#52c41a'
+                              }}
+                            />
+                          </Tooltip>
+                        </div>
+                      )}
                     </div>
                   }
                 />
