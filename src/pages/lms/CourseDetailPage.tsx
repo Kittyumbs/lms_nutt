@@ -4,6 +4,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 
 import useAuth from '../../auth/useAuth';
+import useRole from '../../auth/useRole';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
 import { useEnrollment } from '../../hooks/useEnrollment';
 import { PageSEO } from '../../utils/seo';
@@ -36,6 +37,7 @@ const getLessonTypeIcon = (type: string) => {
 export default function CourseDetailPage() {
   const { cid } = useParams<{ cid: string }>();
   const { user, signInWithGoogle } = useAuth();
+  const { role } = useRole();
   const { course, modules, lessons, loading, error } = useCourseDetail(cid || '');
   const { enrolled, enroll } = useEnrollment(cid || '');
 
@@ -163,31 +165,45 @@ export default function CourseDetailPage() {
                 </div>
               </div>
 
-              {/* Actions - Only show for Published courses */}
-              {course.status === 'Published' && (
-                <div>
-                  {!enrolled ? (
-                    <Button
-                      type="primary"
-                      size="large"
-                      onClick={handleEnroll}
-                      className="mr-4"
-                    >
-                      {user ? 'Enroll Now' : 'Sign in to Enroll'}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="primary"
-                      size="large"
-                      className="mr-4"
-                    >
-                      <Link to={`/lms/learn/${cid}/${firstLessonId}`} className="text-white">
-                        Continue Learning
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              )}
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3">
+                {/* Edit Content Button - Only for instructors/admins */}
+                {(role === 'instructor' || role === 'admin') && (
+                  <Button
+                    type="default"
+                    size="large"
+                    className="mr-4"
+                  >
+                    <Link to={`/lms/course/${cid}/edit`} className="text-gray-700">
+                      Edit Content
+                    </Link>
+                  </Button>
+                )}
+
+                {/* Enroll/Continue Learning - Only show for Published courses */}
+                {course.status === 'Published' && (
+                  <>
+                    {!enrolled ? (
+                      <Button
+                        type="primary"
+                        size="large"
+                        onClick={handleEnroll}
+                      >
+                        {user ? 'Enroll Now' : 'Sign in to Enroll'}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="primary"
+                        size="large"
+                      >
+                        <Link to={`/lms/learn/${cid}/${firstLessonId}`} className="text-white">
+                          Continue Learning
+                        </Link>
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -36,7 +36,8 @@ type ResourceLink = {
 function toFavicon(url: string) {
   try {
     const u = new URL(url);
-    return `${u.origin}/favicon.ico`;
+    // Sử dụng Google's favicon service để lấy favicon đáng tin cậy
+    return `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=32`;
   } catch {
     return undefined;
   }

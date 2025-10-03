@@ -1,4 +1,4 @@
-import { PlusOutlined, EditOutlined, EllipsisOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, CopyOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -93,28 +93,6 @@ const CoursesPage: React.FC = () => {
     refresh();
   };
 
-  // Debug function: Create sample course if admin
-  const createSampleCourse = async () => {
-    if (role !== 'admin') return;
-
-    const { getAuth } = await import('firebase/auth');
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-
-    // Import createCourse
-    const { createCourse } = await import('../../hooks/useCourses');
-
-    await createCourse({
-      title: 'Sample Course - Admin Created',
-      desc: 'This is a sample course to test admin functionality',
-      tags: ['React', 'TypeScript'],
-      status: 'Published'
-    });
-
-    console.log('🎯 Sample course created with ownerUid');
-    refresh();
-  };
 
   const getStatusColor = (status: CourseStatus) => {
     switch (status) {
@@ -190,11 +168,6 @@ const CoursesPage: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Courses</h2>
         <Space>
-          {role === 'admin' && (
-            <Button type="default" onClick={createSampleCourse}>
-              Create Sample Course
-            </Button>
-          )}
           <RequireInstructor>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
               New Course
@@ -260,6 +233,18 @@ const CoursesPage: React.FC = () => {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {courses.map((course) => {
             const isAuthorized = role === 'instructor' || role === 'admin';
+            
+            // Debug log để kiểm tra
+            if (role === 'admin' || role === 'instructor') {
+              console.log('🔧 Course Card Debug:', {
+                courseId: course.id,
+                courseTitle: course.title,
+                role,
+                isAuthorized,
+                courseStatus: course.status
+              });
+            }
+            
             return (
               <Card
                 key={course.id}
@@ -271,18 +256,39 @@ const CoursesPage: React.FC = () => {
                     ? [
                         course.status === 'Published' ? (
                           <Tooltip title="Unpublish" key="unpub">
-                            <Button type="text" danger icon={<CloseOutlined />} onClick={() => handleSetStatus(course.id, 'Draft')} />
+                            <Button 
+                              type="text" 
+                              danger 
+                              icon={<CloseOutlined />} 
+                              onClick={() => handleSetStatus(course.id, 'Draft')}
+                              style={{ fontSize: '16px' }}
+                            />
                           </Tooltip>
                         ) : (
                           <Tooltip title="Publish" key="pub">
-                            <Button type="primary" icon={<CheckOutlined />} onClick={() => handleSetStatus(course.id, 'Published')} />
+                            <Button 
+                              type="primary" 
+                              icon={<CheckOutlined />} 
+                              onClick={() => handleSetStatus(course.id, 'Published')}
+                              style={{ fontSize: '16px' }}
+                            />
                           </Tooltip>
                         ),
                         <Tooltip title="Edit" key="edit">
-                          <Button type="text" icon={<EditOutlined />} onClick={() => handleEditCourse(course)} />
+                          <Button 
+                            type="text" 
+                            icon={<EditOutlined />} 
+                            onClick={() => handleEditCourse(course)}
+                            style={{ fontSize: '16px' }}
+                          />
                         </Tooltip>,
                         <Tooltip title="Duplicate" key="dup">
-                          <Button type="text" icon={<EllipsisOutlined />} onClick={() => handleDuplicateCourse(course.id)} />
+                          <Button 
+                            type="text" 
+                            icon={<CopyOutlined />} 
+                            onClick={() => handleDuplicateCourse(course.id)}
+                            style={{ fontSize: '16px' }}
+                          />
                         </Tooltip>,
                       ]
                     : []

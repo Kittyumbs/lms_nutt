@@ -6,6 +6,7 @@ import { AuthProvider } from './auth/AuthProvider';
 import AppLayout from './components/Layout/AppLayout';
 import Catalog from './pages/lms/Catalog';
 import CourseDetailPage from './pages/lms/CourseDetailPage';
+import CourseEditorPage from './pages/lms/CourseEditorPage';
 import CoursesPage from './pages/lms/CoursesPage';
 import Dashboard from './pages/lms/Dashboard';
 import LessonPlayerPage from './pages/lms/LessonPlayerPage';
@@ -35,6 +36,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/taskmanage" element={<TaskManageHome />} />
             <Route path="/lms/courses" element={<CoursesPage />} />
             <Route path="/lms/course/:cid" element={<CourseDetailPage />} />
+            <Route path="/lms/course/:cid/edit" element={<CourseEditorPage />} />
             <Route path="/lms/learn/:cid/:lid" element={<LessonPlayerPage />} />
             <Route path="/lms/catalog" element={<Catalog />} />
             <Route path="/lms/dashboard" element={<Dashboard />} />
