@@ -1,6 +1,7 @@
 import { Drawer, Form, Input, Button, Select, Space, message } from 'antd';
 import React, { useEffect } from 'react';
-import MDEditor from '@uiw/react-md-editor';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const { Option } = Select;
 
@@ -74,9 +75,18 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
           <Input placeholder="Enter course title" />
         </Form.Item>
         <Form.Item name="desc" label="Description">
-          <MDEditor
-            height={200}
-            data-color-mode="light"
+          <ReactQuill
+            theme="snow"
+            modules={{
+              toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link', 'image'],
+                ['clean']
+              ],
+            }}
+            style={{ height: '150px', marginBottom: '50px' }}
           />
         </Form.Item>
         <Form.Item name="tags" label="Tags">

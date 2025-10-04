@@ -1,7 +1,7 @@
 import { HomeOutlined, BookOutlined, CheckCircleOutlined, PlayCircleOutlined, FileTextOutlined, QuestionCircleOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Card, Alert, Skeleton, Space } from 'antd';
 import React, { useState, useEffect, useMemo } from 'react';
-import ReactMarkdown from 'react-markdown';
+// import ReactMarkdown from 'react-markdown'; // Replaced with HTML rendering for ReactQuill
 import { useParams, Link, useNavigate } from 'react-router-dom';
 
 // import useAuth from '../../auth/useAuth';
@@ -50,15 +50,15 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
       );
     }
     
-    // Fallback to markdown content if video URL is invalid
-    const content = `# Video: ${lesson.title}\n\n**Video URL:** ${videoUrl}\n\n[Click here to watch the video](${videoUrl})`;
-    return <div className="prose max-w-none"><ReactMarkdown>{content}</ReactMarkdown></div>;
+    // Fallback to HTML content if video URL is invalid
+    const content = `<h1>Video: ${lesson.title}</h1><p><strong>Video URL:</strong> ${videoUrl}</p><p><a href="${videoUrl}" target="_blank">Click here to watch the video</a></p>`;
+    return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: content }} />;
   }
 
   if (lesson.type === 'text') {
-    // Use actual content from database
-    const content = lesson.content || `# ${lesson.title}\n\nNội dung bài học chưa được cập nhật.`;
-    return <div className="prose max-w-none"><ReactMarkdown>{content}</ReactMarkdown></div>;
+    // Use actual content from database (HTML from ReactQuill)
+    const content = lesson.content || `<h1>${lesson.title}</h1><p>Nội dung bài học chưa được cập nhật.</p>`;
+    return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: content }} />;
   }
 
   if (lesson.type === 'quiz') {
@@ -102,9 +102,9 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
       console.error('Error parsing quiz content:', error);
     }
     
-    // Fallback to markdown content if quiz parsing fails
-    const content = lesson.content || `# Quiz: ${lesson.title}\n\nNội dung quiz chưa được cập nhật.`;
-    return <div className="prose max-w-none"><ReactMarkdown>{content}</ReactMarkdown></div>;
+    // Fallback to HTML content if quiz parsing fails
+    const content = lesson.content || `<h1>Quiz: ${lesson.title}</h1><p>Nội dung quiz chưa được cập nhật.</p>`;
+    return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: content }} />;
   }
 
   if (lesson.type === 'pdf') {
@@ -185,10 +185,14 @@ const LessonSidebar: React.FC<{
             modules.map((module: any) => (
               <div key={module.id} className="space-y-2">
                 <div className="font-medium text-sm text-gray-800 px-2 py-1 bg-gray-100 rounded flex items-center justify-between">
-                  <span>{module.title}</span>
-                  <span className="text-xs text-gray-500">
-                    {module.lessons?.length || 0} bài học
-                  </span>
+                  <div className="flex items-center">
+                    <span>{module.title}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-xs text-gray-500 font-medium">
+                      {module.lessons?.length || 0} bài học
+                    </span>
+                  </div>
                 </div>
                 <div className="pl-4 space-y-1">
                   {module.lessons?.map((lesson: any) => {

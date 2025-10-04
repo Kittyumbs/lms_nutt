@@ -9,7 +9,8 @@ import {
   FilePdfOutlined,
   ArrowLeftOutlined
 } from '@ant-design/icons';
-import MDEditor from '@uiw/react-md-editor';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { 
   Button, 
   Card, 
@@ -33,6 +34,17 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import useRole from '../../auth/useRole';
 import { useCourseDetail, type Module, type Lesson } from '../../hooks/useCourseDetail';
 import { useCourseEditor } from '../../hooks/useCourseEditor';
+
+// ReactQuill modules configuration
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link', 'image'],
+    ['clean']
+  ],
+};
 
 // Quiz Builder Component
 const QuizBuilder: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
@@ -394,7 +406,7 @@ export default function CourseEditorPage() {
     <>
       <PageSEO title={`Edit: ${course.title}`} description="Course Editor" />
       
-      <div className="max-w-6xl mx-auto px-6 py-4">
+      <div className="max-w-6xl mx-auto px-6 py-4 min-h-screen overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
@@ -406,7 +418,7 @@ export default function CourseEditorPage() {
             </Button>
             <div>
               <Title level={2} className="mb-0">
-                Chỉnh sửa nội dung khóa học: <span className="text-blue-600">{course.title}</span>
+                Chỉnh sửa nội dung khóa học:<br><span className="text-blue-600">{course.title}</span></br>
               </Title>
             </div>
           </div>
@@ -432,14 +444,14 @@ export default function CourseEditorPage() {
               onClick={handleCreateModule}
               className="w-full h-12 text-base"
             >
-              ➕ Thêm chương học mới
+              Thêm chương học mới
             </Button>
           </div>
 
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="modules">
               {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
+                <div {...provided.droppableProps} ref={provided.innerRef} className="max-h-[70vh] overflow-y-auto">
                   {modules.map((module, index) => (
                     <Draggable key={module.id} draggableId={module.id} index={index}>
                       {(provided, snapshot) => (
@@ -502,7 +514,7 @@ export default function CourseEditorPage() {
                             )}
 
                             {/* Module Lessons */}
-                            <div className="space-y-2">
+                            <div className="space-y-2 max-h-[50vh] overflow-y-auto">
                               {module.lessons?.map((lesson, lessonIndex) => (
                                 <div
                                   key={lesson.id}
@@ -768,6 +780,12 @@ export default function CourseEditorPage() {
                     <span>Bài học văn bản</span>
                   </div>
                 </Option>
+                <Option value="pdf">
+                  <div className="flex items-center space-x-2">
+                    <FilePdfOutlined />
+                    <span>Bài học PDF</span>
+                  </div>
+                </Option>
                 <Option value="video">
                   <div className="flex items-center space-x-2">
                     <PlayCircleOutlined />
@@ -778,12 +796,6 @@ export default function CourseEditorPage() {
                   <div className="flex items-center space-x-2">
                     <QuestionCircleOutlined />
                     <span>Bài trắc nghiệm</span>
-                  </div>
-                </Option>
-                <Option value="pdf">
-                  <div className="flex items-center space-x-2">
-                    <FilePdfOutlined />
-                    <span>Tài liệu PDF</span>
                   </div>
                 </Option>
               </Select>
@@ -808,9 +820,10 @@ export default function CourseEditorPage() {
                 label="Nội dung bài học"
                 rules={[{ required: true, message: 'Vui lòng nhập nội dung bài học' }]}
               >
-                <MDEditor
-                  height={300}
-                  data-color-mode="light"
+                <ReactQuill
+                  theme="snow"
+                  modules={quillModules}
+                  style={{ height: '200px', marginBottom: '50px' }}
                 />
               </Form.Item>
             )}
@@ -822,9 +835,10 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả video' }]}
                 >
-                  <MDEditor
-                    height={200}
-                    data-color-mode="light"
+                  <ReactQuill
+                    theme="snow"
+                    modules={quillModules}
+                    style={{ height: '150px', marginBottom: '50px' }}
                   />
                 </Form.Item>
                 <Form.Item
@@ -848,9 +862,10 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả tài liệu' }]}
                 >
-                  <MDEditor
-                    height={200}
-                    data-color-mode="light"
+                  <ReactQuill
+                    theme="snow"
+                    modules={quillModules}
+                    style={{ height: '150px', marginBottom: '50px' }}
                   />
                 </Form.Item>
                 <Form.Item

@@ -252,10 +252,14 @@ export default function CourseDetailPage() {
                             key={module.id}
                             header={
                               <div className="flex items-center justify-between w-full">
-                                <span className="font-medium">{module.title}</span>
-                                <span className="text-sm text-gray-500">
-                                  {module.lessons.length} lessons
-                                </span>
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium">{module.title}</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm text-gray-500 font-medium">
+                                    {module.lessons.length} bài học
+                                  </span>
+                                </div>
                               </div>
                             }
                             className="bg-white border border-gray-200 mb-2 rounded-lg"
