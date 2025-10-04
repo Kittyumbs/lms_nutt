@@ -74,14 +74,10 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
           <Input placeholder="Enter course title" />
         </Form.Item>
         <Form.Item name="desc" label="Description">
-          <div data-color-mode="light">
-            <MDEditor
-              value={form.getFieldValue('desc') || ''}
-              onChange={(value) => form.setFieldValue('desc', value || '')}
-              height={200}
-              data-color-mode="light"
-            />
-          </div>
+          <MDEditor
+            height={200}
+            data-color-mode="light"
+          />
         </Form.Item>
         <Form.Item name="tags" label="Tags">
           <Select mode="tags" placeholder="Select or create tags" />

@@ -33,6 +33,196 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import useRole from '../../auth/useRole';
 import { useCourseDetail, type Module, type Lesson } from '../../hooks/useCourseDetail';
 import { useCourseEditor } from '../../hooks/useCourseEditor';
+
+// Quiz Builder Component
+const QuizBuilder: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+  const [questions, setQuestions] = useState(() => {
+    if (value) {
+      try {
+        const parsed = JSON.parse(value);
+        return parsed.questions || [{
+          id: 1,
+          question: '',
+          options: ['', ''],
+          correctAnswer: 0,
+          explanation: ''
+        }];
+      } catch {
+        return [{
+          id: 1,
+          question: '',
+          options: ['', ''],
+          correctAnswer: 0,
+          explanation: ''
+        }];
+      }
+    }
+    return [{
+      id: 1,
+      question: '',
+      options: ['', ''],
+      correctAnswer: 0,
+      explanation: ''
+    }];
+  });
+
+  const addQuestion = () => {
+    const newQuestion = {
+      id: questions.length + 1,
+      question: '',
+      options: ['', ''],
+      correctAnswer: 0,
+      explanation: ''
+    };
+    setQuestions([...questions, newQuestion]);
+  };
+
+  const removeQuestion = (id: number) => {
+    if (questions.length > 1) {
+      setQuestions(questions.filter((q: any) => q.id !== id));
+    }
+  };
+
+  const updateQuestion = (id: number, field: string, value: any) => {
+    setQuestions(questions.map((q: any) => 
+      q.id === id ? { ...q, [field]: value } : q
+    ));
+  };
+
+  const addOption = (questionId: number) => {
+    setQuestions(questions.map((q: any) => 
+      q.id === questionId 
+        ? { ...q, options: [...q.options, ''] }
+        : q
+    ));
+  };
+
+  const removeOption = (questionId: number, optionIndex: number) => {
+    setQuestions(questions.map((q: any) => 
+      q.id === questionId 
+        ? { 
+            ...q, 
+            options: q.options.filter((_: any, index: number) => index !== optionIndex),
+            correctAnswer: q.correctAnswer >= optionIndex ? Math.max(0, q.correctAnswer - 1) : q.correctAnswer
+          }
+        : q
+    ));
+  };
+
+  const updateOption = (questionId: number, optionIndex: number, value: string) => {
+    setQuestions(questions.map((q: any) => 
+      q.id === questionId 
+        ? { 
+            ...q, 
+            options: q.options.map((opt: any, index: number) => index === optionIndex ? value : opt)
+          }
+        : q
+    ));
+  };
+
+  // Update form value when questions change
+  useEffect(() => {
+    if (onChange) {
+      onChange(JSON.stringify({ questions }, null, 2));
+    }
+  }, [questions, onChange]);
+
+  return (
+    <div className="space-y-6">
+      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <h4 className="font-semibold text-blue-800 mb-2">Hướng dẫn tạo câu hỏi trắc nghiệm:</h4>
+        <div className="text-sm text-blue-700 space-y-1">
+          <p>• <strong>Câu hỏi:</strong> Viết câu hỏi rõ ràng, dễ hiểu</p>
+          <p>• <strong>Đáp án:</strong> Tạo ít nhất 2 đáp án, tối đa 6 đáp án</p>
+          <p>• <strong>Đáp án đúng:</strong> Chỉ có 1 đáp án đúng</p>
+          <p>• <strong>Giải thích:</strong> Thêm giải thích cho đáp án đúng</p>
+        </div>
+      </div>
+
+      {questions.map((question: any, questionIndex: number) => (
+        <Card key={question.id} size="small" className="border border-gray-200">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h5 className="font-semibold text-gray-800">Câu hỏi {questionIndex + 1}</h5>
+              {questions.length > 1 && (
+                <Button 
+                  size="small" 
+                  danger 
+                  icon={<DeleteOutlined />}
+                  onClick={() => removeQuestion(question.id)}
+                >
+                  Xóa câu hỏi
+                </Button>
+              )}
+            </div>
+
+            <Input 
+              placeholder="Nhập câu hỏi..."
+              value={question.question}
+              onChange={(e) => updateQuestion(question.id, 'question', e.target.value)}
+            />
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium">Đáp án:</label>
+                {question.options.length < 6 && (
+                  <Button 
+                    size="small" 
+                    type="dashed"
+                    onClick={() => addOption(question.id)}
+                  >
+                    + Thêm đáp án
+                  </Button>
+                )}
+              </div>
+              
+              {question.options.map((option: any, optionIndex: number) => (
+                <div key={optionIndex} className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    name={`correctAnswer_${question.id}`}
+                    checked={question.correctAnswer === optionIndex}
+                    onChange={() => updateQuestion(question.id, 'correctAnswer', optionIndex)}
+                    className="text-blue-600"
+                  />
+                  <Input 
+                    placeholder={`Đáp án ${String.fromCharCode(65 + optionIndex)}`}
+                    value={option}
+                    onChange={(e) => updateOption(question.id, optionIndex, e.target.value)}
+                  />
+                  {question.options.length > 2 && (
+                    <Button 
+                      size="small" 
+                      danger 
+                      icon={<DeleteOutlined />}
+                      onClick={() => removeOption(question.id, optionIndex)}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <TextArea 
+              placeholder="Giải thích cho đáp án đúng..."
+              rows={2}
+              value={question.explanation}
+              onChange={(e) => updateQuestion(question.id, 'explanation', e.target.value)}
+            />
+          </div>
+        </Card>
+      ))}
+
+      <Button 
+        type="dashed" 
+        onClick={addQuestion}
+        className="w-full"
+        icon={<PlusOutlined />}
+      >
+        Thêm câu hỏi mới
+      </Button>
+    </div>
+  );
+};
 import { PageSEO } from '../../utils/seo';
 
 const { Title, Text } = Typography;
@@ -215,8 +405,9 @@ export default function CourseEditorPage() {
               Quay lại khóa học
             </Button>
             <div>
-              <Title level={2} className="mb-0">Chỉnh sửa nội dung khóa học</Title>
-              <Text type="secondary">{course.title}</Text>
+              <Title level={2} className="mb-0">
+                Chỉnh sửa nội dung khóa học: <span className="text-blue-600">{course.title}</span>
+              </Title>
             </div>
           </div>
         </div>
@@ -262,19 +453,20 @@ export default function CourseEditorPage() {
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
                                   <DragOutlined className="text-gray-400" {...provided.dragHandleProps} />
-                                  <span className="font-semibold text-lg">📖 {module.title}</span>
-                                  <Text type="secondary" className="text-sm">
-                                    ({module.lessons?.length || 0} bài học)
-                                  </Text>
+                                  <span className="font-semibold text-lg">{module.title}</span>
                                 </div>
-                                <Space>
+                                <div className="flex items-center space-x-4">
+                                  <Text type="secondary" className="text-sm font-medium">
+                                    {module.lessons?.length || 0} bài học
+                                  </Text>
+                                  <Space>
                                   <Button 
                                     size="small" 
                                     icon={<PlusOutlined />}
                                     onClick={() => handleCreateLesson(module.id)}
                                     type="primary"
                                   >
-                                    ➕ Thêm bài học
+                                    Thêm bài học
                                   </Button>
                                   <Button 
                                     size="small" 
@@ -296,7 +488,8 @@ export default function CourseEditorPage() {
                                       title="Xóa chương"
                                     />
                                   </Popconfirm>
-                                </Space>
+                                  </Space>
+                                </div>
                               </div>
                             }
                             size="small"
@@ -615,14 +808,10 @@ export default function CourseEditorPage() {
                 label="Nội dung bài học"
                 rules={[{ required: true, message: 'Vui lòng nhập nội dung bài học' }]}
               >
-                <div data-color-mode="light">
-                  <MDEditor
-                    value={lessonForm.getFieldValue('content') || ''}
-                    onChange={(value) => lessonForm.setFieldValue('content', value || '')}
-                    height={300}
-                    data-color-mode="light"
-                  />
-                </div>
+                <MDEditor
+                  height={300}
+                  data-color-mode="light"
+                />
               </Form.Item>
             )}
 
@@ -633,14 +822,10 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả video' }]}
                 >
-                  <div data-color-mode="light">
-                    <MDEditor
-                      value={lessonForm.getFieldValue('content') || ''}
-                      onChange={(value) => lessonForm.setFieldValue('content', value || '')}
-                      height={200}
-                      data-color-mode="light"
-                    />
-                  </div>
+                  <MDEditor
+                    height={200}
+                    data-color-mode="light"
+                  />
                 </Form.Item>
                 <Form.Item
                   name="videoUrls"
@@ -663,14 +848,10 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả tài liệu' }]}
                 >
-                  <div data-color-mode="light">
-                    <MDEditor
-                      value={lessonForm.getFieldValue('content') || ''}
-                      onChange={(value) => lessonForm.setFieldValue('content', value || '')}
-                      height={200}
-                      data-color-mode="light"
-                    />
-                  </div>
+                  <MDEditor
+                    height={200}
+                    data-color-mode="light"
+                  />
                 </Form.Item>
                 <Form.Item
                   name="pdfUrls"
@@ -692,85 +873,7 @@ export default function CourseEditorPage() {
                 label="Nội dung câu hỏi trắc nghiệm"
                 rules={[{ required: true, message: 'Vui lòng nhập nội dung câu hỏi' }]}
               >
-                <div className="space-y-4">
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h4 className="font-semibold text-blue-800 mb-2">Hướng dẫn tạo câu hỏi trắc nghiệm:</h4>
-                    <div className="text-sm text-blue-700 space-y-1">
-                      <p>• <strong>Câu hỏi:</strong> Viết câu hỏi rõ ràng, dễ hiểu</p>
-                      <p>• <strong>Đáp án:</strong> Tạo ít nhất 2 đáp án, tối đa 6 đáp án</p>
-                      <p>• <strong>Đáp án đúng:</strong> Chỉ có 1 đáp án đúng</p>
-                      <p>• <strong>Giải thích:</strong> Thêm giải thích cho đáp án đúng</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <Input 
-                      placeholder="Câu hỏi của bạn..." 
-                      onChange={(e) => {
-                        const currentContent = lessonForm.getFieldValue('content') || '{}';
-                        try {
-                          const quiz = JSON.parse(currentContent);
-                          quiz.question = e.target.value;
-                          lessonForm.setFieldValue('content', JSON.stringify(quiz, null, 2));
-                        } catch {
-                          lessonForm.setFieldValue('content', JSON.stringify({ question: e.target.value, options: [], correctAnswer: 0, explanation: '' }, null, 2));
-                        }
-                      }}
-                    />
-                    
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium">Đáp án:</label>
-                      {[0, 1, 2, 3, 4, 5].map((index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <input 
-                            type="radio" 
-                            name="correctAnswer" 
-                            value={index}
-                            onChange={(e) => {
-                              const currentContent = lessonForm.getFieldValue('content') || '{}';
-                              try {
-                                const quiz = JSON.parse(currentContent);
-                                quiz.correctAnswer = parseInt(e.target.value);
-                                lessonForm.setFieldValue('content', JSON.stringify(quiz, null, 2));
-                              } catch {
-                                lessonForm.setFieldValue('content', JSON.stringify({ question: '', options: [], correctAnswer: parseInt(e.target.value), explanation: '' }, null, 2));
-                              }
-                            }}
-                          />
-                          <Input 
-                            placeholder={`Đáp án ${String.fromCharCode(65 + index)}`}
-                            onChange={(e) => {
-                              const currentContent = lessonForm.getFieldValue('content') || '{}';
-                              try {
-                                const quiz = JSON.parse(currentContent);
-                                if (!quiz.options) quiz.options = [];
-                                quiz.options[index] = e.target.value;
-                                lessonForm.setFieldValue('content', JSON.stringify(quiz, null, 2));
-                              } catch {
-                                lessonForm.setFieldValue('content', JSON.stringify({ question: '', options: [e.target.value], correctAnswer: 0, explanation: '' }, null, 2));
-                              }
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <TextArea 
-                      placeholder="Giải thích cho đáp án đúng..."
-                      rows={3}
-                      onChange={(e) => {
-                        const currentContent = lessonForm.getFieldValue('content') || '{}';
-                        try {
-                          const quiz = JSON.parse(currentContent);
-                          quiz.explanation = e.target.value;
-                          lessonForm.setFieldValue('content', JSON.stringify(quiz, null, 2));
-                        } catch {
-                          lessonForm.setFieldValue('content', JSON.stringify({ question: '', options: [], correctAnswer: 0, explanation: e.target.value }, null, 2));
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
+                <QuizBuilder />
               </Form.Item>
             )}
 

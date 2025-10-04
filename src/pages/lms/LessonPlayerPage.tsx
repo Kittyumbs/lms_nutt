@@ -170,28 +170,16 @@ const LessonSidebar: React.FC<{
         <div className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold mb-2">{courseDetail?.title}</h3>
-            {currentLesson && (
-              <div className="text-sm text-gray-600">
-                <div className="flex items-center mb-1">
-                  <span className="mr-2">{getLessonTypeIcon(currentLesson.type)}</span>
-                  {currentLesson.title}
-                </div>
-                <div>
-                  Lesson {currentLesson.order}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="text-sm text-gray-600">
-            Progress: {doneIds.length} / {lessons.length} lessons
+            <div className="text-sm text-gray-600">
+              Progress: {doneIds.length} / {lessons.length} lessons
+            </div>
           </div>
         </div>
       </Card>
 
       <Card className="shadow-sm">
         <h4 className="font-semibold mb-4">Course Outline</h4>
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto" id="course-outline">
           {modules.length > 0 ? (
             // Display lessons grouped by modules
             modules.map((module: any) => (
@@ -209,6 +197,7 @@ const LessonSidebar: React.FC<{
                     return (
                       <button
                         key={lesson.id}
+                        id={`lesson-${lesson.id}`}
                         onClick={() => onLessonClick(lesson.id)}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center hover:bg-blue-50 transition-colors ${
                           isCurrent ? 'bg-blue-100 text-blue-800 border border-blue-300' :
@@ -241,6 +230,7 @@ const LessonSidebar: React.FC<{
                 return (
                   <button
                     key={lesson.id}
+                    id={`lesson-${lesson.id}`}
                     onClick={() => onLessonClick(lesson.id)}
                     className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center hover:bg-blue-50 transition-colors ${
                       isCurrent ? 'bg-blue-100 text-blue-800 border border-blue-300' :
@@ -286,6 +276,16 @@ export default function LessonPlayerPage() {
       setCurrentLessonId(lid);
     }
   }, [lid, currentLessonId]);
+
+  // Scroll to current lesson in sidebar
+  useEffect(() => {
+    if (currentLessonId) {
+      const element = document.getElementById(`lesson-${currentLessonId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [currentLessonId]);
 
   // Scroll detection
   useEffect(() => {
@@ -450,7 +450,7 @@ export default function LessonPlayerPage() {
               </div>
 
               {currentLesson && (
-                <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="mt-8 pt-6 border-t border-gray-200 flex justify-end">
                   <Space>
                     <Button
                       type="primary"
@@ -462,9 +462,10 @@ export default function LessonPlayerPage() {
 
                     {nextLessonId && (
                       <Button
+                        type="default"
                         onClick={() => handleLessonClick(nextLessonId)}
                       >
-                        Next Lesson
+                        Bài học tiếp theo
                       </Button>
                     )}
                   </Space>
