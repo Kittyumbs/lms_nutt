@@ -463,11 +463,11 @@ export default function CourseEditorPage() {
                           <Card
                             title={
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-2 flex-1">
                                   <DragOutlined className="text-gray-400" {...provided.dragHandleProps} />
                                   <span className="font-semibold text-lg">{module.title}</span>
                                 </div>
-                                <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-4 flex-shrink-0">
                                   <Text type="secondary" className="text-sm font-medium">
                                     {module.lessons?.length || 0} bài học
                                   </Text>

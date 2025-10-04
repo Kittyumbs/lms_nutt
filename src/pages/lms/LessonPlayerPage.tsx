@@ -4,6 +4,31 @@ import React, { useState, useEffect, useMemo } from 'react';
 // import ReactMarkdown from 'react-markdown'; // Replaced with HTML rendering for ReactQuill
 import { useParams, Link, useNavigate } from 'react-router-dom';
 
+// Safe HTML renderer component
+const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
+  // Clean up the HTML content to avoid React errors
+  const cleanContent = content
+    .replace(/<br\s*\/?>/gi, '<br />') // Ensure br tags are self-closing
+    .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 />') // Ensure img tags are self-closing
+    .replace(/<input([^>]*?)(?:\s*\/)?>/gi, '<input$1 />') // Ensure input tags are self-closing
+    .replace(/<hr\s*\/?>/gi, '<hr />') // Ensure hr tags are self-closing
+    .replace(/<p><br\s*\/?><\/p>/gi, '<p>&nbsp;</p>') // Replace empty paragraphs with br
+    .replace(/<p><\/p>/gi, '') // Remove empty paragraphs
+    .replace(/<p>\s*<\/p>/gi, ''); // Remove paragraphs with only whitespace
+
+  // If content is empty or only whitespace, return a default message
+  if (!cleanContent || cleanContent.trim() === '' || cleanContent.trim() === '<p></p>') {
+    return <div className={className}><p>Nội dung chưa được cập nhật.</p></div>;
+  }
+
+  return (
+    <div 
+      className={className} 
+      dangerouslySetInnerHTML={{ __html: cleanContent }} 
+    />
+  );
+};
+
 // import useAuth from '../../auth/useAuth';
 import useRole from '../../auth/useRole';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
@@ -52,13 +77,13 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     
     // Fallback to HTML content if video URL is invalid
     const content = `<h1>Video: ${lesson.title}</h1><p><strong>Video URL:</strong> ${videoUrl}</p><p><a href="${videoUrl}" target="_blank">Click here to watch the video</a></p>`;
-    return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: content }} />;
+    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'text') {
     // Use actual content from database (HTML from ReactQuill)
     const content = lesson.content || `<h1>${lesson.title}</h1><p>Nội dung bài học chưa được cập nhật.</p>`;
-    return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: content }} />;
+    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'quiz') {
@@ -104,7 +129,7 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     
     // Fallback to HTML content if quiz parsing fails
     const content = lesson.content || `<h1>Quiz: ${lesson.title}</h1><p>Nội dung quiz chưa được cập nhật.</p>`;
-    return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: content }} />;
+    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'pdf') {
@@ -185,10 +210,10 @@ const LessonSidebar: React.FC<{
             modules.map((module: any) => (
               <div key={module.id} className="space-y-2">
                 <div className="font-medium text-sm text-gray-800 px-2 py-1 bg-gray-100 rounded flex items-center justify-between">
-                  <div className="flex items-center">
+                  <div className="flex items-center flex-1">
                     <span>{module.title}</span>
                   </div>
-                  <div className="flex items-center">
+                  <div className="flex items-center flex-shrink-0">
                     <span className="text-xs text-gray-500 font-medium">
                       {module.lessons?.length || 0} bài học
                     </span>
