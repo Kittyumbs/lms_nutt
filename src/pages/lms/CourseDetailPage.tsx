@@ -190,7 +190,7 @@ export default function CourseDetailPage() {
                         type="primary"
                         size="large"
                       >
-                        <Link to={`/lms/learn/${cid}/${firstLessonId}`} className="text-white">
+                        <Link to={`/lms/course/learn/${cid}/${firstLessonId}`} className="text-white">
                           Continue Learning
                         </Link>
                       </Button>

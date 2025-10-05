@@ -427,7 +427,7 @@ export default function LessonPlayerPage() {
   };
 
   const handleLessonClick = (lessonId: string) => {
-    void navigate(`/lms/learn/${cid}/${lessonId}`);
+    void navigate(`/lms/course/learn/${cid}/${lessonId}`);
   };
 
   if (loading) {

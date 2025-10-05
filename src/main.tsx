@@ -37,7 +37,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/lms/courses" element={<CoursesPage />} />
             <Route path="/lms/course/:cid" element={<CourseDetailPage />} />
             <Route path="/lms/course/:cid/edit" element={<CourseEditorPage />} />
-            <Route path="/lms/learn/:cid/:lid" element={<LessonPlayerPage />} />
+            <Route path="/lms/course/learn/:cid/:lid" element={<LessonPlayerPage />} />
             <Route path="/lms/catalog" element={<Catalog />} />
             <Route path="/lms/dashboard" element={<Dashboard />} />
             <Route path="/lms/notes" element={<Notes />} />

@@ -142,12 +142,12 @@ const QuizBuilder: React.FC<{ value?: string; onChange?: (value: string) => void
   return (
     <div className="space-y-6">
       <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <h4 className="font-semibold text-blue-800 mb-2">Hướng dẫn tạo câu hỏi trắc nghiệm:</h4>
+        <h4 className="font-semibold text-blue-800 mb-2">How to create quiz questions:</h4>
         <div className="text-sm text-blue-700 space-y-1">
-          <p>• <strong>Câu hỏi:</strong> Viết câu hỏi rõ ràng, dễ hiểu</p>
-          <p>• <strong>Đáp án:</strong> Tạo ít nhất 2 đáp án, tối đa 6 đáp án</p>
-          <p>• <strong>Đáp án đúng:</strong> Chỉ có 1 đáp án đúng</p>
-          <p>• <strong>Giải thích:</strong> Thêm giải thích cho đáp án đúng</p>
+          <p>• <strong>Question:</strong> Write clear and understandable questions</p>
+          <p>• <strong>Options:</strong> Create at least 2 options, maximum 6 options</p>
+          <p>• <strong>Correct Answer:</strong> Only 1 correct answer</p>
+          <p>• <strong>Explanation:</strong> Add explanation for the correct answer</p>
         </div>
       </div>
 
@@ -183,7 +183,7 @@ const QuizBuilder: React.FC<{ value?: string; onChange?: (value: string) => void
                     type="dashed"
                     onClick={() => addOption(question.id)}
                   >
-                    + Thêm đáp án
+                    + Add Option
                   </Button>
                 )}
               </div>
@@ -230,7 +230,7 @@ const QuizBuilder: React.FC<{ value?: string; onChange?: (value: string) => void
         className="w-full"
         icon={<PlusOutlined />}
       >
-        Thêm câu hỏi mới
+        Add New Question
       </Button>
     </div>
   );
@@ -417,11 +417,11 @@ export default function CourseEditorPage() {
               icon={<ArrowLeftOutlined />} 
               onClick={() => navigate(`/lms/course/${cid}`)}
             >
-              Quay lại khóa học
+              Back to Course
             </Button>
             <div>
               <Title level={2} className="mb-0">
-                Chỉnh sửa nội dung khóa học
+                Edit Course Content
                 <br />
                 <span className="text-blue-600">{course.title}</span>
               </Title>
@@ -434,9 +434,9 @@ export default function CourseEditorPage() {
         <Card 
           title={
             <div className="flex items-center space-x-2">
-              <span>📚 Danh sách chương học</span>
+              <span>📚 Chapter List</span>
               <Text type="secondary" className="text-sm">
-                ({modules.length} chương)
+                ({modules.length} chapters)
               </Text>
             </div>
           } 
@@ -449,7 +449,7 @@ export default function CourseEditorPage() {
               onClick={handleCreateModule}
               className="w-full h-12 text-base"
             >
-              Thêm chương học mới
+              Add New Chapter
             </Button>
           </div>
 
@@ -483,13 +483,13 @@ export default function CourseEditorPage() {
                                     onClick={() => handleCreateLesson(module.id)}
                                     type="primary"
                                   >
-                                    Thêm bài học
+                                    Add Lesson
                                   </Button>
                                   <Button 
                                     size="small" 
                                     icon={<EditOutlined />}
                                     onClick={() => handleEditModule(module)}
-                                    title="Chỉnh sửa chương"
+                                    title="Edit Chapter"
                                   />
                                   <Popconfirm
                                     title="Xóa chương học?"
@@ -545,7 +545,7 @@ export default function CourseEditorPage() {
                                       size="small" 
                                       icon={<EditOutlined />}
                                       onClick={() => handleEditLesson(lesson)}
-                                      title="Chỉnh sửa bài học"
+                                      title="Edit Lesson"
                                     />
                                     <Popconfirm
                                       title="Xóa bài học?"
