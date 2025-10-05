@@ -258,11 +258,11 @@ export default function UsefulDocsDrawer() {
         icon={<PlusOutlined />}
         onClick={handleOpen}
       >
-        Useful Documents
+        Documents
       </Button>
 
       <Drawer
-        title="Tài liệu thường dùng"
+        title="Documents Useful"
         placement="right"
         width="40vw"
         open={open}
