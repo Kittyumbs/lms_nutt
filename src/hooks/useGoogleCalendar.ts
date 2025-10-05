@@ -53,12 +53,34 @@ export function useGoogleCalendar() {
           await window.gapi.client.load("calendar", "v3");
           setIsGapiLoaded(true);
 
-          // Check for existing token
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-          const existingToken = window.gapi.client.getToken();
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          if (existingToken?.access_token) {
-            setIsSignedIn(true);
+          // Check for existing token in localStorage first
+          const savedToken = localStorage.getItem('google_calendar_token');
+          if (savedToken) {
+            try {
+              const tokenData = JSON.parse(savedToken);
+              const timeUntilExpiry = tokenData.expires_at - Date.now();
+              
+              // If token is still valid, restore it
+              if (timeUntilExpiry > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                window.gapi.client.setToken({ access_token: tokenData.access_token });
+                setIsSignedIn(true);
+              } else {
+                // Token expired, remove it
+                localStorage.removeItem('google_calendar_token');
+              }
+            } catch (error) {
+              console.error('Error parsing saved token:', error);
+              localStorage.removeItem('google_calendar_token');
+            }
+          } else {
+            // Check for existing token in gapi client
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            const existingToken = window.gapi.client.getToken();
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if (existingToken?.access_token) {
+              setIsSignedIn(true);
+            }
           }
 
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -71,6 +93,13 @@ export function useGoogleCalendar() {
                 window.gapi.client.setToken({ access_token: resp.access_token });
                 setIsSignedIn(true);
                 setError(null);
+                
+                // Save token to localStorage for persistence
+                const tokenData = {
+                  access_token: resp.access_token,
+                  expires_at: Date.now() + (60 * 60 * 1000) // 1 hour from now
+                };
+                localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
               } else {
                 setError(resp?.error || "No access token from Google");
               }
@@ -117,6 +146,29 @@ export function useGoogleCalendar() {
     
     const checkTokenStatus = () => {
       try {
+        // First check localStorage for saved token
+        const savedToken = localStorage.getItem('google_calendar_token');
+        if (savedToken) {
+          try {
+            const tokenData = JSON.parse(savedToken);
+            const timeUntilExpiry = tokenData.expires_at - Date.now();
+            
+            if (timeUntilExpiry > 0) {
+              // Token is still valid
+              setIsSignedIn(true);
+              setIsAuthLoading(false);
+              return;
+            } else {
+              // Token expired, remove it
+              localStorage.removeItem('google_calendar_token');
+            }
+          } catch (error) {
+            console.error('Error parsing saved token:', error);
+            localStorage.removeItem('google_calendar_token');
+          }
+        }
+        
+        // Fallback to gapi client token
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         const currentToken = window.gapi?.client?.getToken();
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -155,6 +207,26 @@ export function useGoogleCalendar() {
 
     const handleAuthStateChange = () => {
       try {
+        // First check localStorage
+        const savedToken = localStorage.getItem('google_calendar_token');
+        if (savedToken) {
+          try {
+            const tokenData = JSON.parse(savedToken);
+            const timeUntilExpiry = tokenData.expires_at - Date.now();
+            
+            if (timeUntilExpiry > 0) {
+              setIsSignedIn(true);
+              return;
+            } else {
+              localStorage.removeItem('google_calendar_token');
+            }
+          } catch (error) {
+            console.error('Error parsing saved token:', error);
+            localStorage.removeItem('google_calendar_token');
+          }
+        }
+        
+        // Fallback to gapi client token
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         const token = window.gapi?.client?.getToken();
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -213,7 +285,30 @@ export function useGoogleCalendar() {
 
   const ensureSignedIn = useCallback(async () => {
     // Always check for an existing token first.
-    // If a token exists, set isSignedIn to true and return.
+    // First check localStorage
+    const savedToken = localStorage.getItem('google_calendar_token');
+    if (savedToken) {
+      try {
+        const tokenData = JSON.parse(savedToken);
+        const timeUntilExpiry = tokenData.expires_at - Date.now();
+        
+        if (timeUntilExpiry > 0) {
+          // Token is still valid, restore it
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          window.gapi.client.setToken({ access_token: tokenData.access_token });
+          setIsSignedIn(true);
+          return;
+        } else {
+          // Token expired, remove it
+          localStorage.removeItem('google_calendar_token');
+        }
+      } catch (error) {
+        console.error('Error parsing saved token:', error);
+        localStorage.removeItem('google_calendar_token');
+      }
+    }
+    
+    // Fallback to gapi client token
     const existingToken = window.gapi?.client?.getToken();
     if (existingToken?.access_token) {
       setIsSignedIn(true);
@@ -370,6 +465,9 @@ export function useGoogleCalendar() {
         setIsSignedIn(false);
         setUserProfile(null);
         setError(null);
+        
+        // Remove token from localStorage
+        localStorage.removeItem('google_calendar_token');
 
         // Trigger custom event for synchronization
         window.dispatchEvent(new CustomEvent('gapi_auth_signout'));
@@ -379,6 +477,10 @@ export function useGoogleCalendar() {
         setIsSignedIn(false);
         setUserProfile(null);
         setError(null);
+        
+        // Also remove from localStorage even if no current token
+        localStorage.removeItem('google_calendar_token');
+        
         void message.info("Bạn chưa đăng nhập Google.");
       }
     } catch (error) {
