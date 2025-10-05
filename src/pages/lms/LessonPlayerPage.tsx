@@ -3,30 +3,42 @@ import { Breadcrumb, Button, Card, Alert, Skeleton, Space } from 'antd';
 import React, { useState, useEffect, useMemo } from 'react';
 // import ReactMarkdown from 'react-markdown'; // Replaced with HTML rendering for ReactQuill
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 
-// Safe HTML renderer component
+// Safe HTML renderer component using DOMPurify
 const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
-  // Clean up the HTML content to avoid React errors
-  const cleanContent = content
-    .replace(/<br\s*\/?>/gi, '<br />') // Ensure br tags are self-closing
-    .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 />') // Ensure img tags are self-closing
-    .replace(/<input([^>]*?)(?:\s*\/)?>/gi, '<input$1 />') // Ensure input tags are self-closing
-    .replace(/<hr\s*\/?>/gi, '<hr />') // Ensure hr tags are self-closing
-    .replace(/<p><br\s*\/?><\/p>/gi, '<p>&nbsp;</p>') // Replace empty paragraphs with br
-    .replace(/<p><\/p>/gi, '') // Remove empty paragraphs
-    .replace(/<p>\s*<\/p>/gi, ''); // Remove paragraphs with only whitespace
-
   // If content is empty or only whitespace, return a default message
-  if (!cleanContent || cleanContent.trim() === '' || cleanContent.trim() === '<p></p>') {
+  if (!content || content.trim() === '' || content.trim() === '<p></p>' || content.trim() === '<div></div>') {
     return <div className={className}><p>Nội dung chưa được cập nhật.</p></div>;
   }
 
-  return (
-    <div 
-      className={className} 
-      dangerouslySetInnerHTML={{ __html: cleanContent }} 
-    />
-  );
+  try {
+    // Use DOMPurify to sanitize and clean HTML content
+    const cleanContent = DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'div', 'span',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'src', 'alt', 'title', 'class', 'id', 'style', 'target', 'rel'
+      ],
+      ALLOW_DATA_ATTR: false,
+      KEEP_CONTENT: true,
+      RETURN_DOM: false,
+      RETURN_DOM_FRAGMENT: false
+    });
+
+    return (
+      <div 
+        className={className} 
+        dangerouslySetInnerHTML={{ __html: cleanContent }} 
+      />
+    );
+  } catch (error) {
+    console.error('Error rendering HTML content:', error);
+    return <div className={className}><p>Lỗi hiển thị nội dung.</p></div>;
+  }
 };
 
 // import useAuth from '../../auth/useAuth';
