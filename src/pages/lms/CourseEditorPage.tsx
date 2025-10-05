@@ -266,6 +266,7 @@ export default function CourseEditorPage() {
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [selectedLessonType, setSelectedLessonType] = useState<string>('text');
+  const [editorKey, setEditorKey] = useState<number>(0);
   const [form] = Form.useForm();
   const [lessonForm] = Form.useForm();
 
@@ -779,7 +780,9 @@ export default function CourseEditorPage() {
                 onChange={(value) => {
                   setSelectedLessonType(value);
                   // Clear form content when changing lesson type
-                  form.setFieldsValue({ content: '' });
+                  lessonForm.setFieldsValue({ content: '' });
+                  // Force re-render ReactQuill by changing key
+                  setEditorKey(prev => prev + 1);
                 }}
               >
                 <Option value="text">
@@ -829,6 +832,7 @@ export default function CourseEditorPage() {
                 rules={[{ required: true, message: 'Vui lòng nhập nội dung bài học' }]}
               >
                 <ReactQuill
+                  key={`text-editor-${editorKey}`}
                   theme="snow"
                   style={{ height: '200px', marginBottom: '50px' }}
                   modules={{
@@ -857,6 +861,7 @@ export default function CourseEditorPage() {
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả video' }]}
                 >
                   <ReactQuill
+                    key={`video-editor-${editorKey}`}
                     theme="snow"
                     style={{ height: '150px', marginBottom: '50px' }}
                     modules={{
@@ -897,6 +902,7 @@ export default function CourseEditorPage() {
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả tài liệu' }]}
                 >
                   <ReactQuill
+                    key={`pdf-editor-${editorKey}`}
                     theme="snow"
                     style={{ height: '150px', marginBottom: '50px' }}
                     modules={{
