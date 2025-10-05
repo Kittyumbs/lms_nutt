@@ -14,11 +14,29 @@ import 'react-quill/dist/quill.snow.css';
 
 // Simple ReactQuill component that works directly with Ant Design Form
 const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+  console.log('🔍 SimpleReactQuill - Render:', { 
+    value: value, 
+    valueLength: value?.length,
+    valueType: typeof value,
+    hasOnChange: !!onChange 
+  });
+  
+  const handleChange = (newValue: string) => {
+    console.log('🔍 SimpleReactQuill - onChange triggered:', { 
+      newValue: newValue, 
+      newValueLength: newValue?.length,
+      newValueType: typeof newValue 
+    });
+    if (onChange) {
+      onChange(newValue);
+    }
+  };
+  
   return (
     <ReactQuill
       theme="snow"
       value={value || ''}
-      onChange={onChange}
+      onChange={handleChange}
       style={{ height: '200px', marginBottom: '50px' }}
       modules={{
         toolbar: [
@@ -384,6 +402,14 @@ export default function CourseEditorPage() {
   };
 
   const handleEditLesson = (lesson: Lesson) => {
+    console.log('🔍 handleEditLesson - START:', {
+      lessonId: lesson.id,
+      lessonTitle: lesson.title,
+      lessonType: lesson.type,
+      originalContent: lesson.content,
+      originalContentLength: lesson.content?.length
+    });
+    
     setEditingLesson(lesson);
     setSelectedLessonType(lesson.type);
     
@@ -399,32 +425,49 @@ export default function CourseEditorPage() {
           videoUrls: parsedContent.videoUrls || [],
           pdfUrls: parsedContent.pdfUrls || []
         };
+        console.log('🔍 handleEditLesson - Video/PDF parsed:', {
+          originalContent: lesson.content,
+          parsedDescription: parsedContent.description,
+          finalContent: formData.content
+        });
       } catch (error) {
-        console.error('Error parsing lesson content:', error);
+        console.error('🔍 handleEditLesson - Parse error:', error);
         formData = { ...lesson, content: lesson.content || '' };
       }
     } else if (lesson.type === 'text') {
       formData = { ...lesson, content: lesson.content || '' };
+      console.log('🔍 handleEditLesson - Text lesson:', {
+        originalContent: lesson.content,
+        finalContent: formData.content
+      });
     } else if (lesson.type === 'quiz') {
       formData = { ...lesson, content: lesson.content || '' };
+      console.log('🔍 handleEditLesson - Quiz lesson:', {
+        originalContent: lesson.content,
+        finalContent: formData.content
+      });
     }
     
     // Debug logging for loaded content
-    console.log('🔍 DEBUG - Loading lesson for edit:', {
+    console.log('🔍 handleEditLesson - Form data prepared:', {
       lessonId: lesson.id,
       lessonType: lesson.type,
-      originalContent: lesson.content,
-      formDataContent: formData.content
+      formDataContent: formData.content,
+      formDataContentLength: formData.content?.length
     });
     
     // Set form values first
+    console.log('🔍 handleEditLesson - Setting form values...');
     lessonForm.setFieldsValue(formData);
     
     // Force re-render ReactQuill with new content
+    console.log('🔍 handleEditLesson - Incrementing editor key...');
     setEditorKey(prev => prev + 1);
     
     // Open modal after a small delay to ensure form is updated
+    console.log('🔍 handleEditLesson - Opening modal in 100ms...');
     setTimeout(() => {
+      console.log('🔍 handleEditLesson - Opening modal NOW');
       setIsLessonModalOpen(true);
     }, 100);
   };
@@ -786,12 +829,20 @@ export default function CourseEditorPage() {
             layout="vertical"
             onFinish={async (values) => {
               try {
+                console.log('🔍 onFinish - START:', {
+                  values: values,
+                  valuesContent: values.content,
+                  valuesContentType: typeof values.content,
+                  valuesContentLength: values.content?.length,
+                  valuesType: values.type
+                });
+                
                 let content = values.content;
                 
                 // Debug logging for content
-                console.log('🔍 DEBUG - Form values.content:', values.content);
-                console.log('🔍 DEBUG - Content type:', typeof values.content);
-                console.log('🔍 DEBUG - Content length:', values.content?.length);
+                console.log('🔍 onFinish - Form values.content:', values.content);
+                console.log('🔍 onFinish - Content type:', typeof values.content);
+                console.log('🔍 onFinish - Content length:', values.content?.length);
                 
                 // Handle different lesson types
                 if (values.type === 'video' && values.videoUrls) {
@@ -799,17 +850,22 @@ export default function CourseEditorPage() {
                     description: values.content,
                     videoUrls: values.videoUrls
                   });
+                  console.log('🔍 onFinish - Video content prepared:', content);
                 } else if (values.type === 'pdf' && values.pdfUrls) {
                   content = JSON.stringify({
                     description: values.content,
                     pdfUrls: values.pdfUrls
                   });
+                  console.log('🔍 onFinish - PDF content prepared:', content);
                 } else if (values.type === 'quiz') {
                   // Content is already JSON from the form
                   content = values.content;
+                  console.log('🔍 onFinish - Quiz content prepared:', content);
+                } else {
+                  console.log('🔍 onFinish - Text content prepared:', content);
                 }
                 
-                console.log('🔍 DEBUG - Final content to save:', content);
+                console.log('🔍 onFinish - Final content to save:', content);
 
                 const lessonData = {
                   ...values,

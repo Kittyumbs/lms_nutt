@@ -5,11 +5,29 @@ import 'react-quill/dist/quill.snow.css';
 
 // Simple ReactQuill component that works directly with Ant Design Form
 const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+  console.log('🔍 CourseFormDrawer SimpleReactQuill - Render:', { 
+    value: value, 
+    valueLength: value?.length,
+    valueType: typeof value,
+    hasOnChange: !!onChange 
+  });
+  
+  const handleChange = (newValue: string) => {
+    console.log('🔍 CourseFormDrawer SimpleReactQuill - onChange triggered:', { 
+      newValue: newValue, 
+      newValueLength: newValue?.length,
+      newValueType: typeof newValue 
+    });
+    if (onChange) {
+      onChange(newValue);
+    }
+  };
+  
   return (
     <ReactQuill
       theme="snow"
       value={value || ''}
-      onChange={onChange}
+      onChange={handleChange}
       style={{ height: '150px', marginBottom: '50px' }}
       modules={{
         toolbar: [
