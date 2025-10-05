@@ -6,12 +6,18 @@ import 'react-quill/dist/quill.snow.css';
 // Custom ReactQuill wrapper for Ant Design Form integration
 const ReactQuillWrapper: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
   const [content, setContent] = React.useState(value || '');
+  const [isInitialized, setIsInitialized] = React.useState(false);
   
   React.useEffect(() => {
-    setContent(value || '');
+    console.log('🔍 CourseFormDrawer ReactQuillWrapper - Value changed:', { value, currentContent: content });
+    if (value !== content) {
+      setContent(value || '');
+      setIsInitialized(true);
+    }
   }, [value]);
   
   const handleChange = (newContent: string) => {
+    console.log('🔍 CourseFormDrawer ReactQuillWrapper - Content changed:', { newContent, length: newContent.length });
     setContent(newContent);
     if (onChange) {
       onChange(newContent);

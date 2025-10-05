@@ -138,10 +138,16 @@ body {
 .prose ul, .prose ol {
   margin: 0.5em 0 !important;
   padding-left: 1.5em !important;
+  list-style-type: disc !important;
+}
+
+.prose ol {
+  list-style-type: decimal !important;
 }
 
 .prose li {
   margin: 0.25em 0 !important;
+  display: list-item !important;
 }
 
 .prose a {
@@ -163,4 +169,15 @@ body {
 .prose p:empty {
   height: 1em !important;
   margin: 0.5em 0 !important;
+}
+
+/* Force list styling to be visible */
+.prose ol li::marker {
+  content: counter(list-item) ". " !important;
+  font-weight: bold !important;
+}
+
+.prose ul li::marker {
+  content: "• " !important;
+  font-weight: bold !important;
 }
