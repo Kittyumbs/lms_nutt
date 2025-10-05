@@ -1,4 +1,4 @@
-import { UserOutlined, CheckCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined, SyncOutlined, GoogleOutlined } from '@ant-design/icons';
+import { UserOutlined, CheckCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined, SyncOutlined } from '@ant-design/icons';
 import { Drawer, List, Avatar, Tag, Spin, message, Button, Space, Alert } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -36,8 +36,8 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
-  const { user, isGoogleCalendarAuthed, signInWithGoogleCalendar } = useAuth();
-  const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
+  const { user, isGoogleCalendarAuthed } = useAuth();
+  const { isSignedIn, isGapiLoaded, error, ensureSignedIn, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
 
 
   const loadEvents = useCallback(async () => {
@@ -129,31 +129,12 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
             <>
               <Alert
                 message="Cần cấp quyền Google Calendar"
-                description="Để xem và tạo sự kiện lịch, vui lòng cấp quyền truy cập Google Calendar."
+                description="Để xem và tạo sự kiện lịch, vui lòng cấp quyền truy cập Google Calendar từ sidebar bên trái."
                 type="warning"
                 showIcon
                 style={{ marginBottom: 16 }}
               />
-              <Space direction="vertical">
-                <Button 
-                  type="primary" 
-                  icon={<GoogleOutlined />}
-                  onClick={async () => {
-                    try {
-                      await signInWithGoogleCalendar();
-                    } catch (err) {
-                      const errorMessage = err instanceof Error ? err.message : 'Lỗi không xác định';
-                      void message.error(errorMessage);
-                    }
-                  }}
-                  size="large"
-                >
-                  Cấp quyền Google Calendar
-                </Button>
-                <Button onClick={handleAuthClick}>
-                  Hoặc đăng nhập lại
-                </Button>
-              </Space>
+              <p>Bạn có thể cấp quyền Google Calendar từ sidebar bên trái.</p>
             </>
           )}
           {error && <Alert message={error} type="error" style={{ marginTop: 16 }} />}
