@@ -419,6 +419,8 @@ export default function CourseEditorPage() {
   };
 
   const handleCreateLesson = (moduleId: string) => {
+    console.log('🔍 handleCreateLesson - START: Clearing form for new lesson');
+    
     setSelectedModuleId(moduleId);
     setEditingLesson(null);
     
@@ -426,12 +428,21 @@ export default function CourseEditorPage() {
     const moduleLessons = lessons.filter(lesson => lesson.moduleId === moduleId);
     const nextOrder = moduleLessons.length > 0 ? Math.max(...moduleLessons.map(l => l.order)) + 1 : 1;
     
+    // Clear the form completely
     lessonForm.resetFields();
     lessonForm.setFieldsValue({ 
       type: 'text', 
-      order: nextOrder 
+      order: nextOrder,
+      title: '',
+      content: ''
     });
+    
     setSelectedLessonType('text');
+    
+    // Force re-render ReactQuill with empty content
+    setEditorKey(prev => prev + 1);
+    
+    console.log('🔍 handleCreateLesson - Form cleared, opening modal');
     setIsLessonModalOpen(true);
   };
 
