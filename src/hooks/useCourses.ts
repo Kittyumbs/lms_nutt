@@ -285,48 +285,47 @@ async function createTemplateModulesAndLessons(courseId: string) {
           {
             title: 'React là gì và tại sao nên sử dụng?',
             type: 'text',
-            content: `# React là gì?
+            content: `React là gì?
 
 React là một thư viện JavaScript được phát triển bởi Facebook để xây dựng giao diện người dùng (UI). React giúp bạn tạo ra các ứng dụng web nhanh chóng và dễ bảo trì.
 
-## Tại sao nên sử dụng React?
+Tại sao nên sử dụng React?
 
-### 1. **Component-based Architecture**
+1. Component-based Architecture
 - Tái sử dụng code dễ dàng
 - Dễ bảo trì và mở rộng
 - Tách biệt logic và UI
 
-### 2. **Virtual DOM**
+2. Virtual DOM
 - Cải thiện hiệu suất
 - Cập nhật UI nhanh chóng
 - Tối ưu hóa rendering
 
-### 3. **Ecosystem phong phú**
+3. Ecosystem phong phú
 - Nhiều thư viện hỗ trợ
 - Cộng đồng lớn mạnh
 - Tài liệu đầy đủ
 
-### 4. **JSX Syntax**
+4. JSX Syntax
 - Viết HTML trong JavaScript
 - Code dễ đọc và hiểu
 - Hỗ trợ TypeScript
 
-## Khi nào nên sử dụng React?
+Khi nào nên sử dụng React?
 
 - Xây dựng Single Page Applications (SPA)
 - Ứng dụng có nhiều tương tác người dùng
 - Cần hiệu suất cao
 - Team có kinh nghiệm JavaScript
 
-## Bài tập thực hành
+Bài tập thực hành
 
-**Nhiệm vụ**: Tạo một component React đơn giản hiển thị "Hello, World!"
+Nhiệm vụ: Tạo một component React đơn giản hiển thị "Hello, World!"
 
-**Hướng dẫn**:
+Hướng dẫn:
 1. Mở file App.js trong dự án React
 2. Thay thế nội dung bằng code sau:
 
-\`\`\`jsx
 import React from 'react';
 
 function App() {
@@ -339,11 +338,10 @@ function App() {
 }
 
 export default App;
-\`\`\`
 
 3. Lưu file và xem kết quả trong browser
 
-**Kết quả mong đợi**: Trang web hiển thị "Hello, World!" và "Chào mừng bạn đến với React!"`,
+Kết quả mong đợi: Trang web hiển thị "Hello, World!" và "Chào mừng bạn đến với React!"`,
             order: 1,
           },
           {

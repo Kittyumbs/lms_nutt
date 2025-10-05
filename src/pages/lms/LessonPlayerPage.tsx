@@ -12,19 +12,10 @@ const SafeTextRenderer: React.FC<{ content: string; className?: string }> = ({ c
     return <div className={className}><p>Nội dung chưa được cập nhật.</p></div>;
   }
 
-  // Simply render as plain text with line breaks preserved
-  const formattedContent = content
-    .split('\n')
-    .map((line, index) => (
-      <React.Fragment key={index}>
-        {line}
-        {index < content.split('\n').length - 1 && <br />}
-      </React.Fragment>
-    ));
-  
+  // Simply render as plain text with line breaks preserved using CSS
   return (
-    <div className={className}>
-      {formattedContent}
+    <div className={className} style={{ whiteSpace: 'pre-line' }}>
+      {content}
     </div>
   );
 };
