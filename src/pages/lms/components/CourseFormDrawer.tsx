@@ -1,7 +1,7 @@
 import { Drawer, Form, Input, Button, Select, Space, message } from 'antd';
 import React, { useEffect } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+// import ReactQuill from 'react-quill';
+// import 'react-quill/dist/quill.snow.css';
 
 const { Option } = Select;
 
@@ -75,18 +75,10 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
           <Input placeholder="Enter course title" />
         </Form.Item>
         <Form.Item name="desc" label="Description">
-          <ReactQuill
-            theme="snow"
-            modules={{
-              toolbar: [
-                [{ 'header': [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                ['link', 'image'],
-                ['clean']
-              ],
-            }}
-            style={{ height: '150px', marginBottom: '50px' }}
+          <Input.TextArea
+            rows={6}
+            placeholder="Enter course description..."
+            style={{ height: '150px' }}
           />
         </Form.Item>
         <Form.Item name="tags" label="Tags">

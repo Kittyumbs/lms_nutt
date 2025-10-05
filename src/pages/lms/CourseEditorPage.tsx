@@ -9,8 +9,8 @@ import {
   FilePdfOutlined,
   ArrowLeftOutlined
 } from '@ant-design/icons';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+// import ReactQuill from 'react-quill';
+// import 'react-quill/dist/quill.snow.css';
 import { 
   Button, 
   Card, 
@@ -35,16 +35,16 @@ import useRole from '../../auth/useRole';
 import { useCourseDetail, type Module, type Lesson } from '../../hooks/useCourseDetail';
 import { useCourseEditor } from '../../hooks/useCourseEditor';
 
-// ReactQuill modules configuration
-const quillModules = {
-  toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['link', 'image'],
-    ['clean']
-  ],
-};
+// ReactQuill modules configuration - DISABLED
+// const quillModules = {
+//   toolbar: [
+//     [{ 'header': [1, 2, 3, false] }],
+//     ['bold', 'italic', 'underline', 'strike'],
+//     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+//     ['link', 'image'],
+//     ['clean']
+//   ],
+// };
 
 // Quiz Builder Component
 const QuizBuilder: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
@@ -820,10 +820,10 @@ export default function CourseEditorPage() {
                 label="Nội dung bài học"
                 rules={[{ required: true, message: 'Vui lòng nhập nội dung bài học' }]}
               >
-                <ReactQuill
-                  theme="snow"
-                  modules={quillModules}
-                  style={{ height: '200px', marginBottom: '50px' }}
+                <Input.TextArea
+                  rows={8}
+                  placeholder="Nhập nội dung bài học..."
+                  style={{ height: '200px' }}
                 />
               </Form.Item>
             )}
@@ -835,10 +835,10 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả video' }]}
                 >
-                  <ReactQuill
-                    theme="snow"
-                    modules={quillModules}
-                    style={{ height: '150px', marginBottom: '50px' }}
+                  <Input.TextArea
+                    rows={6}
+                    placeholder="Nhập mô tả video..."
+                    style={{ height: '150px' }}
                   />
                 </Form.Item>
                 <Form.Item
@@ -862,10 +862,10 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả tài liệu' }]}
                 >
-                  <ReactQuill
-                    theme="snow"
-                    modules={quillModules}
-                    style={{ height: '150px', marginBottom: '50px' }}
+                  <Input.TextArea
+                    rows={6}
+                    placeholder="Nhập mô tả tài liệu..."
+                    style={{ height: '150px' }}
                   />
                 </Form.Item>
                 <Form.Item

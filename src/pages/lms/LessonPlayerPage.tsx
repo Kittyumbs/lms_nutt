@@ -3,76 +3,28 @@ import { Breadcrumb, Button, Card, Alert, Skeleton, Space } from 'antd';
 import React, { useState, useEffect, useMemo } from 'react';
 // import ReactMarkdown from 'react-markdown'; // Replaced with HTML rendering for ReactQuill
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import DOMPurify from 'dompurify';
+// import DOMPurify from 'dompurify'; // No longer needed
 
-// Safe HTML renderer component - avoid dangerouslySetInnerHTML completely
-const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
+// Simple text renderer component - no HTML parsing needed
+const SafeTextRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
   // If content is empty or only whitespace, return a default message
-  if (!content || content.trim() === '' || content.trim() === '<p></p>' || content.trim() === '<div></div>') {
+  if (!content || content.trim() === '') {
     return <div className={className}><p>Nội dung chưa được cập nhật.</p></div>;
   }
 
-  // Parse HTML content and convert to React elements
-  const parseHTMLToReact = (htmlString: string) => {
-    try {
-      // Create a temporary DOM element
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlString;
-      
-      // Convert DOM nodes to React elements recursively
-      const convertNodeToReact = (node: Node): React.ReactNode => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          return node.textContent;
-        }
-        
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as Element;
-          const tagName = element.tagName.toLowerCase();
-          const props: any = {};
-          
-          // Copy attributes
-          for (let i = 0; i < element.attributes.length; i++) {
-            const attr = element.attributes[i];
-            props[attr.name] = attr.value;
-          }
-          
-          // Convert children
-          const children: React.ReactNode[] = [];
-          for (let i = 0; i < element.childNodes.length; i++) {
-            const child = convertNodeToReact(element.childNodes[i]);
-            if (child !== null && child !== undefined) {
-              children.push(child);
-            }
-          }
-          
-          // Create React element
-          return React.createElement(tagName, props, ...children);
-        }
-        
-        return null;
-      };
-      
-      // Convert all child nodes
-      const reactElements: React.ReactNode[] = [];
-      for (let i = 0; i < tempDiv.childNodes.length; i++) {
-        const child = convertNodeToReact(tempDiv.childNodes[i]);
-        if (child !== null && child !== undefined) {
-          reactElements.push(child);
-        }
-      }
-      
-      return reactElements;
-    } catch (error) {
-      console.error('Error parsing HTML:', error);
-      return [<p key="error">Lỗi hiển thị nội dung.</p>];
-    }
-  };
-
-  const reactElements = parseHTMLToReact(content);
+  // Simply render as plain text with line breaks preserved
+  const formattedContent = content
+    .split('\n')
+    .map((line, index) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < content.split('\n').length - 1 && <br />}
+      </React.Fragment>
+    ));
   
   return (
     <div className={className}>
-      {reactElements}
+      {formattedContent}
     </div>
   );
 };
@@ -125,13 +77,13 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     
     // Fallback to HTML content if video URL is invalid
     const content = `<h1>Video: ${lesson.title}</h1><p><strong>Video URL:</strong> ${videoUrl}</p><p><a href="${videoUrl}" target="_blank">Click here to watch the video</a></p>`;
-    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
+    return <SafeTextRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'text') {
     // Use actual content from database (HTML from ReactQuill)
     const content = lesson.content || `<h1>${lesson.title}</h1><p>Nội dung bài học chưa được cập nhật.</p>`;
-    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
+    return <SafeTextRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'quiz') {
@@ -177,7 +129,7 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     
     // Fallback to HTML content if quiz parsing fails
     const content = lesson.content || `<h1>Quiz: ${lesson.title}</h1><p>Nội dung quiz chưa được cập nhật.</p>`;
-    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
+    return <SafeTextRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'pdf') {
