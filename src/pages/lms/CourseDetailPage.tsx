@@ -244,6 +244,9 @@ export default function CourseDetailPage() {
                       bordered={false}
                       expandIconPosition="end"
                       className="bg-transparent"
+                      style={{
+                        '--ant-collapse-header-padding': '16px 20px',
+                      } as React.CSSProperties}
                     >
                       {modules.length > 0 ? (
                         // Display lessons grouped by modules
@@ -252,17 +255,20 @@ export default function CourseDetailPage() {
                             key={module.id}
                             header={
                               <div className="flex items-center justify-between w-full">
-                                <div className="flex items-center space-x-2 flex-1">
-                                  <span className="font-medium">{module.title}</span>
+                                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                  <span className="font-medium truncate">{module.title}</span>
                                 </div>
-                                <div className="flex items-center space-x-2 flex-shrink-0">
-                                  <span className="text-sm text-gray-500 font-medium">
+                                <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
+                                  <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
                                     {module.lessons.length} bài học
                                   </span>
                                 </div>
                               </div>
                             }
                             className="bg-white border border-gray-200 mb-2 rounded-lg"
+                            style={{
+                              '--ant-collapse-header-padding': '16px 20px',
+                            } as React.CSSProperties}
                             showArrow
                             collapsible={module.lessons.length > 0 ? "header" : "disabled"}
                           >
