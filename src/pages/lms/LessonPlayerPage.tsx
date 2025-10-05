@@ -57,33 +57,65 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     contentPreview: lesson.content?.substring(0, 100) + '...'
   });
   if (lesson.type === 'video') {
-    // Use actual video URL from database
-    const videoUrl = lesson.content || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-    
-    // Extract video ID from YouTube URL
-    const getYouTubeVideoId = (url: string) => {
-      const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
-      return match ? match[1] : null;
-    };
-    
-    const videoId = getYouTubeVideoId(videoUrl);
-    
-    if (videoId) {
-      return (
-        <div className="relative w-full" style={{ aspectRatio: '16 / 9' }}>
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
-            className="w-full h-full rounded-lg"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={lesson.title}
-          />
-        </div>
-      );
+    try {
+      // Parse JSON content from database
+      const videoData = lesson.content ? JSON.parse(lesson.content) : null;
+      
+      if (videoData && videoData.videoUrls && videoData.videoUrls.length > 0) {
+        const videoUrl = videoData.videoUrls[0]; // Use first video URL
+        
+        // Extract video ID from YouTube URL
+        const getYouTubeVideoId = (url: string) => {
+          const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+          return match ? match[1] : null;
+        };
+        
+        const videoId = getYouTubeVideoId(videoUrl);
+        
+        if (videoId) {
+          return (
+            <div className="space-y-4">
+              {/* Video Description */}
+              {videoData.description && (
+                <SafeHTMLRenderer content={videoData.description} className="prose max-w-none" />
+              )}
+              
+              {/* Video Player */}
+              <div className="relative w-full" style={{ aspectRatio: '16 / 9' }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
+                  className="w-full h-full rounded-lg"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={lesson.title}
+                />
+              </div>
+              
+              {/* Additional Video URLs */}
+              {videoData.videoUrls.length > 1 && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold mb-2">Additional Videos:</h4>
+                  <ul className="space-y-2">
+                    {videoData.videoUrls.slice(1).map((url: string, index: number) => (
+                      <li key={index}>
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">
+                          Video {index + 2}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing video content:', error);
     }
     
-    // Fallback to HTML content if video URL is invalid
-    const content = `<h1>Video: ${lesson.title}</h1><p><strong>Video URL:</strong> ${videoUrl}</p><p><a href="${videoUrl}" target="_blank">Click here to watch the video</a></p>`;
+    // Fallback content
+    const content = `<h1>Video: ${lesson.title}</h1><p>Nội dung video chưa được cập nhật.</p>`;
     return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 
@@ -98,35 +130,39 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     try {
       const quizData = lesson.content ? JSON.parse(lesson.content) : null;
       
-      if (quizData && quizData.question) {
+      if (quizData && quizData.questions && quizData.questions.length > 0) {
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold mb-4">Quiz: {lesson.title}</h2>
             
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="font-semibold mb-4 text-lg">{quizData.question}</h3>
-              <div className="space-y-3">
-                {quizData.options?.map((option: string, idx: number) => (
-                  <label key={idx} className="flex items-center p-3 bg-white rounded border hover:bg-gray-50 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="quiz" 
-                      value={idx} 
-                      className="mr-3" 
-                    />
-                    <span>{option}</span>
-                  </label>
-                ))}
-              </div>
-              
-              {quizData.explanation && (
-                <div className="mt-4 p-4 bg-blue-50 rounded border-l-4 border-blue-400">
-                  <p className="text-sm text-blue-800">
-                    <strong>Giải thích:</strong> {quizData.explanation}
-                  </p>
+            {quizData.questions.map((question: any, questionIndex: number) => (
+              <div key={question.id || questionIndex} className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="font-semibold mb-4 text-lg">
+                  Câu {questionIndex + 1}: {question.question}
+                </h3>
+                <div className="space-y-3">
+                  {question.options?.map((option: string, idx: number) => (
+                    <label key={idx} className="flex items-center p-3 bg-white rounded border hover:bg-gray-50 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name={`quiz-${questionIndex}`} 
+                        value={idx} 
+                        className="mr-3" 
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
                 </div>
-              )}
-            </div>
+                
+                {question.explanation && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded border-l-4 border-blue-400">
+                    <p className="text-sm text-blue-800">
+                      <strong>Giải thích:</strong> {question.explanation}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         );
       }
@@ -140,31 +176,57 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
   }
 
   if (lesson.type === 'pdf') {
-    // Use actual PDF URL from database
-    const pdfUrl = lesson.content || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    try {
+      // Parse JSON content from database
+      const pdfData = lesson.content ? JSON.parse(lesson.content) : null;
+      
+      if (pdfData && pdfData.pdfUrls && pdfData.pdfUrls.length > 0) {
+        const pdfUrl = pdfData.pdfUrls[0]; // Use first PDF URL
+        
+        return (
+          <div className="space-y-4">
+            {/* PDF Description */}
+            {pdfData.description && (
+              <SafeHTMLRenderer content={pdfData.description} className="prose max-w-none" />
+            )}
+            
+            {/* PDF Viewer */}
+            <div className="h-[80vh] w-full">
+              <iframe
+                src={pdfUrl}
+                className="w-full h-full border rounded-lg"
+                title="PDF Viewer"
+              />
+            </div>
+            
+            {/* PDF Links */}
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold mb-2">PDF Documents:</h4>
+              <ul className="space-y-2">
+                {pdfData.pdfUrls.map((url: string, index: number) => (
+                  <li key={index}>
+                    <a 
+                      href={url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      PDF Document {index + 1}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        );
+      }
+    } catch (error) {
+      console.error('Error parsing PDF content:', error);
+    }
     
-    return (
-      <div className="h-[80vh] w-full">
-        <iframe
-          src={pdfUrl}
-          className="w-full h-full border rounded-lg"
-          title="PDF Viewer"
-        />
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">
-            <strong>PDF Link:</strong> 
-          </p>
-          <a 
-            href={pdfUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline"
-          >
-            {pdfUrl}
-          </a>
-        </div>
-      </div>
-    );
+    // Fallback content
+    const content = `<h1>PDF: ${lesson.title}</h1><p>Nội dung PDF chưa được cập nhật.</p>`;
+    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 
   return <div>Unsupported lesson type: {lesson.type}</div>;
