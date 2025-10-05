@@ -347,33 +347,33 @@ Kết quả mong đợi: Trang web hiển thị "Hello, World!" và "Chào mừn
           {
             title: 'Cài đặt môi trường phát triển',
             type: 'text',
-            content: `# Cài đặt môi trường phát triển React
+            content: `Cài đặt môi trường phát triển React
 
-## Yêu cầu hệ thống
+#Yêu cầu hệ thống
 
-### 1. **Node.js**
+##1. Node.js
 - Phiên bản: 16.0 trở lên
 - Tải về: [nodejs.org](https://nodejs.org)
 
-### 2. **npm hoặc yarn**
+##2. npm hoặc yarn
 - npm: đi kèm với Node.js
 - yarn: cài đặt riêng nếu muốn
 
-### 3. **Code Editor**
+##3. Code Editor
 - Visual Studio Code (khuyến nghị)
 - WebStorm
 - Sublime Text
 
-## Tạo dự án React mới
+#Tạo dự án React mới
 
-### Sử dụng Create React App
+##Sử dụng Create React App
 \`\`\`bash
 npx create-react-app my-app
 cd my-app
 npm start
 \`\`\`
 
-### Sử dụng Vite (khuyến nghị)
+##Sử dụng Vite (khuyến nghị)
 \`\`\`bash
 npm create vite@latest my-app -- --template react
 cd my-app
@@ -381,7 +381,7 @@ npm install
 npm run dev
 \`\`\`
 
-## Cấu trúc thư mục
+#Cấu trúc thư mục
 
 \`\`\`
 my-app/
@@ -399,7 +399,7 @@ my-app/
 └── README.md
 \`\`\`
 
-## Cài đặt extensions cho VS Code
+#Cài đặt extensions cho VS Code
 
 - ES7+ React/Redux/React-Native snippets
 - Prettier - Code formatter
@@ -407,38 +407,38 @@ my-app/
 - Auto Rename Tag
 - Bracket Pair Colorizer
 
-## Bài tập thực hành
+#Bài tập thực hành
 
-**Nhiệm vụ**: Tạo dự án React đầu tiên của bạn
+Nhiệm vụ: Tạo dự án React đầu tiên của bạn
 
-**Hướng dẫn từng bước**:
+Hướng dẫn từng bước:
 
-1. **Kiểm tra Node.js**:
+1. Kiểm tra Node.js:
    \`\`\`bash
    node --version
    npm --version
    \`\`\`
 
-2. **Tạo dự án mới**:
+2. Tạo dự án mới:
    \`\`\`bash
    npx create-react-app my-first-react-app
    cd my-first-react-app
    \`\`\`
 
-3. **Chạy dự án**:
+3. Chạy dự án:
    \`\`\`bash
    npm start
    \`\`\`
 
-4. **Mở browser** và truy cập http://localhost:3000
+4. Mở browser và truy cập http://localhost:3000
 
-**Kết quả mong đợi**: 
+Kết quả mong đợi: 
 - Trang web React mặc định hiển thị
 - Logo React xoay
 - Text "Edit src/App.js and save to reload"
 - Link "Learn React"
 
-**Lưu ý**: Nếu gặp lỗi, hãy kiểm tra:
+Lưu ý: Nếu gặp lỗi, hãy kiểm tra:
 - Node.js đã cài đặt chưa
 - Kết nối internet ổn định
 - Port 3000 chưa được sử dụng`,
@@ -460,23 +460,23 @@ my-app/
           {
             title: 'Tìm hiểu về JSX',
             type: 'text',
-            content: `# JSX - JavaScript XML
+            content: `JSX - JavaScript XML
 
 JSX là một extension syntax của JavaScript cho phép bạn viết HTML trong JavaScript.
 
-## Cú pháp JSX cơ bản
+#Cú pháp JSX cơ bản
 
-### 1. **Element đơn giản**
+##1. Element đơn giản
 \`\`\`jsx
 const element = <h1>Hello, World!</h1>;
 \`\`\`
 
-### 2. **Element với attributes**
+##2. Element với attributes
 \`\`\`jsx
 const element = <div className="container" id="main">Content</div>;
 \`\`\`
 
-### 3. **Element lồng nhau**
+##3. Element lồng nhau
 \`\`\`jsx
 const element = (
   <div>
@@ -486,20 +486,20 @@ const element = (
 );
 \`\`\`
 
-## JavaScript trong JSX
+#JavaScript trong JSX
 
-### 1. **Expression**
+##1. Expression
 \`\`\`jsx
 const name = 'John';
 const element = <h1>Hello, {name}!</h1>;
 \`\`\`
 
-### 2. **Function calls**
+##2. Function calls
 \`\`\`jsx
 const element = <h1>Hello, {formatName(user)}!</h1>;
 \`\`\`
 
-### 3. **Conditional rendering**
+##3. Conditional rendering
 \`\`\`jsx
 const element = (
   <div>
@@ -508,9 +508,9 @@ const element = (
 );
 \`\`\`
 
-## Lưu ý quan trọng
+#Lưu ý quan trọng
 
-### 1. **className thay vì class**
+##1. className thay vì class
 \`\`\`jsx
 // ❌ Sai
 <div class="container">
@@ -519,7 +519,7 @@ const element = (
 <div className="container">
 \`\`\`
 
-### 2. **CamelCase cho attributes**
+##2. CamelCase cho attributes
 \`\`\`jsx
 // ❌ Sai
 <div tabindex="1" onclick={handleClick}>
@@ -528,7 +528,7 @@ const element = (
 <div tabIndex="1" onClick={handleClick}>
 \`\`\`
 
-### 3. **Self-closing tags**
+##3. Self-closing tags
 \`\`\`jsx
 // ❌ Sai
 <img src="image.jpg"></img>
@@ -537,11 +537,11 @@ const element = (
 <img src="image.jpg" />
 \`\`\`
 
-## Bài tập thực hành
+#Bài tập thực hành
 
-**Nhiệm vụ**: Tạo một component JSX hiển thị thông tin cá nhân
+Nhiệm vụ: Tạo một component JSX hiển thị thông tin cá nhân
 
-**Hướng dẫn**:
+Hướng dẫn:
 1. Mở file App.js
 2. Thay thế nội dung bằng code sau:
 
@@ -581,36 +581,36 @@ export default App;
 
 3. Lưu file và xem kết quả
 
-**Kết quả mong đợi**: 
+Kết quả mong đợi: 
 - Hiển thị thông tin cá nhân với tên, tuổi, thành phố
 - Hiển thị trạng thái sinh viên
 - Hiển thị danh sách kỹ năng
 
-**Thử thách**: Thay đổi các giá trị biến và xem kết quả thay đổi như thế nào!`,
+Thử thách: Thay đổi các giá trị biến và xem kết quả thay đổi như thế nào!`,
             order: 1,
           },
           {
             title: 'Tạo component đầu tiên',
             type: 'text',
-            content: `# Tạo Component đầu tiên
+            content: `Tạo Component đầu tiên
 
-## Function Component
+#Function Component
 
-### 1. **Component đơn giản**
+##1. Component đơn giản
 \`\`\`jsx
 function Welcome() {
   return <h1>Hello, World!</h1>;
 }
 \`\`\`
 
-### 2. **Component với props**
+##2. Component với props
 \`\`\`jsx
 function Welcome(props) {
   return <h1>Hello, {props.name}!</h1>;
 }
 \`\`\`
 
-### 3. **Sử dụng component**
+##3. Sử dụng component
 \`\`\`jsx
 function App() {
   return (
@@ -623,7 +623,7 @@ function App() {
 }
 \`\`\`
 
-## Class Component
+#Class Component
 
 \`\`\`jsx
 class Welcome extends React.Component {
@@ -633,7 +633,7 @@ class Welcome extends React.Component {
 }
 \`\`\`
 
-## Component với state
+#Component với state
 
 \`\`\`jsx
 class Clock extends React.Component {
@@ -670,11 +670,11 @@ class Clock extends React.Component {
 }
 \`\`\`
 
-## Bài tập thực hành
+#Bài tập thực hành
 
-**Nhiệm vụ**: Tạo một component Card hiển thị thông tin sản phẩm
+Nhiệm vụ: Tạo một component Card hiển thị thông tin sản phẩm
 
-**Hướng dẫn**:
+Hướng dẫn:
 1. Tạo file mới: \`src/components/ProductCard.js\`
 2. Thêm code sau:
 
@@ -787,12 +787,12 @@ export default App;
 }
 \`\`\`
 
-**Kết quả mong đợi**: 
+Kết quả mong đợi: 
 - Hiển thị 2 sản phẩm với hình ảnh, tên, giá, mô tả
 - Mỗi sản phẩm có nút "Mua ngay"
 - Layout đẹp với CSS
 
-**Thử thách**: 
+Thử thách: 
 - Thêm thêm sản phẩm vào mảng
 - Thay đổi style CSS
 - Thêm chức năng click vào nút "Mua ngay"`,
@@ -824,20 +824,20 @@ export default App;
           {
             title: 'Tìm hiểu về Props',
             type: 'text',
-            content: `# Props trong React
+            content: `Props trong React
 
 Props (Properties) là cách để truyền dữ liệu từ component cha xuống component con.
 
-## Cách sử dụng Props
+#Cách sử dụng Props
 
-### 1. **Truyền props**
+##1. Truyền props
 \`\`\`jsx
 function App() {
   return <Welcome name="John" age={25} />;
 }
 \`\`\`
 
-### 2. **Nhận props**
+##2. Nhận props
 \`\`\`jsx
 function Welcome(props) {
   return (
@@ -849,7 +849,7 @@ function Welcome(props) {
 }
 \`\`\`
 
-### 3. **Destructuring props**
+##3. Destructuring props
 \`\`\`jsx
 function Welcome({ name, age }) {
   return (
@@ -861,7 +861,7 @@ function Welcome({ name, age }) {
 }
 \`\`\`
 
-## Default Props
+#Default Props
 
 \`\`\`jsx
 function Welcome({ name = 'Guest', age = 0 }) {
@@ -874,7 +874,7 @@ function Welcome({ name = 'Guest', age = 0 }) {
 }
 \`\`\`
 
-## PropTypes (TypeScript)
+#PropTypes (TypeScript)
 
 \`\`\`tsx
 interface WelcomeProps {
@@ -894,11 +894,11 @@ function Welcome({ name, age, isActive = false }: WelcomeProps) {
 }
 \`\`\`
 
-## Bài tập thực hành
+#Bài tập thực hành
 
-**Nhiệm vụ**: Tạo component UserCard hiển thị thông tin người dùng
+Nhiệm vụ: Tạo component UserCard hiển thị thông tin người dùng
 
-**Hướng dẫn**:
+Hướng dẫn:
 1. Tạo file \`src/components/UserCard.js\`:
 
 \`\`\`jsx
@@ -1053,12 +1053,12 @@ export default App;
 }
 \`\`\`
 
-**Kết quả mong đợi**: 
+Kết quả mong đợi: 
 - Hiển thị 2 user card với avatar, thông tin, và nút action
 - User active có màu xanh, inactive có màu đỏ
 - Click nút Edit/Delete sẽ log ra console
 
-**Thử thách**: 
+Thử thách: 
 - Thêm thêm user vào mảng
 - Thay đổi style CSS
 - Thêm chức năng thực sự cho nút Edit/Delete`,
@@ -1067,13 +1067,13 @@ export default App;
           {
             title: 'State trong React',
             type: 'text',
-            content: `# State trong React
+            content: `State trong React
 
 State là dữ liệu có thể thay đổi trong component. Khi state thay đổi, component sẽ re-render.
 
-## useState Hook
+#useState Hook
 
-### 1. **State đơn giản**
+##1. State đơn giản
 \`\`\`jsx
 import { useState } from 'react';
 
@@ -1091,7 +1091,7 @@ function Counter() {
 }
 \`\`\`
 
-### 2. **State với object**
+##2. State với object
 \`\`\`jsx
 function UserProfile() {
   const [user, setUser] = useState({
@@ -1115,7 +1115,7 @@ function UserProfile() {
 }
 \`\`\`
 
-### 3. **State với array**
+##3. State với array
 \`\`\`jsx
 function TodoList() {
   const [todos, setTodos] = useState([]);
@@ -1146,11 +1146,11 @@ function TodoList() {
 }
 \`\`\`
 
-## Bài tập thực hành
+#Bài tập thực hành
 
-**Nhiệm vụ**: Tạo ứng dụng Todo List hoàn chỉnh
+Nhiệm vụ: Tạo ứng dụng Todo List hoàn chỉnh
 
-**Hướng dẫn**:
+Hướng dẫn:
 1. Tạo file \`src/components/TodoApp.js\`:
 
 \`\`\`jsx
@@ -1256,7 +1256,7 @@ function TodoApp() {
         <div className="stats">
           <p>Tổng cộng: {totalCount} công việc</p>
           <p>Đã hoàn thành: {completedCount} công việc</p>
-          <p>Tiến độ: {Math.round((completedCount / totalCount) * 100)}%</p>
+          <p>Tiến độ: {Math.round((completedCount / totalCount)  100)}%</p>
         </div>
       )}
     </div>
@@ -1412,13 +1412,13 @@ function App() {
 export default App;
 \`\`\`
 
-**Kết quả mong đợi**: 
+Kết quả mong đợi: 
 - Ứng dụng Todo List hoàn chỉnh với thêm, xóa, đánh dấu hoàn thành
 - Filter theo trạng thái (tất cả, chưa hoàn thành, đã hoàn thành)
 - Thống kê tiến độ hoàn thành
 - Giao diện đẹp và responsive
 
-**Thử thách**: 
+Thử thách: 
 - Thêm chức năng sửa todo
 - Thêm chức năng lưu vào localStorage
 - Thêm chức năng sắp xếp theo ngày tạo`,
@@ -1440,11 +1440,11 @@ export default App;
           {
             title: 'useEffect Hook',
             type: 'text',
-            content: `# useEffect Hook
+            content: `useEffect Hook
 
 useEffect cho phép bạn thực hiện side effects trong function components.
 
-## Cú pháp cơ bản
+#Cú pháp cơ bản
 
 \`\`\`jsx
 import { useState, useEffect } from 'react';
@@ -1467,30 +1467,30 @@ function Example() {
 }
 \`\`\`
 
-## Dependency Array
+#Dependency Array
 
-### 1. **Chạy sau mỗi render**
+##1. Chạy sau mỗi render
 \`\`\`jsx
 useEffect(() => {
   // Chạy sau mỗi render
 });
 \`\`\`
 
-### 2. **Chạy một lần duy nhất**
+##2. Chạy một lần duy nhất
 \`\`\`jsx
 useEffect(() => {
   // Chỉ chạy một lần sau mount
 }, []);
 \`\`\`
 
-### 3. **Chạy khi dependency thay đổi**
+##3. Chạy khi dependency thay đổi
 \`\`\`jsx
 useEffect(() => {
   // Chạy khi count thay đổi
 }, [count]);
 \`\`\`
 
-## Cleanup function
+#Cleanup function
 
 \`\`\`jsx
 useEffect(() => {
@@ -1508,13 +1508,13 @@ useEffect(() => {
           {
             title: 'useContext và useReducer',
             type: 'text',
-            content: `# useContext và useReducer
+            content: `useContext và useReducer
 
-## useContext
+#useContext
 
 useContext cho phép bạn sử dụng Context API một cách dễ dàng.
 
-### 1. **Tạo Context**
+##1. Tạo Context
 \`\`\`jsx
 import { createContext, useContext } from 'react';
 
@@ -1531,7 +1531,7 @@ function ThemeProvider({ children }) {
 }
 \`\`\`
 
-### 2. **Sử dụng Context**
+##2. Sử dụng Context
 \`\`\`jsx
 function ThemedButton() {
   const { theme, setTheme } = useContext(ThemeContext);
@@ -1547,11 +1547,11 @@ function ThemedButton() {
 }
 \`\`\`
 
-## useReducer
+#useReducer
 
 useReducer là một alternative cho useState khi state phức tạp.
 
-### 1. **Reducer function**
+##1. Reducer function
 \`\`\`jsx
 function counterReducer(state, action) {
   switch (action.type) {
@@ -1567,7 +1567,7 @@ function counterReducer(state, action) {
 }
 \`\`\`
 
-### 2. **Sử dụng useReducer**
+##2. Sử dụng useReducer
 \`\`\`jsx
 function Counter() {
   const [state, dispatch] = useReducer(counterReducer, { count: 0 });
@@ -1594,25 +1594,25 @@ function Counter() {
           {
             title: 'Thiết kế ứng dụng Todo',
             type: 'text',
-            content: `# Thiết kế ứng dụng Todo
+            content: `Thiết kế ứng dụng Todo
 
-## Yêu cầu chức năng
+#Yêu cầu chức năng
 
-### 1. **Quản lý Todo**
+##1. Quản lý Todo
 - Thêm todo mới
 - Đánh dấu hoàn thành
 - Xóa todo
 - Chỉnh sửa todo
 
-### 2. **Lọc và tìm kiếm**
+##2. Lọc và tìm kiếm
 - Lọc theo trạng thái (All, Active, Completed)
 - Tìm kiếm theo nội dung
 
-### 3. **Thống kê**
+##3. Thống kê
 - Hiển thị số lượng todo
 - Hiển thị tiến độ hoàn thành
 
-## Cấu trúc component
+#Cấu trúc component
 
 \`\`\`
 TodoApp/
@@ -1630,7 +1630,7 @@ TodoApp/
 └── App.jsx
 \`\`\`
 
-## State Management
+#State Management
 
 \`\`\`jsx
 const [todos, setTodos] = useState([]);

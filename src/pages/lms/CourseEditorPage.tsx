@@ -277,10 +277,11 @@ export default function CourseEditorPage() {
           <div className="text-center py-8">
             <Title level={3}>Access Denied</Title>
             <Text type="secondary">You don't have permission to edit course content.</Text>
-            <br />
-            <Button type="primary" className="mt-4">
+            <div className="mt-4">
+            <Button type="primary">
               <Link to="/lms/courses">Back to Courses</Link>
             </Button>
+            </div>
           </div>
         </Card>
       </div>
@@ -302,10 +303,11 @@ export default function CourseEditorPage() {
           <div className="text-center py-8">
             <Title level={3}>Course Not Found</Title>
             <Text type="secondary">{error || 'The course you are looking for does not exist.'}</Text>
-            <br />
-            <Button type="primary" className="mt-4">
+            <div className="mt-4">
+            <Button type="primary">
               <Link to="/lms/courses">Back to Courses</Link>
             </Button>
+            </div>
           </div>
         </Card>
       </div>
@@ -418,7 +420,7 @@ export default function CourseEditorPage() {
             </Button>
             <div>
               <Title level={2} className="mb-0">
-                Chỉnh sửa nội dung khóa học:<br><span className="text-blue-600">{course.title}</span></br>
+                Chỉnh sửa nội dung khóa học: <span className="text-blue-600">{course.title}</span>
               </Title>
             </div>
           </div>

@@ -244,9 +244,11 @@ const CoursesPage: React.FC = () => {
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
             <span>
-              No courses yet <br />
+              No courses yet
               {(role === 'instructor' || role === 'admin') && (
-                <Button type="link" onClick={handleNewCourse}>Create a new course</Button>
+                <div className="mt-2">
+                  <Button type="link" onClick={handleNewCourse}>Create a new course</Button>
+                </div>
               )}
             </span>
           }
