@@ -197,21 +197,10 @@ const LessonSidebar: React.FC<{
   };
 
   return (
-    <div className="w-80 sticky top-4 space-y-4">
-      <Card className="shadow-sm">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">{courseDetail?.title}</h3>
-            <div className="text-sm text-gray-600">
-              Progress: {doneIds.length} / {lessons.length} lessons
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="shadow-sm">
+    <div className="w-80">
+      <Card className="shadow-sm sticky-course-outline">
         <h4 className="font-semibold mb-4">Course Outline</h4>
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto" id="course-outline">
+        <div className="space-y-4" id="course-outline">
           {modules.length > 0 ? (
             // Display lessons grouped by modules
             modules.map((module: any) => (

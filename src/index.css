@@ -70,3 +70,12 @@ body {
 .ant-collapse .ant-collapse-content-box {
   padding: 16px 20px !important;
 }
+
+/* Sticky Course Outline */
+.sticky-course-outline {
+  position: sticky !important;
+  top: 20px !important;
+  z-index: 10 !important;
+  max-height: calc(100vh - 40px) !important;
+  overflow-y: auto !important;
+}
