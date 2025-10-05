@@ -15,6 +15,35 @@ import CourseQuickView from './components/CourseQuickView';
 const { Search } = Input;
 const { Option } = Select;
 
+// Safe HTML renderer component for ReactQuill content
+const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
+  // If content is empty or only whitespace, return a default message
+  if (!content || content.trim() === '') {
+    return <div className={className}><p>No description provided.</p></div>;
+  }
+
+  // Clean HTML content to avoid React errors
+  const cleanContent = content
+    .replace(/<br\s*\/?>/gi, '<br />')
+    .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 />')
+    .replace(/<input([^>]*?)(?:\s*\/)?>/gi, '<input$1 />')
+    .replace(/<hr\s*\/?>/gi, '<hr />')
+    .replace(/<p><br\s*\/?><\/p>/gi, '<p>&nbsp;</p>')
+    .trim();
+
+  try {
+    return (
+      <div 
+        className={`prose ${className || ''}`} 
+        dangerouslySetInnerHTML={{ __html: cleanContent }} 
+      />
+    );
+  } catch (error) {
+    console.error('Error rendering HTML content:', error);
+    return <div className={className}><p>Error displaying content.</p></div>;
+  }
+};
+
 const CoursesPage: React.FC = () => {
   const { user } = useAuth();
   const { role } = useRole();
@@ -290,7 +319,9 @@ const CoursesPage: React.FC = () => {
                   }
                   description={
                     <div className="flex flex-col">
-                      <p className="line-clamp-2 text-sm text-gray-600">{course.desc || 'No description provided.'}</p>
+                      <div className="line-clamp-2 text-sm text-gray-600">
+                        <SafeHTMLRenderer content={course.desc || ''} />
+                      </div>
                       <div className="mt-2">
                         <Space wrap size={[0, 8]}>
                           {course.tags.slice(0, 3).map((tag) => (

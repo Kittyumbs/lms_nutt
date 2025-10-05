@@ -6,6 +6,35 @@ import useRole from '../../../auth/useRole';
 
 import type { Course, CourseStatus } from '../../../hooks/useCourses';
 
+// Safe HTML renderer component for ReactQuill content
+const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
+  // If content is empty or only whitespace, return a default message
+  if (!content || content.trim() === '') {
+    return <div className={className}><p>No description provided.</p></div>;
+  }
+
+  // Clean HTML content to avoid React errors
+  const cleanContent = content
+    .replace(/<br\s*\/?>/gi, '<br />')
+    .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 />')
+    .replace(/<input([^>]*?)(?:\s*\/)?>/gi, '<input$1 />')
+    .replace(/<hr\s*\/?>/gi, '<hr />')
+    .replace(/<p><br\s*\/?><\/p>/gi, '<p>&nbsp;</p>')
+    .trim();
+
+  try {
+    return (
+      <div 
+        className={`prose ${className || ''}`} 
+        dangerouslySetInnerHTML={{ __html: cleanContent }} 
+      />
+    );
+  } catch (error) {
+    console.error('Error rendering HTML content:', error);
+    return <div className={className}><p>Error displaying content.</p></div>;
+  }
+};
+
 interface CourseQuickViewProps {
   open: boolean;
   course?: Course;
@@ -197,7 +226,9 @@ const CourseQuickView: React.FC<CourseQuickViewProps> = ({
           </Tag>
         </div>
 
-        <p style={{ color: '#4b5563', marginBottom: 16 }}>{course.desc || 'No description provided.'}</p>
+        <div style={{ color: '#4b5563', marginBottom: 16 }}>
+          <SafeHTMLRenderer content={course.desc || ''} />
+        </div>
 
         <Space wrap style={{ marginBottom: 16 }}>
           {course.tags.map((tag) => (

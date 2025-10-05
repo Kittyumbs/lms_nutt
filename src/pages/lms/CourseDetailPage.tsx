@@ -11,6 +11,35 @@ import { PageSEO } from '../../utils/seo';
 
 const { Panel } = Collapse;
 
+// Safe HTML renderer component for ReactQuill content
+const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
+  // If content is empty or only whitespace, return a default message
+  if (!content || content.trim() === '') {
+    return <div className={className}><p>No description provided for this course.</p></div>;
+  }
+
+  // Clean HTML content to avoid React errors
+  const cleanContent = content
+    .replace(/<br\s*\/?>/gi, '<br />')
+    .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 />')
+    .replace(/<input([^>]*?)(?:\s*\/)?>/gi, '<input$1 />')
+    .replace(/<hr\s*\/?>/gi, '<hr />')
+    .replace(/<p><br\s*\/?><\/p>/gi, '<p>&nbsp;</p>')
+    .trim();
+
+  try {
+    return (
+      <div 
+        className={`prose ${className || ''}`} 
+        dangerouslySetInnerHTML={{ __html: cleanContent }} 
+      />
+    );
+  } catch (error) {
+    console.error('Error rendering HTML content:', error);
+    return <div className={className}><p>Error displaying content.</p></div>;
+  }
+};
+
 // Helper function to get status color
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -209,9 +238,10 @@ export default function CourseDetailPage() {
             <Tabs.TabPane tab="Overview" key="overview">
               <div className="p-4">
                 <h3 className="text-lg font-semibold mb-4">About this course</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  {course.desc || 'No description provided for this course.'}
-                </p>
+                <SafeHTMLRenderer 
+                  content={course.desc || ''} 
+                  className="text-gray-700 leading-relaxed"
+                />
 
                 <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-600">
                   <div>
