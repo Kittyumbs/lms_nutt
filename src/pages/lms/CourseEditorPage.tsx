@@ -11,6 +11,49 @@ import {
 } from '@ant-design/icons';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+
+// Custom ReactQuill wrapper for Ant Design Form integration
+const ReactQuillWrapper: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+  const [content, setContent] = React.useState(value || '');
+  
+  React.useEffect(() => {
+    setContent(value || '');
+  }, [value]);
+  
+  const handleChange = (newContent: string) => {
+    setContent(newContent);
+    if (onChange) {
+      onChange(newContent);
+    }
+  };
+  
+  return (
+    <ReactQuill
+      theme="snow"
+      value={content}
+      onChange={handleChange}
+      style={{ height: '200px', marginBottom: '50px' }}
+      modules={{
+        toolbar: [
+          [{ 'size': ['small', false, 'large', 'huge'] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'color': [] }, { 'background': [] }],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'align': [] }],
+          ['link'],
+          ['clean']
+        ],
+        clipboard: {
+          matchVisual: false,
+        }
+      }}
+      formats={[
+        'size', 'bold', 'italic', 'underline', 'strike',
+        'color', 'background', 'list', 'bullet', 'align', 'link'
+      ]}
+    />
+  );
+};
 import { 
   Button, 
   Card, 
@@ -874,32 +917,8 @@ export default function CourseEditorPage() {
                 name="content"
                 label="Lesson Content"
                 rules={[{ required: true, message: 'Please enter lesson content' }]}
-                getValueFromEvent={(value) => value}
-                getValueProps={(value) => ({ value: value || '' })}
               >
-                <ReactQuill
-                  key={`text-editor-${editorKey}`}
-                  theme="snow"
-                  style={{ height: '200px', marginBottom: '50px' }}
-                  modules={{
-                    toolbar: [
-                      [{ 'size': ['small', false, 'large', 'huge'] }],
-                      ['bold', 'italic', 'underline', 'strike'],
-                      [{ 'color': [] }, { 'background': [] }],
-                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                      [{ 'align': [] }],
-                      ['link'],
-                      ['clean']
-                    ],
-                    clipboard: {
-                      matchVisual: false,
-                    }
-                  }}
-                  formats={[
-                    'size', 'bold', 'italic', 'underline', 'strike',
-                    'color', 'background', 'list', 'bullet', 'align', 'link'
-                  ]}
-                />
+                <ReactQuillWrapper key={`text-editor-${editorKey}`} />
               </Form.Item>
             )}
 
@@ -909,32 +928,8 @@ export default function CourseEditorPage() {
                   name="content"
                   label="Description Content"
                   rules={[{ required: true, message: 'Please enter video description' }]}
-                  getValueFromEvent={(value) => value}
-                  getValueProps={(value) => ({ value: value || '' })}
                 >
-                  <ReactQuill
-                    key={`video-editor-${editorKey}`}
-                    theme="snow"
-                    style={{ height: '150px', marginBottom: '50px' }}
-                    modules={{
-                      toolbar: [
-                        [{ 'size': ['small', false, 'large', 'huge'] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'color': [] }, { 'background': [] }],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'align': [] }],
-                        ['link'],
-                        ['clean']
-                      ],
-                      clipboard: {
-                        matchVisual: false,
-                      }
-                    }}
-                    formats={[
-                      'size', 'bold', 'italic', 'underline', 'strike',
-                      'color', 'background', 'list', 'bullet', 'align', 'link'
-                    ]}
-                  />
+                  <ReactQuillWrapper key={`video-editor-${editorKey}`} />
                 </Form.Item>
                 <Form.Item
                   name="videoUrls"
@@ -956,32 +951,8 @@ export default function CourseEditorPage() {
                   name="content"
                   label="Description Content"
                   rules={[{ required: true, message: 'Please enter PDF description' }]}
-                  getValueFromEvent={(value) => value}
-                  getValueProps={(value) => ({ value: value || '' })}
                 >
-                  <ReactQuill
-                    key={`pdf-editor-${editorKey}`}
-                    theme="snow"
-                    style={{ height: '150px', marginBottom: '50px' }}
-                    modules={{
-                      toolbar: [
-                        [{ 'size': ['small', false, 'large', 'huge'] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'color': [] }, { 'background': [] }],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'align': [] }],
-                        ['link'],
-                        ['clean']
-                      ],
-                      clipboard: {
-                        matchVisual: false,
-                      }
-                    }}
-                    formats={[
-                      'size', 'bold', 'italic', 'underline', 'strike',
-                      'color', 'background', 'list', 'bullet', 'align', 'link'
-                    ]}
-                  />
+                  <ReactQuillWrapper key={`pdf-editor-${editorKey}`} />
                 </Form.Item>
                 <Form.Item
                   name="pdfUrls"

@@ -3,6 +3,49 @@ import React, { useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
+// Custom ReactQuill wrapper for Ant Design Form integration
+const ReactQuillWrapper: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+  const [content, setContent] = React.useState(value || '');
+  
+  React.useEffect(() => {
+    setContent(value || '');
+  }, [value]);
+  
+  const handleChange = (newContent: string) => {
+    setContent(newContent);
+    if (onChange) {
+      onChange(newContent);
+    }
+  };
+  
+  return (
+    <ReactQuill
+      theme="snow"
+      value={content}
+      onChange={handleChange}
+      style={{ height: '150px', marginBottom: '50px' }}
+      modules={{
+        toolbar: [
+          [{ 'size': ['small', false, 'large', 'huge'] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'color': [] }, { 'background': [] }],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'align': [] }],
+          ['link'],
+          ['clean']
+        ],
+        clipboard: {
+          matchVisual: false,
+        }
+      }}
+      formats={[
+        'size', 'bold', 'italic', 'underline', 'strike',
+        'color', 'background', 'list', 'bullet', 'align', 'link'
+      ]}
+    />
+  );
+};
+
 const { Option } = Select;
 
 import { createCourse, updateCourse, deleteCourse } from '../../../hooks/useCourses';
@@ -105,31 +148,8 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
         <Form.Item 
           name="desc" 
           label="Description"
-          getValueFromEvent={(value) => value}
-          getValueProps={(value) => ({ value: value || '' })}
         >
-          <ReactQuill
-            theme="snow"
-            style={{ height: '150px', marginBottom: '50px' }}
-            modules={{
-              toolbar: [
-                [{ 'size': ['small', false, 'large', 'huge'] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'color': [] }, { 'background': [] }],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                [{ 'align': [] }],
-                ['link'],
-                ['clean']
-              ],
-              clipboard: {
-                matchVisual: false,
-              }
-            }}
-            formats={[
-              'size', 'bold', 'italic', 'underline', 'strike',
-              'color', 'background', 'list', 'bullet', 'align', 'link'
-            ]}
-          />
+          <ReactQuillWrapper />
         </Form.Item>
         <Form.Item name="tags" label="Tags">
           <Select mode="tags" placeholder="Select or create tags" />
