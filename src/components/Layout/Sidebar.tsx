@@ -1,4 +1,4 @@
-import { CheckSquareOutlined, BookOutlined, AppstoreOutlined, BarChartOutlined, FileTextOutlined, UserOutlined, SwapOutlined, GoogleOutlined, CalendarOutlined } from '@ant-design/icons';
+import { CheckSquareOutlined, BookOutlined, BarChartOutlined, FileTextOutlined, UserOutlined, SwapOutlined, GoogleOutlined, CalendarOutlined } from '@ant-design/icons';
 import { Avatar, Button, Tag, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
@@ -113,11 +113,10 @@ export default function Sidebar() {
         <nav style={{ padding: 8 }}>
           <div style={{ fontSize: 12, color: '#6b7280', padding: '6px 8px' }}>{collapsed ? 'M' : 'MAIN'}</div>
           <Item to="/taskmanage" label="TaskManage" collapsed={collapsed} icon={<CheckSquareOutlined />} />
+          <Item to="/lms/dashboard" label="Dashboard" collapsed={collapsed} icon={<BarChartOutlined />} />
 
           <div style={{ fontSize: 12, color: '#6b7280', padding: '10px 8px 6px' }}>{collapsed ? 'L' : 'LMS'}</div>
           <Item to="/lms/courses" label="Courses" collapsed={collapsed} icon={<BookOutlined />} />
-          <Item to="/lms/catalog" label="Catalog" collapsed={collapsed} icon={<AppstoreOutlined />} />
-          <Item to="/lms/dashboard" label="Dashboard" collapsed={collapsed} icon={<BarChartOutlined />} />
           <Item to="/lms/notes" label="Notes" collapsed={collapsed} icon={<FileTextOutlined />} />
         </nav>
 
