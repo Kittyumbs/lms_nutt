@@ -254,18 +254,18 @@ export default function CourseDetailPage() {
                           <Panel
                             key={module.id}
                             header={
-                              <div className="flex items-center justify-between w-full">
-                                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                              <div className="flex items-center justify-between w-full" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div className="flex items-center space-x-2" style={{ flex: '1', minWidth: '0' }}>
                                   <span className="font-medium truncate">{module.title}</span>
                                 </div>
-                                <div className="flex items-center space-x-2 flex-shrink-0">
+                                <div className="flex items-center space-x-2" style={{ flexShrink: '0' }}>
                                   <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
                                     {module.lessons.length} bài học
                                   </span>
                                 </div>
                               </div>
                             }
-                            className="bg-white border border-gray-200 mb-2 rounded-lg"
+                            className="bg-white border border-gray-200 mb-2 rounded-lg custom-collapse-header"
                             style={{
                               '--ant-collapse-header-padding': '16px 20px',
                             } as React.CSSProperties}

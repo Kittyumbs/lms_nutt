@@ -27,3 +27,22 @@ body {
 
 /* Màu chữ khi được chọn */
 .ant-segmented .ant-segmented-item-selected { color: #111 !important; }
+
+/* Custom Collapse Header Layout */
+.custom-collapse-header .ant-collapse-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 16px 20px !important;
+}
+
+.custom-collapse-header .ant-collapse-header-text {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.custom-collapse-header .ant-collapse-expand-icon {
+  flex-shrink: 0 !important;
+  margin-left: 8px !important;
+}
