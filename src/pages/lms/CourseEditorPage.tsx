@@ -420,7 +420,9 @@ export default function CourseEditorPage() {
             </Button>
             <div>
               <Title level={2} className="mb-0">
-                Chỉnh sửa nội dung khóa học: <span className="text-blue-600">{course.title}</span>
+                Chỉnh sửa nội dung khóa học
+                <br />
+                <span className="text-blue-600">{course.title}</span>
               </Title>
             </div>
           </div>
