@@ -356,7 +356,32 @@ export default function CourseEditorPage() {
   const handleEditLesson = (lesson: Lesson) => {
     setEditingLesson(lesson);
     setSelectedLessonType(lesson.type);
-    lessonForm.setFieldsValue(lesson);
+    
+    // Handle content based on lesson type
+    let formData: any = { ...lesson };
+    
+    if (lesson.type === 'video' || lesson.type === 'pdf') {
+      try {
+        const parsedContent = JSON.parse(lesson.content || '{}');
+        formData = {
+          ...lesson,
+          content: parsedContent.description || '',
+          videoUrls: parsedContent.videoUrls || [],
+          pdfUrls: parsedContent.pdfUrls || []
+        };
+      } catch (error) {
+        console.error('Error parsing lesson content:', error);
+        formData = { ...lesson, content: lesson.content || '' };
+      }
+    } else if (lesson.type === 'text') {
+      formData = { ...lesson, content: lesson.content || '' };
+    } else if (lesson.type === 'quiz') {
+      formData = { ...lesson, content: lesson.content || '' };
+    }
+    
+    lessonForm.setFieldsValue(formData);
+    // Force re-render ReactQuill with new content
+    setEditorKey(prev => prev + 1);
     setIsLessonModalOpen(true);
   };
 
@@ -777,13 +802,17 @@ export default function CourseEditorPage() {
             >
               <Select 
                 placeholder="Chọn loại bài học"
-                onChange={(value) => {
-                  setSelectedLessonType(value);
-                  // Clear form content when changing lesson type
-                  lessonForm.setFieldsValue({ content: '' });
-                  // Force re-render ReactQuill by changing key
-                  setEditorKey(prev => prev + 1);
-                }}
+              onChange={(value) => {
+                setSelectedLessonType(value);
+                // Clear form content when changing lesson type
+                lessonForm.setFieldsValue({ 
+                  content: '',
+                  videoUrls: [],
+                  pdfUrls: []
+                });
+                // Force re-render ReactQuill by changing key
+                setEditorKey(prev => prev + 1);
+              }}
               >
                 <Option value="text">
                   <div className="flex items-center space-x-2">
@@ -828,8 +857,10 @@ export default function CourseEditorPage() {
             {selectedLessonType === 'text' && (
               <Form.Item
                 name="content"
-                label="Nội dung bài học"
-                rules={[{ required: true, message: 'Vui lòng nhập nội dung bài học' }]}
+                label="Lesson Content"
+                rules={[{ required: true, message: 'Please enter lesson content' }]}
+                getValueFromEvent={(value) => value}
+                getValueProps={(value) => ({ value: value || '' })}
               >
                 <ReactQuill
                   key={`text-editor-${editorKey}`}
@@ -861,8 +892,10 @@ export default function CourseEditorPage() {
               <>
                 <Form.Item
                   name="content"
-                  label="Nội dung mô tả"
-                  rules={[{ required: true, message: 'Vui lòng nhập mô tả video' }]}
+                  label="Description Content"
+                  rules={[{ required: true, message: 'Please enter video description' }]}
+                  getValueFromEvent={(value) => value}
+                  getValueProps={(value) => ({ value: value || '' })}
                 >
                   <ReactQuill
                     key={`video-editor-${editorKey}`}
@@ -906,8 +939,10 @@ export default function CourseEditorPage() {
               <>
                 <Form.Item
                   name="content"
-                  label="Nội dung mô tả"
-                  rules={[{ required: true, message: 'Vui lòng nhập mô tả tài liệu' }]}
+                  label="Description Content"
+                  rules={[{ required: true, message: 'Please enter PDF description' }]}
+                  getValueFromEvent={(value) => value}
+                  getValueProps={(value) => ({ value: value || '' })}
                 >
                   <ReactQuill
                     key={`pdf-editor-${editorKey}`}

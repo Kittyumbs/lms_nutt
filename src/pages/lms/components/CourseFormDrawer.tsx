@@ -102,7 +102,12 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
         >
           <Input placeholder="Enter course title" />
         </Form.Item>
-        <Form.Item name="desc" label="Description">
+        <Form.Item 
+          name="desc" 
+          label="Description"
+          getValueFromEvent={(value) => value}
+          getValueProps={(value) => ({ value: value || '' })}
+        >
           <ReactQuill
             theme="snow"
             style={{ height: '150px', marginBottom: '50px' }}
