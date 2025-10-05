@@ -258,7 +258,7 @@ export default function CourseDetailPage() {
                                 <div className="flex items-center space-x-2 flex-1 min-w-0">
                                   <span className="font-medium truncate">{module.title}</span>
                                 </div>
-                                <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
+                                <div className="flex items-center space-x-2 flex-shrink-0">
                                   <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
                                     {module.lessons.length} bài học
                                   </span>
