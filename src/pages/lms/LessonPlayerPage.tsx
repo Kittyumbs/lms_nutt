@@ -5,40 +5,76 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 
-// Safe HTML renderer component using DOMPurify
+// Safe HTML renderer component - avoid dangerouslySetInnerHTML completely
 const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
   // If content is empty or only whitespace, return a default message
   if (!content || content.trim() === '' || content.trim() === '<p></p>' || content.trim() === '<div></div>') {
     return <div className={className}><p>Nội dung chưa được cập nhật.</p></div>;
   }
 
-  try {
-    // Use DOMPurify to sanitize and clean HTML content
-    const cleanContent = DOMPurify.sanitize(content, {
-      ALLOWED_TAGS: [
-        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'div', 'span',
-        'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr'
-      ],
-      ALLOWED_ATTR: [
-        'href', 'src', 'alt', 'title', 'class', 'id', 'style', 'target', 'rel'
-      ],
-      ALLOW_DATA_ATTR: false,
-      KEEP_CONTENT: true,
-      RETURN_DOM: false,
-      RETURN_DOM_FRAGMENT: false
-    });
+  // Parse HTML content and convert to React elements
+  const parseHTMLToReact = (htmlString: string) => {
+    try {
+      // Create a temporary DOM element
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlString;
+      
+      // Convert DOM nodes to React elements recursively
+      const convertNodeToReact = (node: Node): React.ReactNode => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent;
+        }
+        
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
+          const tagName = element.tagName.toLowerCase();
+          const props: any = {};
+          
+          // Copy attributes
+          for (let i = 0; i < element.attributes.length; i++) {
+            const attr = element.attributes[i];
+            props[attr.name] = attr.value;
+          }
+          
+          // Convert children
+          const children: React.ReactNode[] = [];
+          for (let i = 0; i < element.childNodes.length; i++) {
+            const child = convertNodeToReact(element.childNodes[i]);
+            if (child !== null && child !== undefined) {
+              children.push(child);
+            }
+          }
+          
+          // Create React element
+          return React.createElement(tagName, props, ...children);
+        }
+        
+        return null;
+      };
+      
+      // Convert all child nodes
+      const reactElements: React.ReactNode[] = [];
+      for (let i = 0; i < tempDiv.childNodes.length; i++) {
+        const child = convertNodeToReact(tempDiv.childNodes[i]);
+        if (child !== null && child !== undefined) {
+          reactElements.push(child);
+        }
+      }
+      
+      return reactElements;
+    } catch (error) {
+      console.error('Error parsing HTML:', error);
+      return [<p key="error">Lỗi hiển thị nội dung.</p>];
+    }
+  };
 
-    return (
-      <div 
-        className={className} 
-        dangerouslySetInnerHTML={{ __html: cleanContent }} 
-      />
-    );
-  } catch (error) {
-    console.error('Error rendering HTML content:', error);
-    return <div className={className}><p>Lỗi hiển thị nội dung.</p></div>;
-  }
+  const reactElements = parseHTMLToReact(content);
+  
+  return (
+    <div className={className}>
+      {reactElements}
+    </div>
+  );
 };
 
 // import useAuth from '../../auth/useAuth';
