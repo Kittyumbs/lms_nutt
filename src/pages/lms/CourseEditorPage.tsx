@@ -24,6 +24,16 @@ const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) =>
     isInitialized: isInitialized
   });
   
+  // Set initialized after a short delay to prevent initial onChange
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('🔍 SimpleReactQuill - Setting initialized to true after delay');
+      setIsInitialized(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   const handleChange = (newValue: string) => {
     console.log('🔍 SimpleReactQuill - onChange triggered:', { 
       newValue: newValue, 
@@ -40,7 +50,10 @@ const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) =>
   
   const handleFocus = () => {
     console.log('🔍 SimpleReactQuill - onFocus triggered');
-    setIsInitialized(true);
+    if (!isInitialized) {
+      console.log('🔍 SimpleReactQuill - Setting initialized to true');
+      setIsInitialized(true);
+    }
   };
   
   return (
