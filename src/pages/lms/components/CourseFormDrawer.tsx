@@ -8,13 +8,20 @@ const ReactQuillWrapper: React.FC<{ value?: string; onChange?: (value: string) =
   const [content, setContent] = React.useState(value || '');
   const [isInitialized, setIsInitialized] = React.useState(false);
   
+  // Initialize content on mount
   React.useEffect(() => {
-    console.log('🔍 CourseFormDrawer ReactQuillWrapper - Value changed:', { value, currentContent: content });
-    if (value !== content) {
+    console.log('🔍 CourseFormDrawer ReactQuillWrapper - Initial mount:', { value, currentContent: content });
+    setContent(value || '');
+    setIsInitialized(true);
+  }, []); // Only run on mount
+  
+  // Update content when value prop changes (but not on mount)
+  React.useEffect(() => {
+    if (isInitialized && value !== content) {
+      console.log('🔍 CourseFormDrawer ReactQuillWrapper - Value changed after init:', { value, currentContent: content });
       setContent(value || '');
-      setIsInitialized(true);
     }
-  }, [value]);
+  }, [value, isInitialized]);
   
   const handleChange = (newContent: string) => {
     console.log('🔍 CourseFormDrawer ReactQuillWrapper - Content changed:', { newContent, length: newContent.length });

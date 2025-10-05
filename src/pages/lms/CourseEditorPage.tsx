@@ -17,13 +17,20 @@ const ReactQuillWrapper: React.FC<{ value?: string; onChange?: (value: string) =
   const [content, setContent] = React.useState(value || '');
   const [isInitialized, setIsInitialized] = React.useState(false);
   
+  // Initialize content on mount
   React.useEffect(() => {
-    console.log('🔍 ReactQuillWrapper - Value changed:', { value, currentContent: content });
-    if (value !== content) {
+    console.log('🔍 ReactQuillWrapper - Initial mount:', { value, currentContent: content });
+    setContent(value || '');
+    setIsInitialized(true);
+  }, []); // Only run on mount
+  
+  // Update content when value prop changes (but not on mount)
+  React.useEffect(() => {
+    if (isInitialized && value !== content) {
+      console.log('🔍 ReactQuillWrapper - Value changed after init:', { value, currentContent: content });
       setContent(value || '');
-      setIsInitialized(true);
     }
-  }, [value]);
+  }, [value, isInitialized]);
   
   const handleChange = (newContent: string) => {
     console.log('🔍 ReactQuillWrapper - Content changed:', { newContent, length: newContent.length });
@@ -930,7 +937,7 @@ export default function CourseEditorPage() {
                 label="Lesson Content"
                 rules={[{ required: true, message: 'Please enter lesson content' }]}
               >
-                <ReactQuillWrapper key={`text-editor-${editorKey}`} />
+                <ReactQuillWrapper key={`text-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
               </Form.Item>
             )}
 
@@ -941,7 +948,7 @@ export default function CourseEditorPage() {
                   label="Description Content"
                   rules={[{ required: true, message: 'Please enter video description' }]}
                 >
-                  <ReactQuillWrapper key={`video-editor-${editorKey}`} />
+                  <ReactQuillWrapper key={`video-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
                 </Form.Item>
                 <Form.Item
                   name="videoUrls"
@@ -964,7 +971,7 @@ export default function CourseEditorPage() {
                   label="Description Content"
                   rules={[{ required: true, message: 'Please enter PDF description' }]}
                 >
-                  <ReactQuillWrapper key={`pdf-editor-${editorKey}`} />
+                  <ReactQuillWrapper key={`pdf-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
                 </Form.Item>
                 <Form.Item
                   name="pdfUrls"
