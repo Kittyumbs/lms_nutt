@@ -420,6 +420,7 @@ export default function CourseEditorPage() {
 
   const handleCreateLesson = (moduleId: string) => {
     console.log('🔍 handleCreateLesson - START: Clearing form for new lesson');
+    console.log('🔍 handleCreateLesson - Current form values before clear:', lessonForm.getFieldsValue());
     
     setSelectedModuleId(moduleId);
     setEditingLesson(null);
@@ -436,6 +437,8 @@ export default function CourseEditorPage() {
       title: '',
       content: ''
     });
+    
+    console.log('🔍 handleCreateLesson - Form values after clear:', lessonForm.getFieldsValue());
     
     setSelectedLessonType('text');
     
@@ -1014,7 +1017,7 @@ export default function CourseEditorPage() {
                 getValueFromEvent={(value) => value}
                 getValueProps={(value) => ({ value: value || '' })}
               >
-                <SimpleReactQuill />
+                <SimpleReactQuill key={`content-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
               </Form.Item>
             )}
 
@@ -1027,7 +1030,7 @@ export default function CourseEditorPage() {
                   getValueFromEvent={(value) => value}
                   getValueProps={(value) => ({ value: value || '' })}
                 >
-                  <SimpleReactQuill />
+                  <SimpleReactQuill key={`video-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
                 </Form.Item>
                 <Form.Item
                   name="videoUrls"
@@ -1052,7 +1055,7 @@ export default function CourseEditorPage() {
                   getValueFromEvent={(value) => value}
                   getValueProps={(value) => ({ value: value || '' })}
                 >
-                  <SimpleReactQuill />
+                  <SimpleReactQuill key={`pdf-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
                 </Form.Item>
                 <Form.Item
                   name="pdfUrls"
