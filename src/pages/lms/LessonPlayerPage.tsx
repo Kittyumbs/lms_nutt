@@ -48,15 +48,6 @@ import type { Lesson } from '../../hooks/useCourseDetail';
 
 // Lesson content components
 const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
-  // Debug log to check lesson content
-  console.log('🎓 Lesson Content Debug:', {
-    lessonId: lesson.id,
-    title: lesson.title,
-    type: lesson.type,
-    hasContent: !!lesson.content,
-    contentLength: lesson.content?.length || 0,
-    contentPreview: lesson.content?.substring(0, 100) + '...'
-  });
   if (lesson.type === 'video') {
     try {
       // Parse JSON content from database
@@ -124,13 +115,6 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     // Use actual content from database (HTML from ReactQuill)
     const content = lesson.content || `<h1>${lesson.title}</h1><p>Nội dung bài học chưa được cập nhật.</p>`;
     
-    // Debug logging for content display
-    console.log('🔍 DEBUG - Displaying text lesson content:', {
-      lessonId: lesson.id,
-      lessonTitle: lesson.title,
-      content: content,
-      contentLength: content?.length
-    });
     
     return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }

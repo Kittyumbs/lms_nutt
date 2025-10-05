@@ -159,7 +159,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           // If token expires in less than 5 minutes, try to refresh
           if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
-            console.log('Token expiring soon, attempting refresh...');
             if (tokenClient) {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
               tokenClient.requestAccessToken({ prompt: '' });

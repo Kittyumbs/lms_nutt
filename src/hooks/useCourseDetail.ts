@@ -111,14 +111,6 @@ export function useCourseDetail(courseId: string): {
           } as Lesson;
         });
 
-      // Debug logs
-      console.log('📚 Course Detail Debug:', {
-        courseId,
-        modulesCount: modulesData.length,
-        lessonsCount: lessonsData.length,
-        modules: modulesData.map(m => ({ id: m.id, title: m.title, order: m.order })),
-        lessons: lessonsData.map(l => ({ id: l.id, title: l.title, moduleId: l.moduleId, order: l.order }))
-      });
 
       // Group lessons by modules
       const modulesWithLessons = modulesData.map(module => ({

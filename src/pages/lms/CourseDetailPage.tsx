@@ -308,7 +308,6 @@ export default function CourseDetailPage() {
                                   key={lesson.id}
                                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                                   onClick={() => {
-                                    console.log('Navigate to lesson:', lesson.id);
                                   }}
                                 >
                                   <div className="flex items-center space-x-3">

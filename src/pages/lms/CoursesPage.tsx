@@ -1,4 +1,4 @@
-import { PlusOutlined, EditOutlined, CopyOutlined, CheckOutlined, CloseOutlined, RocketOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, CopyOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { RequireInstructor } from '../../auth/guards';
 import useAuth from '../../auth/useAuth';
 import useRole from '../../auth/useRole';
-import { useCourses, duplicateCourse, setCourseStatus, createTemplateCourse, type Course, type CourseStatus } from '../../hooks/useCourses';
+import { useCourses, duplicateCourse, setCourseStatus, type Course, type CourseStatus } from '../../hooks/useCourses';
 import { PageSEO } from '../../utils/seo';
 
 import CourseFormDrawer from './components/CourseFormDrawer';
@@ -75,12 +75,6 @@ const CoursesPage: React.FC = () => {
   // data
   const { items: courses, loading, refresh } = useCourses({ search, tags, status: statusFilter });
 
-  if (!loading && role === 'admin') {
-    console.log('📚 COURSES DATA DEBUG:', {
-      coursesCount: courses.length,
-      courseIds: courses.map(c => ({ id: c.id, title: c.title.substring(0, 20), ownerUid: c.ownerUid }))
-    });
-  }
 
 
 
@@ -122,14 +116,6 @@ const CoursesPage: React.FC = () => {
     refresh();
   };
 
-  const handleCreateTemplateCourse = async () => {
-    try {
-      await createTemplateCourse();
-      refresh();
-    } catch (error) {
-      console.error('Error creating template course:', error);
-    }
-  };
 
 
   const getStatusColor = (status: CourseStatus) => {
@@ -207,19 +193,6 @@ const CoursesPage: React.FC = () => {
         <h2 className="text-xl font-semibold">Courses</h2>
         <Space>
           <RequireInstructor>
-            <Button 
-              type="default" 
-              icon={<RocketOutlined />} 
-              onClick={handleCreateTemplateCourse}
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: 'none',
-                color: 'white',
-                fontWeight: 'bold'
-              }}
-            >
-              Create Template Course
-            </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
               New Course
             </Button>
@@ -288,14 +261,6 @@ const CoursesPage: React.FC = () => {
             const isAuthorized = role === 'instructor' || role === 'admin';
             
             // Debug log để kiểm tra
-            console.log('🔧 Course Card Debug:', {
-              courseId: course.id,
-              courseTitle: course.title,
-              role,
-              isAuthorized,
-              courseStatus: course.status,
-              willShowButtons: isAuthorized
-            });
             
             return (
               <Card

@@ -7,18 +7,10 @@ import 'react-quill/dist/quill.snow.css';
 const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
   const [isInitialized, setIsInitialized] = React.useState(false);
   
-  console.log('🔍 CourseFormDrawer SimpleReactQuill - Render:', { 
-    value: value, 
-    valueLength: value?.length,
-    valueType: typeof value,
-    hasOnChange: !!onChange,
-    isInitialized: isInitialized
-  });
   
   // Set initialized after a short delay to prevent initial onChange
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      console.log('🔍 CourseFormDrawer SimpleReactQuill - Setting initialized to true after delay');
       setIsInitialized(true);
     }, 100);
     
@@ -26,12 +18,6 @@ const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) =>
   }, []);
   
   const handleChange = (newValue: string) => {
-    console.log('🔍 CourseFormDrawer SimpleReactQuill - onChange triggered:', { 
-      newValue: newValue, 
-      newValueLength: newValue?.length,
-      newValueType: typeof newValue,
-      isInitialized: isInitialized
-    });
     
     // Only trigger onChange if it's not the initial render
     if (isInitialized && onChange) {
@@ -40,9 +26,7 @@ const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) =>
   };
   
   const handleFocus = () => {
-    console.log('🔍 CourseFormDrawer SimpleReactQuill - onFocus triggered');
     if (!isInitialized) {
-      console.log('🔍 CourseFormDrawer SimpleReactQuill - Setting initialized to true');
       setIsInitialized(true);
     }
   };

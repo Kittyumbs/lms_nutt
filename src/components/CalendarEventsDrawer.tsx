@@ -39,10 +39,8 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   const { user, isGoogleCalendarAuthed, signInWithGoogleCalendar } = useAuth();
   const { isSignedIn, isGapiLoaded, error, handleAuthClick, ensureSignedIn, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
 
-  console.log("CalendarEventsDrawer - isSignedIn prop:", isSignedIn, "isAuthLoading:", isAuthLoading); // Debugging line
 
   const loadEvents = useCallback(async () => {
-    console.log("loadEvents called. isSignedIn:", isSignedIn, "isGapiLoaded:", isGapiLoaded); // Debugging line
     if (!isGapiLoaded) {
       message.warning('Google API chưa sẵn sàng.');
       return;
