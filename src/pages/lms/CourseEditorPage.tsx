@@ -776,7 +776,11 @@ export default function CourseEditorPage() {
             >
               <Select 
                 placeholder="Chọn loại bài học"
-                onChange={(value) => setSelectedLessonType(value)}
+                onChange={(value) => {
+                  setSelectedLessonType(value);
+                  // Clear form content when changing lesson type
+                  form.setFieldsValue({ content: '' });
+                }}
               >
                 <Option value="text">
                   <div className="flex items-center space-x-2">
@@ -829,7 +833,7 @@ export default function CourseEditorPage() {
                   style={{ height: '200px', marginBottom: '50px' }}
                   modules={{
                     toolbar: [
-                      [{ 'header': [1, 2, 3, false] }],
+                      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
                       ['bold', 'italic', 'underline', 'strike'],
                       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                       [{ 'align': [] }],
@@ -857,7 +861,7 @@ export default function CourseEditorPage() {
                     style={{ height: '150px', marginBottom: '50px' }}
                     modules={{
                       toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
                         ['bold', 'italic', 'underline', 'strike'],
                         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                         [{ 'align': [] }],
@@ -897,7 +901,7 @@ export default function CourseEditorPage() {
                     style={{ height: '150px', marginBottom: '50px' }}
                     modules={{
                       toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
                         ['bold', 'italic', 'underline', 'strike'],
                         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                         [{ 'align': [] }],
