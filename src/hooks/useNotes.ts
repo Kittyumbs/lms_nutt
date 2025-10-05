@@ -65,7 +65,10 @@ export function useNotes() {
 
   // Load notes from Firestore
   useEffect(() => {
+    console.log('🔍 useNotes - User:', user?.uid, 'Email:', user?.email);
+    
     if (!user?.uid) {
+      console.log('❌ No user UID, clearing notes');
       setNotes([]);
       return;
     }
@@ -78,12 +81,16 @@ export function useNotes() {
       orderBy('updatedAt', 'desc')
     );
 
+    console.log('📡 Setting up Firestore listener for notes...');
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log('📝 Notes snapshot received:', snapshot.docs.length, 'docs');
       const notesData = snapshot.docs.map(convertFirestoreNote);
+      console.log('📝 Converted notes:', notesData);
       setNotes(notesData);
       setLoading(false);
     }, (error) => {
-      console.error('Error loading notes:', error);
+      console.error('❌ Error loading notes:', error);
       setLoading(false);
     });
 
@@ -143,7 +150,10 @@ export function useNotes() {
 
   // Upsert note (create or update)
   const upsert = useCallback(async (input: Partial<Note> & { id?: string }): Promise<Note> => {
+    console.log('💾 upsert called with:', input);
+    
     if (!user?.uid) {
+      console.error('❌ User not authenticated');
       throw new Error('User not authenticated');
     }
 
@@ -156,10 +166,14 @@ export function useNotes() {
       updatedAt: serverTimestamp()
     };
 
+    console.log('📝 Note data to save:', noteData);
+
     if (input.id) {
       // Update existing note
+      console.log('🔄 Updating existing note:', input.id);
       const noteRef = doc(db, 'notes', input.id);
       await updateDoc(noteRef, noteData);
+      console.log('✅ Note updated successfully');
       
       // Return updated note
       const existingNote = notes.find(note => note.id === input.id);
@@ -170,12 +184,14 @@ export function useNotes() {
       };
     } else {
       // Create new note
+      console.log('➕ Creating new note');
       const newNoteData = {
         ...noteData,
         createdAt: serverTimestamp()
       };
       
       const docRef = await addDoc(collection(db, 'notes'), newNoteData);
+      console.log('✅ Note created successfully with ID:', docRef.id);
       
       return {
         id: docRef.id,
@@ -192,12 +208,36 @@ export function useNotes() {
 
   // Remove note
   const remove = useCallback(async (id: string): Promise<void> => {
+    console.log('🗑️ remove called with ID:', id);
+    
     if (!user?.uid) {
+      console.error('❌ User not authenticated');
       throw new Error('User not authenticated');
     }
     
-    const noteRef = doc(db, 'notes', id);
-    await deleteDoc(noteRef);
+    try {
+      console.log('🗑️ Deleting note from Firestore...');
+      const noteRef = doc(db, 'notes', id);
+      await deleteDoc(noteRef);
+      console.log('✅ Note deleted successfully from Firestore');
+    } catch (error) {
+      console.error('❌ Firestore delete failed, trying localStorage fallback:', error);
+      
+      // Fallback to localStorage
+      try {
+        const storageKey = `notes:${user.uid}`;
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          const notes = JSON.parse(stored);
+          const filteredNotes = notes.filter((note: any) => note.id !== id);
+          localStorage.setItem(storageKey, JSON.stringify(filteredNotes));
+          console.log('✅ Note deleted from localStorage fallback');
+        }
+      } catch (localError) {
+        console.error('❌ localStorage fallback also failed:', localError);
+        throw error; // Re-throw original Firestore error
+      }
+    }
   }, [user?.uid]);
 
   // Toggle pin status
@@ -245,6 +285,17 @@ export function useNotes() {
     return { total, pinned, withTags };
   }, [notes]);
 
+  // Clear all notes (for debugging)
+  const clearAllNotes = useCallback(() => {
+    console.log('🧹 Clearing all notes...');
+    if (user?.uid) {
+      const storageKey = `notes:${user.uid}`;
+      localStorage.removeItem(storageKey);
+      console.log('✅ localStorage cleared');
+    }
+    setNotes([]);
+  }, [user?.uid]);
+
   return {
     notes,
     loading,
@@ -255,7 +306,8 @@ export function useNotes() {
     togglePin,
     search,
     getAllTags,
-    getStats
+    getStats,
+    clearAllNotes
   };
 }
 

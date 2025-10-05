@@ -38,7 +38,7 @@ const { Search } = Input;
 type SortOption = 'newest' | 'oldest' | 'alphabetical';
 
 const NotesCenterPage: React.FC = () => {
-  const { list, upsert, remove, togglePin, getAllTags, getStats } = useNotes();
+  const { list, upsert, remove, togglePin, getAllTags, getStats, clearAllNotes } = useNotes();
   
   // State
   const [searchText, setSearchText] = useState('');
@@ -193,18 +193,34 @@ const NotesCenterPage: React.FC = () => {
             Personal notes and thoughts
           </Text>
         </div>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={handleNewNote}
-          size="large"
-          style={{ 
-            backgroundColor: '#057EC8',
-            borderColor: '#057EC8'
-          }}
-        >
-          New Note
-        </Button>
+        <Space>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={handleNewNote}
+            size="large"
+            style={{ 
+              backgroundColor: '#057EC8',
+              borderColor: '#057EC8'
+            }}
+          >
+            New Note
+          </Button>
+          <Popconfirm
+            title="Clear all notes?"
+            description="This will delete all notes from localStorage. Are you sure?"
+            onConfirm={clearAllNotes}
+            okText="Clear All"
+            cancelText="Cancel"
+          >
+            <Button 
+              danger
+              size="large"
+            >
+              Clear All Notes
+            </Button>
+          </Popconfirm>
+        </Space>
       </div>
 
       {/* Stats */}
