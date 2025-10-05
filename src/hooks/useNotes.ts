@@ -3,21 +3,20 @@ import { nanoid } from 'nanoid';
 import useAuth from '../auth/useAuth';
 
 export type Note = {
-  id: string;            // `${courseId}_${lessonId}` or nanoid
-  courseId?: string;     // optional để có note chung không gắn lesson
-  lessonId?: string;
+  id: string;            // nanoid
   title?: string;        // h1 đầu hoặc nhập tay
   content: string;       // markdown
   tags: string[];
   pinned: boolean;
+  createdAt: number;     // Date.now()
   updatedAt: number;     // Date.now()
+  // Future: courseId, lessonId khi integrate với LMS
 };
 
 type NotesParams = {
   search?: string;
-  courseId?: string;
-  lessonId?: string;
   onlyPinned?: boolean;
+  sortBy?: 'newest' | 'oldest' | 'alphabetical';
 };
 
 export function useNotes() {
@@ -67,6 +66,7 @@ export function useNotes() {
   const list = useCallback((params?: NotesParams): Note[] => {
     let filteredNotes = [...notes];
 
+    // Search filter
     if (params?.search) {
       const searchLower = params.search.toLowerCase();
       filteredNotes = filteredNotes.filter(note => 
@@ -76,20 +76,36 @@ export function useNotes() {
       );
     }
 
-    if (params?.courseId) {
-      filteredNotes = filteredNotes.filter(note => note.courseId === params.courseId);
-    }
-
-    if (params?.lessonId) {
-      filteredNotes = filteredNotes.filter(note => note.lessonId === params.lessonId);
-    }
-
+    // Pinned filter
     if (params?.onlyPinned) {
       filteredNotes = filteredNotes.filter(note => note.pinned);
     }
 
-    // Sort by updatedAt descending (newest first)
-    return filteredNotes.sort((a, b) => b.updatedAt - a.updatedAt);
+    // Sorting
+    const sortBy = params?.sortBy || 'newest';
+    switch (sortBy) {
+      case 'oldest':
+        filteredNotes.sort((a, b) => a.createdAt - b.createdAt);
+        break;
+      case 'alphabetical':
+        filteredNotes.sort((a, b) => {
+          const titleA = a.title || 'Untitled';
+          const titleB = b.title || 'Untitled';
+          return titleA.localeCompare(titleB);
+        });
+        break;
+      case 'newest':
+      default:
+        filteredNotes.sort((a, b) => b.updatedAt - a.updatedAt);
+        break;
+    }
+
+    // Always show pinned notes first
+    return filteredNotes.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return 0;
+    });
   }, [notes]);
 
   // Get single note by ID
@@ -115,12 +131,11 @@ export function useNotes() {
         // Create new note with provided ID
         const newNote: Note = {
           id: input.id,
-          courseId: input.courseId,
-          lessonId: input.lessonId,
           title: input.title || '',
           content: input.content || '',
           tags: input.tags || [],
           pinned: input.pinned || false,
+          createdAt: now,
           updatedAt: now
         };
         newNotes.push(newNote);
@@ -129,12 +144,11 @@ export function useNotes() {
       // Create new note with generated ID
       const newNote: Note = {
         id: nanoid(),
-        courseId: input.courseId,
-        lessonId: input.lessonId,
         title: input.title || '',
         content: input.content || '',
         tags: input.tags || [],
         pinned: input.pinned || false,
+        createdAt: now,
         updatedAt: now
       };
       newNotes.push(newNote);
@@ -170,38 +184,21 @@ export function useNotes() {
     ).sort((a, b) => b.updatedAt - a.updatedAt);
   }, [notes]);
 
-  // Mock course data for filtering
-  const allCourses = useCallback((): { courseId: string; name: string }[] => {
-    // Extract unique courses from notes
-    const courseMap = new Map<string, string>();
+  // Get all unique tags
+  const getAllTags = useCallback((): string[] => {
+    const tagSet = new Set<string>();
     notes.forEach(note => {
-      if (note.courseId && !courseMap.has(note.courseId)) {
-        courseMap.set(note.courseId, `Course ${note.courseId.slice(-4)}`);
-      }
+      note.tags.forEach(tag => tagSet.add(tag));
     });
-    
-    return Array.from(courseMap.entries()).map(([courseId, name]) => ({
-      courseId,
-      name
-    }));
+    return Array.from(tagSet).sort();
   }, [notes]);
 
-  // Mock lesson data for filtering
-  const allLessons = useCallback((courseId?: string): { lessonId: string; name: string }[] => {
-    if (!courseId) return [];
-    
-    // Extract unique lessons for the given course
-    const lessonMap = new Map<string, string>();
-    notes.forEach(note => {
-      if (note.courseId === courseId && note.lessonId && !lessonMap.has(note.lessonId)) {
-        lessonMap.set(note.lessonId, `Lesson ${note.lessonId.slice(-4)}`);
-      }
-    });
-    
-    return Array.from(lessonMap.entries()).map(([lessonId, name]) => ({
-      lessonId,
-      name
-    }));
+  // Get notes statistics
+  const getStats = useCallback(() => {
+    const total = notes.length;
+    const pinned = notes.filter(note => note.pinned).length;
+    const withTags = notes.filter(note => note.tags.length > 0).length;
+    return { total, pinned, withTags };
   }, [notes]);
 
   return {
@@ -213,8 +210,8 @@ export function useNotes() {
     remove,
     togglePin,
     search,
-    allCourses,
-    allLessons
+    getAllTags,
+    getStats
   };
 }
 

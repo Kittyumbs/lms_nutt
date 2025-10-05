@@ -12,7 +12,9 @@ import {
   message,
   Tag,
   Row,
-  Col
+  Col,
+  Statistic,
+  Badge
 } from 'antd';
 import { 
   SearchOutlined, 
@@ -21,27 +23,28 @@ import {
   PushpinFilled,
   EditOutlined,
   DeleteOutlined,
-  BookOutlined
+  BookOutlined,
+  TagsOutlined,
+  ClockCircleOutlined
 } from '@ant-design/icons';
 import { useDebounce } from 'use-debounce';
-import ReactMarkdown from 'react-markdown';
 
 import { useNotes, type Note } from '../../hooks/useNotes';
 import NotesEditor from './components/NotesEditor';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Search } = Input;
 
-type SortOption = 'newest' | 'oldest' | 'pinned';
+type SortOption = 'newest' | 'oldest' | 'alphabetical';
 
 const NotesCenterPage: React.FC = () => {
-  const { list, upsert, remove, togglePin, allCourses, allLessons } = useNotes();
+  const { list, upsert, remove, togglePin, getAllTags, getStats } = useNotes();
   
   // State
   const [searchText, setSearchText] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState<string | undefined>();
-  const [selectedLesson, setSelectedLesson] = useState<string | undefined>();
+  const [selectedTag, setSelectedTag] = useState<string | undefined>();
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
@@ -50,33 +53,16 @@ const NotesCenterPage: React.FC = () => {
 
   // Get filtered and sorted notes
   const getFilteredNotes = useCallback(() => {
-    let filteredNotes = list({
+    return list({
       search: debouncedSearch,
-      courseId: selectedCourse,
-      lessonId: selectedLesson
+      onlyPinned: showPinnedOnly,
+      sortBy
     });
-
-    // Apply sorting
-    if (sortBy === 'pinned') {
-      filteredNotes = filteredNotes.filter(note => note.pinned);
-    } else if (sortBy === 'oldest') {
-      filteredNotes = filteredNotes.sort((a, b) => a.updatedAt - b.updatedAt);
-    }
-    // 'newest' is default sorting from list()
-
-    return filteredNotes;
-  }, [list, debouncedSearch, selectedCourse, selectedLesson, sortBy]);
+  }, [list, debouncedSearch, showPinnedOnly, sortBy]);
 
   const filteredNotes = getFilteredNotes();
-
-  // Get course and lesson options
-  const courseOptions = allCourses();
-  const lessonOptions = allLessons(selectedCourse);
-
-  // Reset lesson when course changes
-  useEffect(() => {
-    setSelectedLesson(undefined);
-  }, [selectedCourse]);
+  const allTags = getAllTags();
+  const stats = getStats();
 
   // Handlers
   const handleNewNote = useCallback(() => {
@@ -110,6 +96,11 @@ const NotesCenterPage: React.FC = () => {
     setEditingNote(null);
   }, []);
 
+  const handleTagFilter = useCallback((tag: string) => {
+    setSelectedTag(selectedTag === tag ? undefined : tag);
+    setSearchText(selectedTag === tag ? '' : tag);
+  }, [selectedTag]);
+
   // Helper functions
   const getNoteTitle = (note: Note) => {
     if (note.title) return note.title;
@@ -134,7 +125,7 @@ const NotesCenterPage: React.FC = () => {
       .replace(/^\s*[-*+]\s+/gm, '') // Remove bullet points
       .trim();
     
-    return cleanContent.length > 150 ? cleanContent.substring(0, 150) + '...' : cleanContent;
+    return cleanContent.length > 120 ? cleanContent.substring(0, 120) + '...' : cleanContent;
   };
 
   const formatDate = (timestamp: number) => {
@@ -165,14 +156,20 @@ const NotesCenterPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-6 py-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <Title level={2} className="!mb-0 flex items-center">
-          <BookOutlined className="mr-3 text-[#057EC8]" />
-          My Notes
-        </Title>
+        <div>
+          <Title level={2} className="!mb-2 flex items-center">
+            <BookOutlined className="mr-3 text-[#057EC8]" />
+            My Notes
+          </Title>
+          <Text type="secondary">
+            Personal notes and thoughts
+          </Text>
+        </div>
         <Button 
           type="primary" 
           icon={<PlusOutlined />}
           onClick={handleNewNote}
+          size="large"
           style={{ 
             backgroundColor: '#057EC8',
             borderColor: '#057EC8'
@@ -181,6 +178,40 @@ const NotesCenterPage: React.FC = () => {
           New Note
         </Button>
       </div>
+
+      {/* Stats */}
+      <Row gutter={[16, 16]} className="mb-6">
+        <Col xs={8} sm={8} md={8}>
+          <Card>
+            <Statistic
+              title="Total Notes"
+              value={stats.total}
+              prefix={<BookOutlined />}
+              valueStyle={{ color: '#057EC8' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={8} sm={8} md={8}>
+          <Card>
+            <Statistic
+              title="Pinned"
+              value={stats.pinned}
+              prefix={<PushpinFilled />}
+              valueStyle={{ color: '#77BEF0' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={8} sm={8} md={8}>
+          <Card>
+            <Statistic
+              title="With Tags"
+              value={stats.withTags}
+              prefix={<TagsOutlined />}
+              valueStyle={{ color: '#D8EFF0' }}
+            />
+          </Card>
+        </Col>
+      </Row>
 
       {/* Filter Bar */}
       <Card 
@@ -192,7 +223,7 @@ const NotesCenterPage: React.FC = () => {
         }}
       >
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={8}>
             <Search
               placeholder="Search notes..."
               value={searchText}
@@ -201,41 +232,27 @@ const NotesCenterPage: React.FC = () => {
               allowClear
             />
           </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={8}>
             <Select
-              placeholder="All Courses"
-              value={selectedCourse}
-              onChange={setSelectedCourse}
+              placeholder="Filter by tag"
+              value={selectedTag}
+              onChange={setSelectedTag}
               allowClear
               style={{ width: '100%' }}
-              options={courseOptions.map(course => ({
-                label: course.name,
-                value: course.courseId
+              options={allTags.map(tag => ({
+                label: tag,
+                value: tag
               }))}
             />
           </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Select
-              placeholder="All Lessons"
-              value={selectedLesson}
-              onChange={setSelectedLesson}
-              allowClear
-              disabled={!selectedCourse}
-              style={{ width: '100%' }}
-              options={lessonOptions.map(lesson => ({
-                label: lesson.name,
-                value: lesson.lessonId
-              }))}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={8}>
             <Segmented
               value={sortBy}
               onChange={(value) => setSortBy(value as SortOption)}
               options={[
                 { label: 'Newest', value: 'newest' },
                 { label: 'Oldest', value: 'oldest' },
-                { label: 'Pinned', value: 'pinned' }
+                { label: 'A-Z', value: 'alphabetical' }
               ]}
               style={{ 
                 width: '100%',
@@ -244,6 +261,36 @@ const NotesCenterPage: React.FC = () => {
             />
           </Col>
         </Row>
+        
+        {/* Quick Filters */}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            type={showPinnedOnly ? 'primary' : 'default'}
+            icon={<PushpinFilled />}
+            onClick={() => setShowPinnedOnly(!showPinnedOnly)}
+            style={showPinnedOnly ? {
+              backgroundColor: '#77BEF0',
+              borderColor: '#77BEF0'
+            } : {}}
+          >
+            Pinned Only
+          </Button>
+          
+          {allTags.slice(0, 5).map(tag => (
+            <Button
+              key={tag}
+              type={selectedTag === tag ? 'primary' : 'default'}
+              size="small"
+              onClick={() => handleTagFilter(tag)}
+              style={selectedTag === tag ? {
+                backgroundColor: '#77BEF0',
+                borderColor: '#77BEF0'
+              } : {}}
+            >
+              {tag}
+            </Button>
+          ))}
+        </div>
       </Card>
 
       {/* Notes Grid */}
@@ -254,22 +301,23 @@ const NotesCenterPage: React.FC = () => {
             description={
               <div>
                 <div className="text-lg font-medium mb-2">
-                  {searchText || selectedCourse || selectedLesson 
+                  {searchText || selectedTag || showPinnedOnly
                     ? 'No notes found' 
                     : 'No notes yet'
                   }
                 </div>
                 <div className="text-gray-500 mb-4">
-                  {searchText || selectedCourse || selectedLesson
+                  {searchText || selectedTag || showPinnedOnly
                     ? 'Try adjusting your search or filters'
                     : 'Create your first note to get started'
                   }
                 </div>
-                {!searchText && !selectedCourse && !selectedLesson && (
+                {!searchText && !selectedTag && !showPinnedOnly && (
                   <Button 
                     type="primary" 
                     icon={<PlusOutlined />}
                     onClick={handleNewNote}
+                    size="large"
                     style={{ 
                       backgroundColor: '#057EC8',
                       borderColor: '#057EC8'
@@ -288,11 +336,10 @@ const NotesCenterPage: React.FC = () => {
             <Col xs={24} sm={12} lg={8} key={note.id}>
               <Card
                 hoverable
-                className="h-full"
+                className="h-full transition-all duration-200 hover:shadow-lg"
                 style={{
                   borderRadius: '12px',
-                  border: '1px solid rgba(0,0,0,0.08)',
-                  transition: 'all 0.2s ease'
+                  border: note.pinned ? '2px solid #77BEF0' : '1px solid rgba(0,0,0,0.08)',
                 }}
                 bodyStyle={{ padding: '16px' }}
                 actions={[
@@ -332,21 +379,24 @@ const NotesCenterPage: React.FC = () => {
                   {/* Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <Title level={5} className="!mb-1 !text-base">
+                      <Title level={5} className="!mb-1 !text-base line-clamp-2">
                         {getNoteTitle(note)}
                       </Title>
-                      <div className="text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500">
+                        <ClockCircleOutlined className="mr-1" />
                         {formatDate(note.updatedAt)}
                       </div>
                     </div>
                     {note.pinned && (
-                      <Tag 
-                        color="#77BEF0" 
-                        className="ml-2 text-xs"
-                        icon={<PushpinFilled />}
-                      >
-                        Pinned
-                      </Tag>
+                      <Badge 
+                        count="PINNED" 
+                        style={{ 
+                          backgroundColor: '#77BEF0',
+                          fontSize: '10px',
+                          height: '16px',
+                          lineHeight: '16px'
+                        }}
+                      />
                     )}
                   </div>
 
@@ -363,7 +413,12 @@ const NotesCenterPage: React.FC = () => {
                   {note.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {note.tags.slice(0, 3).map((tag, index) => (
-                        <Tag key={index} color="#77BEF0">
+                        <Tag 
+                          key={index} 
+                          color="#77BEF0"
+                          className="cursor-pointer"
+                          onClick={() => handleTagFilter(tag)}
+                        >
                           {tag}
                         </Tag>
                       ))}
