@@ -3,39 +3,13 @@ import React, { useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
-// Custom ReactQuill wrapper for Ant Design Form integration
-const ReactQuillWrapper: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
-  const [content, setContent] = React.useState(value || '');
-  const [isInitialized, setIsInitialized] = React.useState(false);
-  
-  // Initialize content on mount
-  React.useEffect(() => {
-    console.log('🔍 CourseFormDrawer ReactQuillWrapper - Initial mount:', { value, currentContent: content });
-    setContent(value || '');
-    setIsInitialized(true);
-  }, []); // Only run on mount
-  
-  // Update content when value prop changes (but not on mount)
-  React.useEffect(() => {
-    if (isInitialized && value !== content) {
-      console.log('🔍 CourseFormDrawer ReactQuillWrapper - Value changed after init:', { value, currentContent: content });
-      setContent(value || '');
-    }
-  }, [value, isInitialized]);
-  
-  const handleChange = (newContent: string) => {
-    console.log('🔍 CourseFormDrawer ReactQuillWrapper - Content changed:', { newContent, length: newContent.length });
-    setContent(newContent);
-    if (onChange) {
-      onChange(newContent);
-    }
-  };
-  
+// Simple ReactQuill component that works directly with Ant Design Form
+const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
   return (
     <ReactQuill
       theme="snow"
-      value={content}
-      onChange={handleChange}
+      value={value || ''}
+      onChange={onChange}
       style={{ height: '150px', marginBottom: '50px' }}
       modules={{
         toolbar: [
@@ -161,8 +135,10 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
         <Form.Item 
           name="desc" 
           label="Description"
+          getValueFromEvent={(value) => value}
+          getValueProps={(value) => ({ value: value || '' })}
         >
-          <ReactQuillWrapper />
+          <SimpleReactQuill />
         </Form.Item>
         <Form.Item name="tags" label="Tags">
           <Select mode="tags" placeholder="Select or create tags" />

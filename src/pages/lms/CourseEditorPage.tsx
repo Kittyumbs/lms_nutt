@@ -12,39 +12,13 @@ import {
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
-// Custom ReactQuill wrapper for Ant Design Form integration
-const ReactQuillWrapper: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
-  const [content, setContent] = React.useState(value || '');
-  const [isInitialized, setIsInitialized] = React.useState(false);
-  
-  // Initialize content on mount
-  React.useEffect(() => {
-    console.log('🔍 ReactQuillWrapper - Initial mount:', { value, currentContent: content });
-    setContent(value || '');
-    setIsInitialized(true);
-  }, []); // Only run on mount
-  
-  // Update content when value prop changes (but not on mount)
-  React.useEffect(() => {
-    if (isInitialized && value !== content) {
-      console.log('🔍 ReactQuillWrapper - Value changed after init:', { value, currentContent: content });
-      setContent(value || '');
-    }
-  }, [value, isInitialized]);
-  
-  const handleChange = (newContent: string) => {
-    console.log('🔍 ReactQuillWrapper - Content changed:', { newContent, length: newContent.length });
-    setContent(newContent);
-    if (onChange) {
-      onChange(newContent);
-    }
-  };
-  
+// Simple ReactQuill component that works directly with Ant Design Form
+const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
   return (
     <ReactQuill
       theme="snow"
-      value={content}
-      onChange={handleChange}
+      value={value || ''}
+      onChange={onChange}
       style={{ height: '200px', marginBottom: '50px' }}
       modules={{
         toolbar: [
@@ -936,8 +910,10 @@ export default function CourseEditorPage() {
                 name="content"
                 label="Lesson Content"
                 rules={[{ required: true, message: 'Please enter lesson content' }]}
+                getValueFromEvent={(value) => value}
+                getValueProps={(value) => ({ value: value || '' })}
               >
-                <ReactQuillWrapper key={`text-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
+                <SimpleReactQuill />
               </Form.Item>
             )}
 
@@ -947,8 +923,10 @@ export default function CourseEditorPage() {
                   name="content"
                   label="Description Content"
                   rules={[{ required: true, message: 'Please enter video description' }]}
+                  getValueFromEvent={(value) => value}
+                  getValueProps={(value) => ({ value: value || '' })}
                 >
-                  <ReactQuillWrapper key={`video-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
+                  <SimpleReactQuill />
                 </Form.Item>
                 <Form.Item
                   name="videoUrls"
@@ -970,8 +948,10 @@ export default function CourseEditorPage() {
                   name="content"
                   label="Description Content"
                   rules={[{ required: true, message: 'Please enter PDF description' }]}
+                  getValueFromEvent={(value) => value}
+                  getValueProps={(value) => ({ value: value || '' })}
                 >
-                  <ReactQuillWrapper key={`pdf-editor-${editorKey}-${editingLesson?.id || 'new'}`} />
+                  <SimpleReactQuill />
                 </Form.Item>
                 <Form.Item
                   name="pdfUrls"
