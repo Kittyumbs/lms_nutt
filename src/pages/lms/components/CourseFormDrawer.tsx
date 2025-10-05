@@ -88,6 +88,9 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
                 ['link'],
                 ['clean']
               ],
+              clipboard: {
+                matchVisual: false,
+              }
             }}
             formats={[
               'size', 'bold', 'italic', 'underline', 'strike',

@@ -844,7 +844,10 @@ export default function CourseEditorPage() {
                       [{ 'align': [] }],
                       ['link'],
                       ['clean']
-                    ]
+                    ],
+                    clipboard: {
+                      matchVisual: false,
+                    }
                   }}
                   formats={[
                     'size', 'bold', 'italic', 'underline', 'strike',
@@ -875,6 +878,9 @@ export default function CourseEditorPage() {
                         ['link'],
                         ['clean']
                       ],
+                      clipboard: {
+                        matchVisual: false,
+                      }
                     }}
                     formats={[
                       'size', 'bold', 'italic', 'underline', 'strike',
@@ -917,6 +923,9 @@ export default function CourseEditorPage() {
                         ['link'],
                         ['clean']
                       ],
+                      clipboard: {
+                        matchVisual: false,
+                      }
                     }}
                     formats={[
                       'size', 'bold', 'italic', 'underline', 'strike',
