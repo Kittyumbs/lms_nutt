@@ -5,19 +5,35 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 // import DOMPurify from 'dompurify'; // No longer needed
 
-// Simple text renderer component - no HTML parsing needed
-const SafeTextRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
+// Safe HTML renderer component for TinyMCE content
+const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
   // If content is empty or only whitespace, return a default message
   if (!content || content.trim() === '') {
     return <div className={className}><p>Nội dung chưa được cập nhật.</p></div>;
   }
 
-  // Simply render as plain text with line breaks preserved using CSS
-  return (
-    <div className={className} style={{ whiteSpace: 'pre-line' }}>
-      {content}
-    </div>
-  );
+  // Clean HTML content to avoid React errors
+  const cleanContent = content
+    .replace(/<br\s*\/?>/gi, '<br />')
+    .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 />')
+    .replace(/<input([^>]*?)(?:\s*\/)?>/gi, '<input$1 />')
+    .replace(/<hr\s*\/?>/gi, '<hr />')
+    .replace(/<p><br\s*\/?><\/p>/gi, '<p>&nbsp;</p>')
+    .replace(/<p><\/p>/gi, '')
+    .replace(/<p>\s*<\/p>/gi, '')
+    .trim();
+
+  try {
+    return (
+      <div 
+        className={className} 
+        dangerouslySetInnerHTML={{ __html: cleanContent }} 
+      />
+    );
+  } catch (error) {
+    console.error('Error rendering HTML content:', error);
+    return <div className={className}><p>Lỗi hiển thị nội dung.</p></div>;
+  }
 };
 
 // import useAuth from '../../auth/useAuth';
@@ -68,13 +84,13 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     
     // Fallback to HTML content if video URL is invalid
     const content = `<h1>Video: ${lesson.title}</h1><p><strong>Video URL:</strong> ${videoUrl}</p><p><a href="${videoUrl}" target="_blank">Click here to watch the video</a></p>`;
-    return <SafeTextRenderer content={content} className="prose max-w-none" />;
+    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'text') {
     // Use actual content from database (HTML from ReactQuill)
     const content = lesson.content || `<h1>${lesson.title}</h1><p>Nội dung bài học chưa được cập nhật.</p>`;
-    return <SafeTextRenderer content={content} className="prose max-w-none" />;
+    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'quiz') {
@@ -120,7 +136,7 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
     
     // Fallback to HTML content if quiz parsing fails
     const content = lesson.content || `<h1>Quiz: ${lesson.title}</h1><p>Nội dung quiz chưa được cập nhật.</p>`;
-    return <SafeTextRenderer content={content} className="prose max-w-none" />;
+    return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 
   if (lesson.type === 'pdf') {

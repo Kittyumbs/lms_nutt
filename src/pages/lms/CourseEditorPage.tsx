@@ -9,8 +9,7 @@ import {
   FilePdfOutlined,
   ArrowLeftOutlined
 } from '@ant-design/icons';
-// import ReactQuill from 'react-quill';
-// import 'react-quill/dist/quill.snow.css';
+import { Editor } from '@tinymce/tinymce-react';
 import { 
   Button, 
   Card, 
@@ -824,10 +823,22 @@ export default function CourseEditorPage() {
                 label="Nội dung bài học"
                 rules={[{ required: true, message: 'Vui lòng nhập nội dung bài học' }]}
               >
-                <Input.TextArea
-                  rows={8}
-                  placeholder="Nhập nội dung bài học..."
-                  style={{ height: '200px' }}
+                <Editor
+                  apiKey="no-api-key"
+                  init={{
+                    height: 200,
+                    menubar: false,
+                    plugins: [
+                      'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                      'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                      'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                      'bold italic underline strikethrough | alignleft aligncenter ' +
+                      'alignright alignjustify | bullist numlist outdent indent | ' +
+                      'removeformat | help',
+                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }'
+                  }}
                 />
               </Form.Item>
             )}
@@ -839,10 +850,22 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả video' }]}
                 >
-                  <Input.TextArea
-                    rows={6}
-                    placeholder="Nhập mô tả video..."
-                    style={{ height: '150px' }}
+                  <Editor
+                    apiKey="no-api-key"
+                    init={{
+                      height: 150,
+                      menubar: false,
+                      plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                      ],
+                      toolbar: 'undo redo | blocks | ' +
+                        'bold italic underline strikethrough | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help',
+                      content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }'
+                    }}
                   />
                 </Form.Item>
                 <Form.Item
@@ -866,10 +889,22 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả tài liệu' }]}
                 >
-                  <Input.TextArea
-                    rows={6}
-                    placeholder="Nhập mô tả tài liệu..."
-                    style={{ height: '150px' }}
+                  <Editor
+                    apiKey="no-api-key"
+                    init={{
+                      height: 150,
+                      menubar: false,
+                      plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                      ],
+                      toolbar: 'undo redo | blocks | ' +
+                        'bold italic underline strikethrough | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help',
+                      content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }'
+                    }}
                   />
                 </Form.Item>
                 <Form.Item

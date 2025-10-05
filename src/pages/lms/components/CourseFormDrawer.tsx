@@ -1,7 +1,6 @@
 import { Drawer, Form, Input, Button, Select, Space, message } from 'antd';
 import React, { useEffect } from 'react';
-// import ReactQuill from 'react-quill';
-// import 'react-quill/dist/quill.snow.css';
+import { Editor } from '@tinymce/tinymce-react';
 
 const { Option } = Select;
 
@@ -75,10 +74,22 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
           <Input placeholder="Enter course title" />
         </Form.Item>
         <Form.Item name="desc" label="Description">
-          <Input.TextArea
-            rows={6}
-            placeholder="Enter course description..."
-            style={{ height: '150px' }}
+          <Editor
+            apiKey="no-api-key"
+            init={{
+              height: 150,
+              menubar: false,
+              plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+              ],
+              toolbar: 'undo redo | blocks | ' +
+                'bold italic underline strikethrough | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'removeformat | help',
+              content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }'
+            }}
           />
         </Form.Item>
         <Form.Item name="tags" label="Tags">
