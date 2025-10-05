@@ -1,15 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
 import { nanoid } from 'nanoid';
+import { 
+  collection, 
+  query, 
+  orderBy, 
+  where, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  deleteDoc, 
+  onSnapshot,
+  serverTimestamp,
+  Timestamp
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import useAuth from '../auth/useAuth';
 
 export type Note = {
-  id: string;            // nanoid
+  id: string;            // Firestore document ID
+  uid: string;           // User ID
   title?: string;        // h1 đầu hoặc nhập tay
   content: string;       // markdown
   tags: string[];
   pinned: boolean;
-  createdAt: number;     // Date.now()
-  updatedAt: number;     // Date.now()
+  createdAt: Timestamp | number;     // Firestore Timestamp or Date.now()
+  updatedAt: Timestamp | number;     // Firestore Timestamp or Date.now()
   // Future: courseId, lessonId khi integrate với LMS
 };
 
@@ -24,43 +40,55 @@ export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Get storage key based on user
-  const getStorageKey = useCallback(() => {
-    return `notes:${user?.uid || 'guest'}`;
-  }, [user?.uid]);
-
-  // Load notes from localStorage
-  const loadNotes = useCallback(() => {
-    try {
-      const storageKey = getStorageKey();
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        const parsedNotes = JSON.parse(stored);
-        setNotes(Array.isArray(parsedNotes) ? parsedNotes : []);
-      } else {
-        setNotes([]);
-      }
-    } catch (error) {
-      console.error('Error loading notes:', error);
-      setNotes([]);
+  // Convert Firestore timestamp to number
+  const timestampToNumber = useCallback((timestamp: Timestamp | number): number => {
+    if (timestamp instanceof Timestamp) {
+      return timestamp.toMillis();
     }
-  }, [getStorageKey]);
+    return timestamp;
+  }, []);
 
-  // Save notes to localStorage
-  const saveNotes = useCallback((newNotes: Note[]) => {
-    try {
-      const storageKey = getStorageKey();
-      localStorage.setItem(storageKey, JSON.stringify(newNotes));
-      setNotes(newNotes);
-    } catch (error) {
-      console.error('Error saving notes:', error);
-    }
-  }, [getStorageKey]);
+  // Convert Note from Firestore format
+  const convertFirestoreNote = useCallback((doc: any): Note => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      uid: data.uid,
+      title: data.title,
+      content: data.content || '',
+      tags: data.tags || [],
+      pinned: data.pinned || false,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt
+    };
+  }, []);
 
-  // Load notes on mount and when user changes
+  // Load notes from Firestore
   useEffect(() => {
-    loadNotes();
-  }, [loadNotes]);
+    if (!user?.uid) {
+      setNotes([]);
+      return;
+    }
+
+    setLoading(true);
+    const notesRef = collection(db, 'notes');
+    const q = query(
+      notesRef,
+      where('uid', '==', user.uid),
+      orderBy('updatedAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notesData = snapshot.docs.map(convertFirestoreNote);
+      setNotes(notesData);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error loading notes:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid, convertFirestoreNote]);
 
   // List notes with optional filtering
   const list = useCallback((params?: NotesParams): Note[] => {
@@ -85,7 +113,7 @@ export function useNotes() {
     const sortBy = params?.sortBy || 'newest';
     switch (sortBy) {
       case 'oldest':
-        filteredNotes.sort((a, b) => a.createdAt - b.createdAt);
+        filteredNotes.sort((a, b) => timestampToNumber(a.createdAt) - timestampToNumber(b.createdAt));
         break;
       case 'alphabetical':
         filteredNotes.sort((a, b) => {
@@ -96,7 +124,7 @@ export function useNotes() {
         break;
       case 'newest':
       default:
-        filteredNotes.sort((a, b) => b.updatedAt - a.updatedAt);
+        filteredNotes.sort((a, b) => timestampToNumber(b.updatedAt) - timestampToNumber(a.updatedAt));
         break;
     }
 
@@ -114,63 +142,79 @@ export function useNotes() {
   }, [notes]);
 
   // Upsert note (create or update)
-  const upsert = useCallback((input: Partial<Note> & { id?: string }): Note => {
-    const now = Date.now();
-    const newNotes = [...notes];
+  const upsert = useCallback(async (input: Partial<Note> & { id?: string }): Promise<Note> => {
+    if (!user?.uid) {
+      throw new Error('User not authenticated');
+    }
+
+    const noteData = {
+      uid: user.uid,
+      title: input.title || '',
+      content: input.content || '',
+      tags: input.tags || [],
+      pinned: input.pinned || false,
+      updatedAt: serverTimestamp()
+    };
 
     if (input.id) {
       // Update existing note
-      const index = newNotes.findIndex(note => note.id === input.id);
-      if (index >= 0) {
-        newNotes[index] = {
-          ...newNotes[index],
-          ...input,
-          updatedAt: now
-        };
-      } else {
-        // Create new note with provided ID
-        const newNote: Note = {
-          id: input.id,
-          title: input.title || '',
-          content: input.content || '',
-          tags: input.tags || [],
-          pinned: input.pinned || false,
-          createdAt: now,
-          updatedAt: now
-        };
-        newNotes.push(newNote);
-      }
+      const noteRef = doc(db, 'notes', input.id);
+      await updateDoc(noteRef, noteData);
+      
+      // Return updated note
+      const existingNote = notes.find(note => note.id === input.id);
+      return {
+        ...existingNote!,
+        ...input,
+        updatedAt: Date.now()
+      };
     } else {
-      // Create new note with generated ID
-      const newNote: Note = {
-        id: nanoid(),
+      // Create new note
+      const newNoteData = {
+        ...noteData,
+        createdAt: serverTimestamp()
+      };
+      
+      const docRef = await addDoc(collection(db, 'notes'), newNoteData);
+      
+      return {
+        id: docRef.id,
+        uid: user.uid,
         title: input.title || '',
         content: input.content || '',
         tags: input.tags || [],
         pinned: input.pinned || false,
-        createdAt: now,
-        updatedAt: now
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       };
-      newNotes.push(newNote);
     }
-
-    saveNotes(newNotes);
-    return newNotes.find(note => note.id === (input.id || newNotes[newNotes.length - 1].id))!;
-  }, [notes, saveNotes]);
+  }, [user?.uid, notes]);
 
   // Remove note
-  const remove = useCallback((id: string): void => {
-    const newNotes = notes.filter(note => note.id !== id);
-    saveNotes(newNotes);
-  }, [notes, saveNotes]);
+  const remove = useCallback(async (id: string): Promise<void> => {
+    if (!user?.uid) {
+      throw new Error('User not authenticated');
+    }
+    
+    const noteRef = doc(db, 'notes', id);
+    await deleteDoc(noteRef);
+  }, [user?.uid]);
 
   // Toggle pin status
-  const togglePin = useCallback((id: string): void => {
-    const newNotes = notes.map(note => 
-      note.id === id ? { ...note, pinned: !note.pinned, updatedAt: Date.now() } : note
-    );
-    saveNotes(newNotes);
-  }, [notes, saveNotes]);
+  const togglePin = useCallback(async (id: string): Promise<void> => {
+    if (!user?.uid) {
+      throw new Error('User not authenticated');
+    }
+    
+    const note = notes.find(note => note.id === id);
+    if (!note) return;
+    
+    const noteRef = doc(db, 'notes', id);
+    await updateDoc(noteRef, {
+      pinned: !note.pinned,
+      updatedAt: serverTimestamp()
+    });
+  }, [user?.uid, notes]);
 
   // Search notes
   const search = useCallback((keyword: string): Note[] => {
@@ -181,8 +225,8 @@ export function useNotes() {
       note.title?.toLowerCase().includes(searchLower) ||
       note.content.toLowerCase().includes(searchLower) ||
       note.tags.some(tag => tag.toLowerCase().includes(searchLower))
-    ).sort((a, b) => b.updatedAt - a.updatedAt);
-  }, [notes]);
+    ).sort((a, b) => timestampToNumber(b.updatedAt) - timestampToNumber(a.updatedAt));
+  }, [notes, timestampToNumber]);
 
   // Get all unique tags
   const getAllTags = useCallback((): string[] => {
@@ -215,7 +259,8 @@ export function useNotes() {
   };
 }
 
-// TODO: Firestore Adapter
-// - collection 'notes', docId `${uid}_${id}`
-// - fields: { uid, courseId, lessonId, title, content, tags, pinned, updatedAt: serverTimestamp() }
+// Firestore Integration Complete ✅
+// - collection 'notes'
+// - fields: { uid, title, content, tags, pinned, createdAt, updatedAt }
 // - Index: composite (uid ASC, updatedAt DESC)
+// - Real-time updates with onSnapshot

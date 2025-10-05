@@ -37,9 +37,9 @@ interface NotesEditorProps {
   isOpen: boolean;
   onClose: () => void;
   note?: Note | null;
-  onSave: (note: Partial<Note> & { id?: string }) => Note;
-  onDelete?: (id: string) => void;
-  onTogglePin?: (id: string) => void;
+  onSave: (note: Partial<Note> & { id?: string }) => Promise<Note>;
+  onDelete?: (id: string) => Promise<void>;
+  onTogglePin?: (id: string) => Promise<void>;
 }
 
 const NotesEditor: React.FC<NotesEditorProps> = ({
@@ -89,7 +89,7 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
     
     setIsSaving(true);
     try {
-      const savedNote = onSave({
+      const savedNote = await onSave({
         id: note?.id,
         title: debouncedTitle,
         content: debouncedContent,
@@ -103,17 +103,27 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
     }
   }, [isOpen, note?.id, debouncedTitle, debouncedContent, debouncedTags, onSave]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (note?.id && onDelete) {
-      onDelete(note.id);
-      onClose();
-      message.success('Note deleted successfully');
+      try {
+        await onDelete(note.id);
+        onClose();
+        message.success('Note deleted successfully');
+      } catch (error) {
+        console.error('Error deleting note:', error);
+        message.error('Failed to delete note');
+      }
     }
   }, [note?.id, onDelete, onClose]);
 
-  const handleTogglePin = useCallback(() => {
+  const handleTogglePin = useCallback(async () => {
     if (note?.id && onTogglePin) {
-      onTogglePin(note.id);
+      try {
+        await onTogglePin(note.id);
+      } catch (error) {
+        console.error('Error toggling pin:', error);
+        message.error('Failed to update note');
+      }
     }
   }, [note?.id, onTogglePin]);
 

@@ -75,20 +75,36 @@ const NotesCenterPage: React.FC = () => {
     setIsEditorOpen(true);
   }, []);
 
-  const handleSaveNote = useCallback((noteData: Partial<Note> & { id?: string }) => {
-    const savedNote = upsert(noteData);
-    setEditingNote(savedNote);
-    message.success(noteData.id ? 'Note updated' : 'Note created');
-    return savedNote;
+  const handleSaveNote = useCallback(async (noteData: Partial<Note> & { id?: string }) => {
+    try {
+      const savedNote = await upsert(noteData);
+      setEditingNote(savedNote);
+      message.success(noteData.id ? 'Note updated' : 'Note created');
+      return savedNote;
+    } catch (error) {
+      console.error('Error saving note:', error);
+      message.error('Failed to save note');
+      throw error;
+    }
   }, [upsert]);
 
-  const handleDeleteNote = useCallback((id: string) => {
-    remove(id);
-    message.success('Note deleted');
+  const handleDeleteNote = useCallback(async (id: string) => {
+    try {
+      await remove(id);
+      message.success('Note deleted');
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      message.error('Failed to delete note');
+    }
   }, [remove]);
 
-  const handleTogglePin = useCallback((id: string) => {
-    togglePin(id);
+  const handleTogglePin = useCallback(async (id: string) => {
+    try {
+      await togglePin(id);
+    } catch (error) {
+      console.error('Error toggling pin:', error);
+      message.error('Failed to update note');
+    }
   }, [togglePin]);
 
   const handleCloseEditor = useCallback(() => {
@@ -128,8 +144,20 @@ const NotesCenterPage: React.FC = () => {
     return cleanContent.length > 120 ? cleanContent.substring(0, 120) + '...' : cleanContent;
   };
 
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
+  const formatDate = (timestamp: number | any) => {
+    // Handle both Firestore Timestamp and number
+    let date: Date;
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      // Firestore Timestamp
+      date = timestamp.toDate();
+    } else if (typeof timestamp === 'number') {
+      // Regular timestamp
+      date = new Date(timestamp);
+    } else {
+      // Fallback
+      date = new Date();
+    }
+    
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -331,15 +359,16 @@ const NotesCenterPage: React.FC = () => {
           />
         </Card>
       ) : (
-        <Row gutter={[16, 16]}>
+        <Row gutter={[24, 24]}>
           {filteredNotes.map((note) => (
             <Col xs={24} sm={12} lg={8} key={note.id}>
               <Card
                 hoverable
-                className="h-full transition-all duration-200 hover:shadow-lg"
+                className="h-full transition-all duration-200 hover:shadow-lg mb-4"
                 style={{
                   borderRadius: '12px',
                   border: note.pinned ? '2px solid #77BEF0' : '1px solid rgba(0,0,0,0.08)',
+                  marginBottom: '16px'
                 }}
                 bodyStyle={{ padding: '16px' }}
                 actions={[
