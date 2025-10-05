@@ -1,6 +1,7 @@
 import { Drawer, Form, Input, Button, Select, Space, message } from 'antd';
 import React, { useEffect } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const { Option } = Select;
 
@@ -74,22 +75,23 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
           <Input placeholder="Enter course title" />
         </Form.Item>
         <Form.Item name="desc" label="Description">
-          <Editor
-            apiKey="no-api-key"
-            init={{
-              height: 150,
-              menubar: false,
-              plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+          <ReactQuill
+            theme="snow"
+            style={{ height: '150px', marginBottom: '50px' }}
+            modules={{
+              toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'align': [] }],
+                ['link'],
+                ['clean']
               ],
-              toolbar: 'undo redo | blocks | ' +
-                'bold italic underline strikethrough | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
-              content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }'
             }}
+            formats={[
+              'header', 'bold', 'italic', 'underline', 'strike',
+              'list', 'bullet', 'align', 'link'
+            ]}
           />
         </Form.Item>
         <Form.Item name="tags" label="Tags">

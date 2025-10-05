@@ -9,7 +9,8 @@ import {
   FilePdfOutlined,
   ArrowLeftOutlined
 } from '@ant-design/icons';
-import { Editor } from '@tinymce/tinymce-react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { 
   Button, 
   Card, 
@@ -823,22 +824,23 @@ export default function CourseEditorPage() {
                 label="Nội dung bài học"
                 rules={[{ required: true, message: 'Vui lòng nhập nội dung bài học' }]}
               >
-                <Editor
-                  apiKey="no-api-key"
-                  init={{
-                    height: 200,
-                    menubar: false,
-                    plugins: [
-                      'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                      'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                      'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                <ReactQuill
+                  theme="snow"
+                  style={{ height: '200px', marginBottom: '50px' }}
+                  modules={{
+                    toolbar: [
+                      [{ 'header': [1, 2, 3, false] }],
+                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      [{ 'align': [] }],
+                      ['link'],
+                      ['clean']
                     ],
-                    toolbar: 'undo redo | blocks | ' +
-                      'bold italic underline strikethrough | alignleft aligncenter ' +
-                      'alignright alignjustify | bullist numlist outdent indent | ' +
-                      'removeformat | help',
-                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }'
                   }}
+                  formats={[
+                    'header', 'bold', 'italic', 'underline', 'strike',
+                    'list', 'bullet', 'align', 'link'
+                  ]}
                 />
               </Form.Item>
             )}
@@ -850,22 +852,23 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả video' }]}
                 >
-                  <Editor
-                    apiKey="no-api-key"
-                    init={{
-                      height: 150,
-                      menubar: false,
-                      plugins: [
-                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                  <ReactQuill
+                    theme="snow"
+                    style={{ height: '150px', marginBottom: '50px' }}
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link'],
+                        ['clean']
                       ],
-                      toolbar: 'undo redo | blocks | ' +
-                        'bold italic underline strikethrough | alignleft aligncenter ' +
-                        'alignright alignjustify | bullist numlist outdent indent | ' +
-                        'removeformat | help',
-                      content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }'
                     }}
+                    formats={[
+                      'header', 'bold', 'italic', 'underline', 'strike',
+                      'list', 'bullet', 'align', 'link'
+                    ]}
                   />
                 </Form.Item>
                 <Form.Item
@@ -889,22 +892,23 @@ export default function CourseEditorPage() {
                   label="Nội dung mô tả"
                   rules={[{ required: true, message: 'Vui lòng nhập mô tả tài liệu' }]}
                 >
-                  <Editor
-                    apiKey="no-api-key"
-                    init={{
-                      height: 150,
-                      menubar: false,
-                      plugins: [
-                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                  <ReactQuill
+                    theme="snow"
+                    style={{ height: '150px', marginBottom: '50px' }}
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link'],
+                        ['clean']
                       ],
-                      toolbar: 'undo redo | blocks | ' +
-                        'bold italic underline strikethrough | alignleft aligncenter ' +
-                        'alignright alignjustify | bullist numlist outdent indent | ' +
-                        'removeformat | help',
-                      content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }'
                     }}
+                    formats={[
+                      'header', 'bold', 'italic', 'underline', 'strike',
+                      'list', 'bullet', 'align', 'link'
+                    ]}
                   />
                 </Form.Item>
                 <Form.Item
