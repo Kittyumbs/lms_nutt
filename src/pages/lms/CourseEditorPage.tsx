@@ -14,22 +14,33 @@ import 'react-quill/dist/quill.snow.css';
 
 // Simple ReactQuill component that works directly with Ant Design Form
 const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+  const [isInitialized, setIsInitialized] = React.useState(false);
+  
   console.log('🔍 SimpleReactQuill - Render:', { 
     value: value, 
     valueLength: value?.length,
     valueType: typeof value,
-    hasOnChange: !!onChange 
+    hasOnChange: !!onChange,
+    isInitialized: isInitialized
   });
   
   const handleChange = (newValue: string) => {
     console.log('🔍 SimpleReactQuill - onChange triggered:', { 
       newValue: newValue, 
       newValueLength: newValue?.length,
-      newValueType: typeof newValue 
+      newValueType: typeof newValue,
+      isInitialized: isInitialized
     });
-    if (onChange) {
+    
+    // Only trigger onChange if it's not the initial render
+    if (isInitialized && onChange) {
       onChange(newValue);
     }
+  };
+  
+  const handleFocus = () => {
+    console.log('🔍 SimpleReactQuill - onFocus triggered');
+    setIsInitialized(true);
   };
   
   return (
@@ -37,6 +48,7 @@ const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) =>
       theme="snow"
       value={value || ''}
       onChange={handleChange}
+      onFocus={handleFocus}
       style={{ height: '200px', marginBottom: '50px' }}
       modules={{
         toolbar: [
@@ -50,6 +62,15 @@ const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) =>
         ],
         clipboard: {
           matchVisual: false,
+          allowed: {
+            tags: ['p', 'br', 'strong', 'em', 'u', 's', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'span'],
+            attributes: ['href', 'target', 'style', 'class']
+          }
+        },
+        history: {
+          delay: 2000,
+          maxStack: 500,
+          userOnly: true
         }
       }}
       formats={[

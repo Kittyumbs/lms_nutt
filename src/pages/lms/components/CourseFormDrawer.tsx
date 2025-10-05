@@ -41,6 +41,15 @@ const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) =>
         ],
         clipboard: {
           matchVisual: false,
+          allowed: {
+            tags: ['p', 'br', 'strong', 'em', 'u', 's', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'span'],
+            attributes: ['href', 'target', 'style', 'class']
+          }
+        },
+        history: {
+          delay: 2000,
+          maxStack: 500,
+          userOnly: true
         }
       }}
       formats={[
