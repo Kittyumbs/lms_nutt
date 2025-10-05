@@ -837,17 +837,18 @@ export default function CourseEditorPage() {
                   style={{ height: '200px', marginBottom: '50px' }}
                   modules={{
                     toolbar: [
-                      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                      [{ 'size': ['small', false, 'large', 'huge'] }],
                       ['bold', 'italic', 'underline', 'strike'],
+                      [{ 'color': [] }, { 'background': [] }],
                       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                       [{ 'align': [] }],
                       ['link'],
                       ['clean']
-                    ],
+                    ]
                   }}
                   formats={[
-                    'header', 'bold', 'italic', 'underline', 'strike',
-                    'list', 'bullet', 'align', 'link'
+                    'size', 'bold', 'italic', 'underline', 'strike',
+                    'color', 'background', 'list', 'bullet', 'align', 'link'
                   ]}
                 />
               </Form.Item>
@@ -866,8 +867,9 @@ export default function CourseEditorPage() {
                     style={{ height: '150px', marginBottom: '50px' }}
                     modules={{
                       toolbar: [
-                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        [{ 'size': ['small', false, 'large', 'huge'] }],
                         ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'color': [] }, { 'background': [] }],
                         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                         [{ 'align': [] }],
                         ['link'],
@@ -875,8 +877,8 @@ export default function CourseEditorPage() {
                       ],
                     }}
                     formats={[
-                      'header', 'bold', 'italic', 'underline', 'strike',
-                      'list', 'bullet', 'align', 'link'
+                      'size', 'bold', 'italic', 'underline', 'strike',
+                      'color', 'background', 'list', 'bullet', 'align', 'link'
                     ]}
                   />
                 </Form.Item>
@@ -907,8 +909,9 @@ export default function CourseEditorPage() {
                     style={{ height: '150px', marginBottom: '50px' }}
                     modules={{
                       toolbar: [
-                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        [{ 'size': ['small', false, 'large', 'huge'] }],
                         ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'color': [] }, { 'background': [] }],
                         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                         [{ 'align': [] }],
                         ['link'],
@@ -916,8 +919,8 @@ export default function CourseEditorPage() {
                       ],
                     }}
                     formats={[
-                      'header', 'bold', 'italic', 'underline', 'strike',
-                      'list', 'bullet', 'align', 'link'
+                      'size', 'bold', 'italic', 'underline', 'strike',
+                      'color', 'background', 'list', 'bullet', 'align', 'link'
                     ]}
                   />
                 </Form.Item>
