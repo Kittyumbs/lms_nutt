@@ -512,7 +512,7 @@ export function useGoogleCalendar() {
         // Trigger custom event for synchronization
         window.dispatchEvent(new CustomEvent('gapi_auth_signout'));
 
-        void message.success("Đã thoát tài khoản Google hiện tại.");
+        void message.success("Successfully signed out from Google account.");
       } else {
         setIsSignedIn(false);
         setUserProfile(null);
@@ -528,7 +528,7 @@ export function useGoogleCalendar() {
           oldValue: localStorage.getItem('google_calendar_token')
         }));
         
-        void message.info("Bạn chưa đăng nhập Google.");
+        void message.info("You are not signed in to Google.");
       }
     } catch (error) {
       console.error('Error during sign out:', error);

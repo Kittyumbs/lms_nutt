@@ -258,7 +258,7 @@ export default function UsefulDocsDrawer() {
         icon={<PlusOutlined />}
         onClick={handleOpen}
       >
-        Tài liệu thường dùng
+        Useful Documents
       </Button>
 
       <Drawer
@@ -269,14 +269,14 @@ export default function UsefulDocsDrawer() {
         onClose={handleClose}
       >
         {/* Add Form Section - Compact */}
-        <Card title="Thêm liên kết mới" size="small" style={{ marginBottom: 12 }}>
+        <Card title="Add New Link" size="small" style={{ marginBottom: 12 }}>
           <Form form={form} layout="vertical" autoComplete="off">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Form.Item
                 label="Link (URL)"
                 name="url"
                 rules={[
-                  { required: true, message: 'Vui lòng nhập URL' },
+                  { required: true, message: 'Please enter URL' },
                   {
                     validator: (_, value) => {
                       if (!value) return Promise.resolve();
@@ -284,37 +284,37 @@ export default function UsefulDocsDrawer() {
                         new URL(String(value));
                         return Promise.resolve();
                       } catch {
-                        return Promise.reject(new Error('URL không hợp lệ'));
+                        return Promise.reject(new Error('Invalid URL'));
                       }
                     },
                   },
                 ]}
               >
-                <Input placeholder="https://example.com/tai-lieu" prefix={<LinkOutlined />} />
+                <Input placeholder="https://example.com/document" prefix={<LinkOutlined />} />
               </Form.Item>
 
               <Form.Item
-                label="Tiêu đề (tuỳ chọn)"
+                label="Title (optional)"
                 name="title"
               >
-                <Input placeholder="VD: Quy trình xử lý đơn Shopee" />
+                <Input placeholder="Example: Shopee Order Processing" />
               </Form.Item>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Form.Item
-                label="Mô tả (tuỳ chọn)"
+                label="Description (optional)"
                 name="description"
               >
-                <Input.TextArea placeholder="Mô tả ngắn gọn..." rows={1} />
+                <Input.TextArea placeholder="Brief description..." rows={1} />
               </Form.Item>
 
               <Form.Item
-                label="Danh mục (tuỳ chọn)"
+                label="Category (optional)"
                 name="category"
               >
                 <Select
-                  placeholder="Chọn hoặc nhập danh mục..."
+                  placeholder="Select or enter category..."
                   allowClear
                   showSearch
                   mode="tags"
@@ -327,9 +327,9 @@ export default function UsefulDocsDrawer() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-              <Button onClick={() => form.resetFields()}>Xoá nhập</Button>
+              <Button onClick={() => form.resetFields()}>Clear</Button>
               <Button type="primary" onClick={onAdd} loading={loading}>
-                Thêm liên kết
+                Add Link
               </Button>
             </div>
           </Form>
@@ -340,7 +340,7 @@ export default function UsefulDocsDrawer() {
         {/* Search and Filter Section */}
         <div style={{ marginBottom: 16 }}>
           <Search
-            placeholder="Tìm kiếm liên kết..."
+            placeholder="Search links..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{ marginBottom: 12 }}
@@ -351,7 +351,7 @@ export default function UsefulDocsDrawer() {
             value={filterCategory}
             onChange={(value) => setFilterCategory(value as string)}
             options={[
-              { label: 'Tất cả', value: 'ALL' },
+              { label: 'All', value: 'ALL' },
               ...categoryOptions.map(cat => ({ label: cat, value: cat }))
             ]}
             style={{ width: '100%' }}
@@ -363,8 +363,8 @@ export default function UsefulDocsDrawer() {
           {filteredLinks.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
               {searchText || filterCategory !== 'ALL' 
-                ? 'Không tìm thấy liên kết phù hợp' 
-                : 'Chưa có liên kết nào. Hãy thêm liên kết đầu tiên!'}
+                ? 'No matching links found' 
+                : 'No links yet. Add your first link!'}
             </div>
           ) : (
             filteredLinks.map((item) => (
@@ -431,7 +431,7 @@ export default function UsefulDocsDrawer() {
                       </div>
                       
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <Tooltip title="Mở link">
+                        <Tooltip title="Open link">
                           <Button 
                             type="text" 
                             icon={<LinkOutlined />} 
@@ -449,7 +449,7 @@ export default function UsefulDocsDrawer() {
                           />
                         </Tooltip>
                         
-                        <Tooltip title={item.isFavorite ? "Bỏ yêu thích" : "Thêm yêu thích"}>
+                        <Tooltip title={item.isFavorite ? "Remove from favorites" : "Add to favorites"}>
                           <Button 
                             type="text" 
                             icon={<StarOutlined />} 
@@ -459,7 +459,7 @@ export default function UsefulDocsDrawer() {
                           />
                         </Tooltip>
                         
-                        <Tooltip title="Chỉnh sửa">
+                        <Tooltip title="Edit">
                           <Button 
                             type="text" 
                             icon={<EditOutlined />} 
@@ -469,10 +469,10 @@ export default function UsefulDocsDrawer() {
                         </Tooltip>
                         
                         <Popconfirm
-                          title="Xóa liên kết?"
-                          description="Bạn có chắc chắn muốn xóa liên kết này?"
-                          okText="Xóa"
-                          cancelText="Hủy"
+                          title="Delete link?"
+                          description="Are you sure you want to delete this link?"
+                          okText="Delete"
+                          cancelText="Cancel"
                           onConfirm={() => onDelete(item.id)}
                         >
                           <Button 
@@ -494,7 +494,7 @@ export default function UsefulDocsDrawer() {
         {/* Edit Modal */}
         {editingLink && (
           <Card 
-            title="Chỉnh sửa liên kết" 
+            title="Edit Link" 
             size="small" 
             style={{ 
               position: 'fixed', 
@@ -509,25 +509,25 @@ export default function UsefulDocsDrawer() {
           >
             <Form form={editForm} layout="vertical">
               <Form.Item
-                label="Tiêu đề"
+                label="Title"
                 name="title"
               >
-                <Input placeholder="Tiêu đề liên kết" />
+                <Input placeholder="Link title" />
               </Form.Item>
               
               <Form.Item
-                label="Mô tả"
+                label="Description"
                 name="description"
               >
-                <Input.TextArea placeholder="Mô tả liên kết" rows={3} />
+                <Input.TextArea placeholder="Link description" rows={3} />
               </Form.Item>
               
               <Form.Item
-                label="Danh mục"
+                label="Category"
                 name="category"
               >
                 <Select
-                  placeholder="Chọn hoặc nhập danh mục..."
+                  placeholder="Select or enter category..."
                   allowClear
                   showSearch
                   mode="tags"
@@ -540,10 +540,10 @@ export default function UsefulDocsDrawer() {
               
               <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
                 <Button onClick={() => setEditingLink(null)}>
-                  Hủy
+                  Cancel
                 </Button>
                 <Button type="primary" onClick={onUpdate} loading={loading}>
-                  Cập nhật
+                  Update
                 </Button>
               </Space>
             </Form>

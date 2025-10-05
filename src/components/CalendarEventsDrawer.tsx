@@ -87,7 +87,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   if (isAuthLoading) {
     return (
       <Drawer
-        title="Sự kiện Google Calendar"
+        title="Google Calendar Events"
         placement="right"
         width="33vw"
         open={isOpen}
@@ -107,7 +107,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   if (showAuthRequired) {
     return (
       <Drawer
-        title="Sự kiện Google Calendar"
+        title="Google Calendar Events"
         placement="right"
         width="33vw"
         open={isOpen}
@@ -117,24 +117,24 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
           {!user ? (
             <>
               <Alert
-                message="Cần đăng nhập"
-                description="Vui lòng đăng nhập vào hệ thống trước để sử dụng Google Calendar."
+                message="Login Required"
+                description="Please log in to the system first to use Google Calendar."
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
               />
-              <p>Bạn có thể đăng nhập từ sidebar bên trái.</p>
+              <p>You can log in from the left sidebar.</p>
             </>
           ) : (
             <>
               <Alert
-                message="Cần cấp quyền Google Calendar"
-                description="Để xem và tạo sự kiện lịch, vui lòng cấp quyền truy cập Google Calendar từ sidebar bên trái."
+                message="Google Calendar Permission Required"
+                description="To view and create calendar events, please grant Google Calendar access from the left sidebar."
                 type="warning"
                 showIcon
                 style={{ marginBottom: 16 }}
               />
-              <p>Bạn có thể cấp quyền Google Calendar từ sidebar bên trái.</p>
+              <p>You can grant Google Calendar permission from the left sidebar.</p>
             </>
           )}
           {error && <Alert message={error} type="error" style={{ marginTop: 16 }} />}

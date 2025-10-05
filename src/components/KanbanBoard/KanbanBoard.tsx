@@ -345,7 +345,7 @@ const KanbanBoard: React.FC = () => {
               icon={<CalendarOutlined style={{ fontSize: '20px', color: '#595959' }} />}
               className="ant-btn-icon-only"
               style={{ marginRight: '8px' }}
-              title="Lịch Google"
+              title="Google Calendar"
             />
           </Dropdown>
           <UsefulDocsDrawer /> {/* Add the UsefulDocsDrawer component here */}

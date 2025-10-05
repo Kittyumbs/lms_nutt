@@ -57,7 +57,7 @@ const PersonnelSelectionModal: React.FC<PersonnelSelectionModalProps> = ({
 
   return (
     <Modal
-      title="Người thực hiện?"
+      title="Assign Personnel?"
       open={isOpen}
       onCancel={onClose}
       footer={[
@@ -76,7 +76,7 @@ const PersonnelSelectionModal: React.FC<PersonnelSelectionModalProps> = ({
       width={400}
     >
       <Form form={form} layout="vertical">
-        <Form.Item label="Chọn người thực hiện">
+        <Form.Item label="Select Personnel">
           <Select
             placeholder="Select personnel"
             loading={loading}

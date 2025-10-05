@@ -9,7 +9,7 @@ const {  Content } = Layout;
 function TaskManageHome() {
   return (
     <Layout className="h-screen select-none">
-      <PageSEO title="Home" description="Quản lý công việc, Kanban và đồng bộ Google Calendar." /> {/* Render PageSEO component */}
+      <PageSEO title="Home" description="Task management, Kanban board and Google Calendar sync." /> {/* Render PageSEO component */}
       <Content>
         <KanbanBoard />
       </Content>

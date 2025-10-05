@@ -51,11 +51,11 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
       };
 
       await createCalendarEvent(event);
-      message.success("Đã tạo lịch nhắc hẹn thành công!");
+      message.success("Calendar event created successfully!");
       onClose();
     } catch (err: any) {
       console.error("Failed to create calendar event:", err);
-      message.error(error || err.message || "Không thể tạo lịch nhắc hẹn.");
+      message.error(error || err.message || "Unable to create calendar event.");
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
   if (!isGapiLoaded) {
     return (
       <Modal
-        title="Tạo lịch nhắc hẹn Google Calendar"
+        title="Create Google Calendar Event"
         open={isOpen}
         onCancel={onClose}
         footer={null}
@@ -81,7 +81,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
   if (showAuthRequired) {
     return (
       <Modal
-        title="Tạo lịch nhắc hẹn Google Calendar"
+        title="Create Google Calendar Event"
         open={isOpen}
         onCancel={onClose}
         footer={null}
@@ -90,24 +90,24 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
           {!user ? (
             <>
               <Alert
-                message="Cần đăng nhập"
-                description="Vui lòng đăng nhập vào hệ thống trước để tạo sự kiện lịch."
+                message="Login Required"
+                description="Please log in to the system first to create calendar events."
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
               />
-              <p>Bạn có thể đăng nhập từ sidebar bên trái.</p>
+              <p>You can log in from the left sidebar.</p>
             </>
           ) : (
             <>
               <Alert
-                message="Cần cấp quyền Google Calendar"
-                description="Để tạo sự kiện lịch, vui lòng cấp quyền truy cập Google Calendar từ sidebar bên trái."
+                message="Google Calendar Permission Required"
+                description="To create calendar events, please grant Google Calendar access from the left sidebar."
                 type="warning"
                 showIcon
                 style={{ marginBottom: 16 }}
               />
-              <p>Bạn có thể cấp quyền Google Calendar từ sidebar bên trái.</p>
+              <p>You can grant Google Calendar permission from the left sidebar.</p>
             </>
           )}
           {error && <Alert message={error} type="error" style={{ marginTop: 16 }} />}
@@ -118,15 +118,15 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
 
   return (
       <Modal
-        title="Tạo lịch nhắc hẹn Google Calendar"
+        title="Create Google Calendar Event"
         open={isOpen}
         onCancel={onClose}
         footer={[
           <Button key="cancel" onClick={onClose}>
-            Hủy
+            Cancel
           </Button>,
           <Button key="submit" type="primary" onClick={handleSubmit} loading={loading} disabled={loading}>
-            Tạo lịch
+            Create Event
           </Button>,
         ]}
         width={600}
@@ -134,23 +134,23 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
         <Form form={form} layout="vertical">
           <Form.Item
             name="summary"
-            label="Tiêu đề sự kiện"
-            rules={[{ required: true, message: "Vui lòng nhập tiêu đề sự kiện!" }]}
+            label="Event Title"
+            rules={[{ required: true, message: "Please enter event title!" }]}
           >
-            <Input placeholder="Ví dụ: Họp dự án X" disabled={loading} />
+            <Input placeholder="Example: Project X Meeting" disabled={loading} />
           </Form.Item>
 
         <Form.Item
           name="description"
-          label="Mô tả"
+          label="Description"
         >
-          <Input.TextArea placeholder="Mô tả chi tiết về sự kiện" autoSize={{ minRows: 3, maxRows: 5 }} disabled={loading} />
+          <Input.TextArea placeholder="Detailed description of the event" autoSize={{ minRows: 3, maxRows: 5 }} disabled={loading} />
         </Form.Item>
 
         <Form.Item
           name="start"
-          label="Thời gian bắt đầu"
-          rules={[{ required: true, message: "Vui lòng chọn thời gian bắt đầu!" }]}
+          label="Start Time"
+          rules={[{ required: true, message: "Please select start time!" }]}
         >
           <DatePicker
             showTime
@@ -162,8 +162,8 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
 
         <Form.Item
           name="end"
-          label="Thời gian kết thúc"
-          rules={[{ required: true, message: "Vui lòng chọn thời gian kết thúc!" }]}
+          label="End Time"
+          rules={[{ required: true, message: "Please select end time!" }]}
         >
           <DatePicker
             showTime
@@ -175,7 +175,7 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
 
         <Form.Item
           name="attendees"
-          label="Người tham dự (Email, cách nhau bởi dấu phẩy)"
+          label="Attendees (Email, separated by commas)"
         >
           <Input placeholder="email1@example.com, email2@example.com" disabled={loading} />
         </Form.Item>

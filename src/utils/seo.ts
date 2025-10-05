@@ -1,6 +1,6 @@
 export function buildTitle(title?: string) {
   const base = "TaskManage";
-  return title ? `${title} · ${base}` : `${base} · Lịch & Kanban`;
+  return title ? `${title} · ${base}` : `${base} · Calendar & Kanban`;
 }
 export function setMeta({ title, desc, url }:{
   title?: string; desc?: string; url?: string;
@@ -35,7 +35,7 @@ export function PageSEO({ title, description, url }: PageSEOProps) {
   useEffect(() => {
     setMeta({
       title: title,
-      desc: description || "Quản lý công việc, Kanban và đồng bộ Google Calendar.",
+      desc: description || "Task management, Kanban board and Google Calendar sync.",
       url: url || "https://lms-nuttency.vercel.app/"
     });
   }, [title, description, url]);
