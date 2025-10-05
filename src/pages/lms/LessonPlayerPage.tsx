@@ -19,8 +19,9 @@ const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ c
     .replace(/<input([^>]*?)(?:\s*\/)?>/gi, '<input$1 />')
     .replace(/<hr\s*\/?>/gi, '<hr />')
     .replace(/<p><br\s*\/?><\/p>/gi, '<p>&nbsp;</p>')
-    .replace(/<p><\/p>/gi, '')
-    .replace(/<p>\s*<\/p>/gi, '')
+    // Don't remove empty paragraphs - they might be intentional line breaks
+    // .replace(/<p><\/p>/gi, '')
+    // .replace(/<p>\s*<\/p>/gi, '')
     .trim();
 
   try {
@@ -122,6 +123,15 @@ const LessonContent: React.FC<{ lesson: Lesson }> = ({ lesson }) => {
   if (lesson.type === 'text') {
     // Use actual content from database (HTML from ReactQuill)
     const content = lesson.content || `<h1>${lesson.title}</h1><p>Nội dung bài học chưa được cập nhật.</p>`;
+    
+    // Debug logging for content display
+    console.log('🔍 DEBUG - Displaying text lesson content:', {
+      lessonId: lesson.id,
+      lessonTitle: lesson.title,
+      content: content,
+      contentLength: content?.length
+    });
+    
     return <SafeHTMLRenderer content={content} className="prose max-w-none" />;
   }
 

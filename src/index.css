@@ -124,3 +124,43 @@ body {
 .ql-editor a:hover {
   color: #40a9ff !important;
 }
+
+/* Ensure proper display of content in SafeHTMLRenderer */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  font-weight: bold !important;
+  margin: 0.5em 0 !important;
+}
+
+.prose p {
+  margin: 0.5em 0 !important;
+}
+
+.prose ul, .prose ol {
+  margin: 0.5em 0 !important;
+  padding-left: 1.5em !important;
+}
+
+.prose li {
+  margin: 0.25em 0 !important;
+}
+
+.prose a {
+  color: #1890ff !important;
+  text-decoration: underline !important;
+}
+
+.prose a:hover {
+  color: #40a9ff !important;
+}
+
+/* Preserve line breaks and spacing */
+.prose br {
+  display: block !important;
+  margin: 0.5em 0 !important;
+  content: "" !important;
+}
+
+.prose p:empty {
+  height: 1em !important;
+  margin: 0.5em 0 !important;
+}

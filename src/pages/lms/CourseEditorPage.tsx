@@ -379,6 +379,14 @@ export default function CourseEditorPage() {
       formData = { ...lesson, content: lesson.content || '' };
     }
     
+    // Debug logging for loaded content
+    console.log('🔍 DEBUG - Loading lesson for edit:', {
+      lessonId: lesson.id,
+      lessonType: lesson.type,
+      originalContent: lesson.content,
+      formDataContent: formData.content
+    });
+    
     lessonForm.setFieldsValue(formData);
     // Force re-render ReactQuill with new content
     setEditorKey(prev => prev + 1);
@@ -744,6 +752,11 @@ export default function CourseEditorPage() {
               try {
                 let content = values.content;
                 
+                // Debug logging for content
+                console.log('🔍 DEBUG - Form values.content:', values.content);
+                console.log('🔍 DEBUG - Content type:', typeof values.content);
+                console.log('🔍 DEBUG - Content length:', values.content?.length);
+                
                 // Handle different lesson types
                 if (values.type === 'video' && values.videoUrls) {
                   content = JSON.stringify({
@@ -759,6 +772,8 @@ export default function CourseEditorPage() {
                   // Content is already JSON from the form
                   content = values.content;
                 }
+                
+                console.log('🔍 DEBUG - Final content to save:', content);
 
                 const lessonData = {
                   ...values,
