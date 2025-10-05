@@ -124,6 +124,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       created_at: Date.now()
                     };
                     localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
+                    
+                    // Trigger storage event to notify other components
+                    window.dispatchEvent(new StorageEvent('storage', {
+                      key: 'google_calendar_token',
+                      newValue: JSON.stringify(tokenData),
+                      oldValue: null
+                    }));
                   }
                 }
               });
@@ -148,7 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     void initGoogleAPI();
   }, []);
 
-  // Auto-refresh token when it's about to expire
+  // Auto-refresh token when it's about to expire and listen for storage changes
   useEffect(() => {
     const checkTokenExpiration = () => {
       const savedToken = localStorage.getItem('google_calendar_token');
@@ -169,11 +176,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setIsGoogleCalendarAuthed(false);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
             window.gapi?.client?.setToken(null);
+          } else {
+            // Token is still valid
+            setIsGoogleCalendarAuthed(true);
           }
         } catch (error) {
           console.error('Error checking token expiration:', error);
           localStorage.removeItem('google_calendar_token');
           setIsGoogleCalendarAuthed(false);
+        }
+      } else {
+        // No token in localStorage
+        setIsGoogleCalendarAuthed(false);
+      }
+    };
+
+    // Listen for localStorage changes from other components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'google_calendar_token') {
+        if (e.newValue) {
+          // Token was added or modified
+          try {
+            const tokenData = JSON.parse(e.newValue);
+            const timeUntilExpiry = tokenData.expires_at - Date.now();
+            
+            if (timeUntilExpiry > 0) {
+              setIsGoogleCalendarAuthed(true);
+              // Restore token to gapi client
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+              window.gapi?.client?.setToken({ access_token: tokenData.access_token });
+            } else {
+              setIsGoogleCalendarAuthed(false);
+            }
+          } catch (error) {
+            console.error('Error parsing token from storage change:', error);
+            setIsGoogleCalendarAuthed(false);
+          }
+        } else {
+          // Token was removed
+          setIsGoogleCalendarAuthed(false);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          window.gapi?.client?.setToken(null);
         }
       }
     };
@@ -184,7 +227,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Also check immediately
     checkTokenExpiration();
 
-    return () => clearInterval(interval);
+    // Listen for storage changes
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [tokenClient]);
 
   // Sign in with Google (Firebase + Calendar)
@@ -250,6 +299,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         // Remove token from localStorage
         localStorage.removeItem('google_calendar_token');
+        
+        // Trigger storage event to notify other components
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'google_calendar_token',
+          newValue: null,
+          oldValue: localStorage.getItem('google_calendar_token')
+        }));
       } catch (calendarError) {
         console.error('Error signing out from Google Calendar:', calendarError);
         // Don't throw here, Firebase signout is more important

@@ -100,6 +100,13 @@ export function useGoogleCalendar() {
                   expires_at: Date.now() + (60 * 60 * 1000) // 1 hour from now
                 };
                 localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
+                
+                // Trigger storage event to notify other components
+                window.dispatchEvent(new StorageEvent('storage', {
+                  key: 'google_calendar_token',
+                  newValue: JSON.stringify(tokenData),
+                  oldValue: null
+                }));
               } else {
                 setError(resp?.error || "No access token from Google");
               }
@@ -199,9 +206,35 @@ export function useGoogleCalendar() {
     if (typeof window === 'undefined') return;
 
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'google_auth_state') {
-        const newState = e.newValue === 'signed_in';
-        setIsSignedIn(newState);
+      if (e.key === 'google_calendar_token') {
+        // Token was added/removed/modified in localStorage
+        const newToken = e.newValue;
+        if (newToken) {
+          try {
+            const tokenData = JSON.parse(newToken);
+            const timeUntilExpiry = tokenData.expires_at - Date.now();
+            
+            if (timeUntilExpiry > 0) {
+              setIsSignedIn(true);
+              // Restore token to gapi client
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+              window.gapi?.client?.setToken({ access_token: tokenData.access_token });
+            } else {
+              setIsSignedIn(false);
+              setUserProfile(null);
+            }
+          } catch (error) {
+            console.error('Error parsing token from storage change:', error);
+            setIsSignedIn(false);
+            setUserProfile(null);
+          }
+        } else {
+          // Token was removed
+          setIsSignedIn(false);
+          setUserProfile(null);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          window.gapi?.client?.setToken(null);
+        }
       }
     };
 
@@ -468,6 +501,13 @@ export function useGoogleCalendar() {
         
         // Remove token from localStorage
         localStorage.removeItem('google_calendar_token');
+        
+        // Trigger storage event to notify other components
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'google_calendar_token',
+          newValue: null,
+          oldValue: localStorage.getItem('google_calendar_token')
+        }));
 
         // Trigger custom event for synchronization
         window.dispatchEvent(new CustomEvent('gapi_auth_signout'));
@@ -480,6 +520,13 @@ export function useGoogleCalendar() {
         
         // Also remove from localStorage even if no current token
         localStorage.removeItem('google_calendar_token');
+        
+        // Trigger storage event to notify other components
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'google_calendar_token',
+          newValue: null,
+          oldValue: localStorage.getItem('google_calendar_token')
+        }));
         
         void message.info("Bạn chưa đăng nhập Google.");
       }
