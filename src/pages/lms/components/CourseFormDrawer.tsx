@@ -1,11 +1,11 @@
-import { Drawer, Form, Input, Button, Select, Space, message } from 'antd';
+import { Drawer, Form, Input, Button, Select, Space, message, Popconfirm } from 'antd';
 import React, { useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 const { Option } = Select;
 
-import { createCourse, updateCourse } from '../../../hooks/useCourses';
+import { createCourse, updateCourse, deleteCourse } from '../../../hooks/useCourses';
 
 import type { Course} from '../../../hooks/useCourses';
 
@@ -48,6 +48,20 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
     }
   };
 
+  const handleDelete = async () => {
+    if (!initial) return;
+    
+    try {
+      await deleteCourse(initial.id);
+      message.success('Course deleted successfully!');
+      onSaved();
+      onClose();
+    } catch (error) {
+      message.error('Failed to delete course. Please try again.');
+      console.error('Failed to delete course:', error);
+    }
+  };
+
   const coverUrl = Form.useWatch('coverUrl', form);
 
   return (
@@ -59,6 +73,20 @@ const CourseFormDrawer: React.FC<CourseFormDrawerProps> = ({ open, mode, initial
       styles={{ body: { paddingBottom: 80 } }}
       extra={
         <Space>
+          {mode === 'edit' && (
+            <Popconfirm
+              title="Delete Course"
+              description="Are you sure you want to delete this course? This action cannot be undone."
+              onConfirm={handleDelete}
+              okText="Yes, Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+            >
+              <Button danger>
+                Delete
+              </Button>
+            </Popconfirm>
+          )}
           <Button onClick={onClose}>Cancel</Button>
           <Button onClick={handleSubmit} type="primary">
             Save

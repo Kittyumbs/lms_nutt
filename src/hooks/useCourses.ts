@@ -1691,3 +1691,38 @@ const [searchTerm, setSearchTerm] = useState('');
     throw error;
   }
 }
+
+export async function deleteCourse(courseId: string): Promise<void> {
+  try {
+    const { getFirestore, doc, deleteDoc, collection, query, where, getDocs } = await import('firebase/firestore');
+    const db = getFirestore();
+
+    // Delete the course
+    await deleteDoc(doc(db, 'courses', courseId));
+
+    // Delete all modules for this course
+    const modulesQuery = query(collection(db, 'modules'), where('courseId', '==', courseId));
+    const modulesSnapshot = await getDocs(modulesQuery);
+    
+    for (const moduleDoc of modulesSnapshot.docs) {
+      await deleteDoc(moduleDoc.ref);
+    }
+
+    // Delete all lessons for this course
+    const lessonsQuery = query(collection(db, 'lessons'), where('courseId', '==', courseId));
+    const lessonsSnapshot = await getDocs(lessonsQuery);
+    
+    for (const lessonDoc of lessonsSnapshot.docs) {
+      await deleteDoc(lessonDoc.ref);
+    }
+
+    console.log('✅ Deleted course and all associated data:', {
+      courseId,
+      modulesDeleted: modulesSnapshot.size,
+      lessonsDeleted: lessonsSnapshot.size
+    });
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    throw error;
+  }
+}

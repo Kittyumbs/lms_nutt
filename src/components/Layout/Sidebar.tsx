@@ -11,15 +11,18 @@ function Item({ to, label, collapsed, icon }: { to: string; label: string; colla
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        collapsed
+      className={({ isActive, isPending }) => {
+        // Special handling for Courses - should be active for all /lms/course/* routes
+        const isCoursesActive = to === '/lms/courses' && (isActive || window.location.pathname.startsWith('/lms/course/'));
+        
+        return collapsed
           ? `flex justify-center items-center h-12 mx-1 rounded-lg text-xl transition-colors duration-200 ${
-              isActive ? 'bg-[#1C6EA4] text-white shadow-sm' : 'text-[#333] hover:bg-[#f0f8ff] hover:text-[#1C6EA4]' /* New active and hover colors */
+              (isActive || isCoursesActive) ? 'bg-[#1C6EA4] text-white shadow-sm' : 'text-[#333] hover:bg-[#f0f8ff] hover:text-[#1C6EA4]' /* New active and hover colors */
             }`
           : `flex items-center px-3 py-2 mx-2 rounded-lg text-sm transition-colors duration-200 ${
-              isActive ? 'bg-[#1C6EA4] text-white font-semibold shadow-sm' : 'text-[#333] hover:bg-[#f0f8ff] hover:text-[#1C6EA4]' /* New active and hover colors */
-            }`
-      }
+              (isActive || isCoursesActive) ? 'bg-[#1C6EA4] text-white font-semibold shadow-sm' : 'text-[#333] hover:bg-[#f0f8ff] hover:text-[#1C6EA4]' /* New active and hover colors */
+            }`;
+      }}
       title={label}
       end={to === '/taskmanage'} // Only use 'end' for TaskManage, not for Courses
     >
