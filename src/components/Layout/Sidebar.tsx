@@ -1,16 +1,17 @@
 import { CheckSquareOutlined, BookOutlined, BarChartOutlined, FileTextOutlined, UserOutlined, SwapOutlined, GoogleOutlined, CalendarOutlined } from '@ant-design/icons';
 import { Avatar, Button, Tag, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 import useAuth from '../../auth/useAuth';
 
 const LS_KEY = 'sidebar-collapsed'; // 'true' = collapsed
 
-function Item({ to, label, collapsed, icon }: { to: string; label: string; collapsed: boolean; icon: React.ReactNode }) {
+function Item({ to, label, collapsed, icon, onClick }: { to: string; label: string; collapsed: boolean; icon: React.ReactNode; onClick?: () => void }) {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive, isPending }) => {
         // Special handling for Courses - should be active for all /lms/course/* routes
         const isCoursesActive = to === '/lms/courses' && (isActive || window.location.pathname.startsWith('/lms/course/'));
@@ -34,6 +35,7 @@ function Item({ to, label, collapsed, icon }: { to: string; label: string; colla
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [authError, setAuthError] = useState<string>('');
+  const navigate = useNavigate();
   // const { pathname } = useLocation();
   const { user, loading: isAuthLoading, isGoogleCalendarAuthed, signInWithGoogle, signInWithGoogleCalendar, signOut } = useAuth();
 
@@ -55,6 +57,18 @@ export default function Sidebar() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
       setAuthError(errorMessage);
+    }
+  };
+
+  const handleDashboardClick = () => {
+    // Check if there's a last viewed dashboard
+    const lastViewedDashboard = localStorage.getItem('last-viewed-dashboard');
+    if (lastViewedDashboard) {
+      // Navigate to the last viewed dashboard
+      navigate(`/lms/dashboard/view/${lastViewedDashboard}`);
+    } else {
+      // Navigate to dashboard list
+      navigate('/lms/dashboard');
     }
   };
 
@@ -113,7 +127,7 @@ export default function Sidebar() {
         <nav style={{ padding: 8 }}>
           <div style={{ fontSize: 12, color: '#6b7280', padding: '6px 8px' }}>{collapsed ? 'M' : 'MAIN'}</div>
           <Item to="/taskmanage" label="TaskManage" collapsed={collapsed} icon={<CheckSquareOutlined />} />
-          <Item to="/lms/dashboard" label="Dashboard" collapsed={collapsed} icon={<BarChartOutlined />} />
+          <Item to="/lms/dashboard" label="Dashboard" collapsed={collapsed} icon={<BarChartOutlined />} onClick={handleDashboardClick} />
 
           <div style={{ fontSize: 12, color: '#6b7280', padding: '10px 8px 6px' }}>{collapsed ? 'L' : 'LMS'}</div>
           <Item to="/lms/courses" label="Courses" collapsed={collapsed} icon={<BookOutlined />} />

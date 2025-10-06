@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Typography, Spin, Alert } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Button, Typography, Spin, Alert, Select, Space } from 'antd';
+import { ArrowLeftOutlined, SwapOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -23,6 +23,7 @@ const DashboardViewerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [dashboard, setDashboard] = useState<DashboardConfig | null>(null);
+  const [allDashboards, setAllDashboards] = useState<DashboardConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Removed fullscreen state - BI has built-in fullscreen
@@ -34,15 +35,18 @@ const DashboardViewerPage: React.FC = () => {
       return;
     }
 
-    // Load dashboard from localStorage
+    // Load all dashboards from localStorage
     const savedDashboards = localStorage.getItem('dashboard-configs');
     if (savedDashboards) {
       try {
         const dashboards: DashboardConfig[] = JSON.parse(savedDashboards);
-        const foundDashboard = dashboards.find(d => d.id === id);
+        setAllDashboards(dashboards);
         
+        const foundDashboard = dashboards.find(d => d.id === id);
         if (foundDashboard) {
           setDashboard(foundDashboard);
+          // Save current dashboard to localStorage for sidebar redirect
+          localStorage.setItem('last-viewed-dashboard', id);
         } else {
           setError('Dashboard not found');
         }
@@ -95,6 +99,10 @@ const DashboardViewerPage: React.FC = () => {
 
   const handleGoBack = () => {
     navigate('/lms/dashboard');
+  };
+
+  const handleDashboardSwitch = (newDashboardId: string) => {
+    navigate(`/lms/dashboard/view/${newDashboardId}`);
   };
 
   if (loading) {
@@ -155,7 +163,23 @@ const DashboardViewerPage: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              {/* Fullscreen button removed - BI has built-in fullscreen */}
+              {/* Dashboard Switch Button */}
+              {allDashboards.length > 1 && (
+                <Space>
+                  <Text className="text-gray-600">Switch:</Text>
+                  <Select
+                    value={dashboard?.id}
+                    onChange={handleDashboardSwitch}
+                    style={{ minWidth: 200 }}
+                    suffixIcon={<SwapOutlined />}
+                    options={allDashboards.map(d => ({
+                      value: d.id,
+                      label: d.name,
+                      disabled: d.id === dashboard?.id
+                    }))}
+                  />
+                </Space>
+              )}
             </div>
           </div>
         </div>
