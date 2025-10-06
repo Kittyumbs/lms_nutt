@@ -75,7 +75,7 @@ const getIssueTypeIcon = (issueType: IssueType) => {
 
 const KanbanBoard: React.FC = () => {   
   const { columns, addTicket, updateTicket, deleteTicket, archiveTicket, moveTicket, handleDragEnd } = useKanbanBoard();
-  const { isSignedIn, handleAuthClick } = useGoogleCalendar(); // Lấy trạng thái và hàm từ hook
+  const { isSignedIn } = useGoogleCalendar(); // Lấy trạng thái từ hook
 
 
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
@@ -319,7 +319,7 @@ const KanbanBoard: React.FC = () => {
                   label: 'Tạo lịch hẹn',
                   onClick: () => {
                     if (!isSignedIn) {
-                      handleAuthClick();
+                      message.warning('Vui lòng đăng nhập Google Calendar từ sidebar để tạo lịch.');
                     } else {
                       setActiveModal('createCalendar');
                     }
@@ -330,7 +330,7 @@ const KanbanBoard: React.FC = () => {
                   label: 'Xem sự kiện lịch',
                   onClick: () => {
                     if (!isSignedIn) {
-                      handleAuthClick();
+                      message.warning('Vui lòng đăng nhập Google Calendar từ sidebar để xem lịch.');
                     } else {
                       setActiveModal('viewCalendarEvents');
                     }
