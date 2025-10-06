@@ -37,7 +37,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const { user, isGoogleCalendarAuthed } = useAuth();
-  const { isSignedIn, isGapiLoaded, error, ensureSignedIn, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
+  const { isSignedIn, isGapiLoaded, error, fetchCalendarEvents, isAuthLoading } = useGoogleCalendar();
 
 
   const loadEvents = useCallback(async () => {
@@ -45,11 +45,14 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
       message.warning('Google API chưa sẵn sàng.');
       return;
     }
+    
+    if (!isSignedIn) {
+      message.warning('Vui lòng đăng nhập Google Calendar từ sidebar để xem lịch.');
+      return;
+    }
+    
     setLoading(true);
     try {
-      // ép đăng nhập nếu chưa
-      await ensureSignedIn();
-
       const fetched = await fetchCalendarEvents();
       const valid = (fetched ?? []).filter(e => !!(e.id && e.summary));
       setEvents(valid as GoogleCalendarEvent[]);
@@ -61,7 +64,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [isGapiLoaded, ensureSignedIn, fetchCalendarEvents, error]);
+  }, [isGapiLoaded, isSignedIn, fetchCalendarEvents, error]);
 
   useEffect(() => {
     if (isOpen && isSignedIn && isGapiLoaded) {
