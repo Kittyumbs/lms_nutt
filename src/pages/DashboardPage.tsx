@@ -86,6 +86,21 @@ const DashboardPage: React.FC = () => {
   const handleEditDashboard = (dashboard: DashboardConfig) => {
     setEditingDashboard(dashboard);
     form.setFieldsValue(dashboard);
+    
+    // Auto-validate URL when editing
+    if (dashboard.embedUrl) {
+      validateUrl(dashboard.embedUrl, dashboard.type);
+    }
+    
+    // Set size preset based on current dimensions
+    if (dashboard.width === '100%' && dashboard.height === 'auto') {
+      setSizePreset('full-width');
+    } else if (dashboard.width === 'auto' && dashboard.height === '100%') {
+      setSizePreset('full-height');
+    } else {
+      setSizePreset('custom');
+    }
+    
     setIsConfigModalVisible(true);
   };
 
@@ -129,7 +144,7 @@ const DashboardPage: React.FC = () => {
         height = 'auto';
       } else if (sizePreset === 'full-height') {
         width = 'auto';
-        height = '100vh';
+        height = '100%';
       } else if (sizePreset === 'custom') {
         width = values.width || '100%';
         height = values.height || 'auto';
@@ -550,7 +565,7 @@ const DashboardPage: React.FC = () => {
                      icon={<ExpandOutlined />}
                      onClick={() => {
                        setSizePreset('full-height');
-                       form.setFieldsValue({ width: 'auto', height: '100vh' });
+                       form.setFieldsValue({ width: 'auto', height: '100%' });
                      }}
                    >
                      Full Height (auto × 100%)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Typography, Spin, Alert } from 'antd';
-import { ArrowLeftOutlined, FullscreenOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -25,7 +25,7 @@ const DashboardViewerPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<DashboardConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  // Removed fullscreen state - BI has built-in fullscreen
 
   useEffect(() => {
     if (!id) {
@@ -91,9 +91,7 @@ const DashboardViewerPage: React.FC = () => {
     }
   };
 
-  const handleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+  // Removed fullscreen handler - BI has built-in fullscreen
 
   const handleGoBack = () => {
     navigate('/lms/dashboard');
@@ -133,10 +131,10 @@ const DashboardViewerPage: React.FC = () => {
   const embedUrl = getEmbedUrl(dashboard);
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      <div className={`${isFullscreen ? 'h-full' : 'max-w-7xl mx-auto p-6'}`}>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className={`bg-white shadow-sm ${isFullscreen ? 'p-4' : 'p-6 rounded-lg mb-6'}`}>
+        <div className="bg-white shadow-sm p-6 rounded-lg mb-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
               <Button 
@@ -157,25 +155,19 @@ const DashboardViewerPage: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button 
-                icon={<FullscreenOutlined />} 
-                onClick={handleFullscreen}
-                type={isFullscreen ? 'primary' : 'default'}
-              >
-                {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-              </Button>
+              {/* Fullscreen button removed - BI has built-in fullscreen */}
             </div>
           </div>
         </div>
 
         {/* Dashboard Content */}
-        <div className={`bg-white ${isFullscreen ? 'h-full' : 'rounded-lg shadow-sm'}`}>
+        <div className="bg-white rounded-lg shadow-sm">
           <div 
-            className={`${isFullscreen ? 'h-full' : 'p-6'}`}
+            className="p-6"
             style={{ 
               width: dashboard.width, 
-              height: isFullscreen ? '100%' : dashboard.height,
-              margin: isFullscreen ? '0' : '0 auto'
+              height: dashboard.height,
+              margin: '0 auto'
             }}
           >
             <iframe
@@ -191,13 +183,11 @@ const DashboardViewerPage: React.FC = () => {
         </div>
 
         {/* Footer Info */}
-        {!isFullscreen && (
-          <div className="mt-4 text-center">
-            <Text type="secondary" className="text-sm">
-              Dashboard URL: {embedUrl}
-            </Text>
-          </div>
-        )}
+        <div className="mt-4 text-center">
+          <Text type="secondary" className="text-sm">
+            Dashboard URL: {embedUrl}
+          </Text>
+        </div>
       </div>
     </div>
   );
