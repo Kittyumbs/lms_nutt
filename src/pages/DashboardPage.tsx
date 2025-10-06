@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col } from 'antd';
-import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ExpandOutlined, ColumnWidthOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ExpandOutlined, ColumnWidthOutlined, EditOutlined, VerticalAlignMiddleOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
@@ -56,6 +56,8 @@ const DashboardPage: React.FC = () => {
     if (type) {
       form.setFieldsValue({ type });
     }
+    // Set default values for new dashboard
+    form.setFieldsValue({ width: '100%', height: 'auto' });
     setIsConfigModalVisible(true);
   };
 
@@ -293,8 +295,10 @@ const DashboardPage: React.FC = () => {
                       onClick={() => handleViewDashboard(dashboard)}
                     >
                        <div className="text-center">
-                         <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center">
-                           <Text type="secondary">PowerBI Preview</Text>
+                         <div className="w-full h-32 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex flex-col items-center justify-center border border-blue-200">
+                           <BarChartOutlined className="text-4xl text-blue-600 mb-2" />
+                           <Text className="text-blue-700 font-medium">PowerBI Dashboard</Text>
+                           <Text type="secondary" className="text-xs">Interactive Reports</Text>
                          </div>
                        </div>
                     </Card>
@@ -355,8 +359,10 @@ const DashboardPage: React.FC = () => {
                       onClick={() => handleViewDashboard(dashboard)}
                     >
                        <div className="text-center">
-                         <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center">
-                           <Text type="secondary">Looker Studio Preview</Text>
+                         <div className="w-full h-32 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg flex flex-col items-center justify-center border border-green-200">
+                           <LineChartOutlined className="text-4xl text-green-600 mb-2" />
+                           <Text className="text-green-700 font-medium">Looker Studio</Text>
+                           <Text type="secondary" className="text-xs">Data Visualization</Text>
                          </div>
                        </div>
                     </Card>
@@ -548,6 +554,7 @@ const DashboardPage: React.FC = () => {
                      type={sizePreset === 'full-width' ? 'primary' : 'default'}
                      icon={<ColumnWidthOutlined />}
                      onClick={() => {
+                       console.log('Setting full-width preset');
                        setSizePreset('full-width');
                        form.setFieldsValue({ width: '100%', height: 'auto' });
                      }}
@@ -556,8 +563,9 @@ const DashboardPage: React.FC = () => {
                    </Button>
                    <Button
                      type={sizePreset === 'full-height' ? 'primary' : 'default'}
-                     icon={<ExpandOutlined />}
+                     icon={<VerticalAlignMiddleOutlined />}
                      onClick={() => {
+                       console.log('Setting full-height preset');
                        setSizePreset('full-height');
                        form.setFieldsValue({ width: 'auto', height: '100%' });
                      }}
