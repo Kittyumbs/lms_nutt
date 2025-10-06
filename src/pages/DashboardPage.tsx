@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col } from 'antd';
-import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ExpandOutlined, ColumnWidthOutlined, EditOutlined, VerticalAlignMiddleOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
+import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ColumnWidthOutlined, EditOutlined, ColumnHeightOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
@@ -137,9 +137,11 @@ const DashboardPage: React.FC = () => {
         }
       }
       
-      // Set default dimensions based on preset
-      let width = '100%';
-      let height = 'auto';
+      // Set dimensions based on preset
+      let width, height;
+      
+      console.log('Size preset:', sizePreset);
+      console.log('Form values:', { width: values.width, height: values.height });
       
       if (sizePreset === 'full-width') {
         width = '100%';
@@ -148,9 +150,16 @@ const DashboardPage: React.FC = () => {
         width = 'auto';
         height = '100%';
       } else if (sizePreset === 'custom') {
+        // Use form values for custom size
         width = values.width || '100%';
         height = values.height || 'auto';
+      } else {
+        // Default fallback
+        width = '100%';
+        height = 'auto';
       }
+      
+      console.log('Final dimensions:', { width, height });
       
       const newDashboard: DashboardConfig = {
         id: editingDashboard?.id || `dashboard_${Date.now()}`,
@@ -563,7 +572,7 @@ const DashboardPage: React.FC = () => {
                    </Button>
                    <Button
                      type={sizePreset === 'full-height' ? 'primary' : 'default'}
-                     icon={<VerticalAlignMiddleOutlined />}
+                     icon={<ColumnHeightOutlined />}
                      onClick={() => {
                        console.log('Setting full-height preset');
                        setSizePreset('full-height');
