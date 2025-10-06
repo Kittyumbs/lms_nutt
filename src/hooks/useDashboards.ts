@@ -36,8 +36,7 @@ export const useDashboards = () => {
 
     const q = query(
       collection(db, 'dashboards'),
-      where('uid', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where('uid', '==', user.uid)
     );
 
     const unsubscribe = onSnapshot(q, 
@@ -49,6 +48,14 @@ export const useDashboards = () => {
             ...doc.data()
           } as DashboardConfig);
         });
+        
+        // Sort by createdAt descending on client side
+        dashboardsData.sort((a, b) => {
+          const aTime = a.createdAt?.toDate?.() || new Date(0);
+          const bTime = b.createdAt?.toDate?.() || new Date(0);
+          return bTime.getTime() - aTime.getTime();
+        });
+        
         setDashboards(dashboardsData);
         setLoading(false);
         setError(null);
@@ -67,8 +74,13 @@ export const useDashboards = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Clean undefined values before saving to Firestore
+      const cleanData = Object.fromEntries(
+        Object.entries(dashboardData).filter(([_, value]) => value !== undefined)
+      );
+
       const docRef = await addDoc(collection(db, 'dashboards'), {
-        ...dashboardData,
+        ...cleanData,
         uid: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -86,9 +98,14 @@ export const useDashboards = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Clean undefined values before saving to Firestore
+      const cleanData = Object.fromEntries(
+        Object.entries(dashboardData).filter(([_, value]) => value !== undefined)
+      );
+
       const dashboardRef = doc(db, 'dashboards', id);
       await updateDoc(dashboardRef, {
-        ...dashboardData,
+        ...cleanData,
         updatedAt: serverTimestamp(),
       });
       

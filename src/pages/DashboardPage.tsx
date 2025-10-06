@@ -187,13 +187,14 @@ const DashboardPage: React.FC = () => {
         name: values.name,
         type: values.type,
         embedUrl: values.embedUrl,
-        accessToken: values.accessToken,
-        reportId: values.reportId,
-        pageId: values.pageId,
         width: width,
         height: height,
-        filters: values.filters,
         isActive: true,
+        // Only include optional fields if they have values
+        ...(values.accessToken && { accessToken: values.accessToken }),
+        ...(values.reportId && { reportId: values.reportId }),
+        ...(values.pageId && { pageId: values.pageId }),
+        ...(values.filters && { filters: values.filters }),
       };
 
       if (editingDashboard) {
