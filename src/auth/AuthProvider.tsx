@@ -268,6 +268,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     
     try {
+      console.log('🚨 signInWithGoogleCalendar called from sidebar - this is OK');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       tokenClient.requestAccessToken({ prompt: 'consent' });
     } catch (error) {

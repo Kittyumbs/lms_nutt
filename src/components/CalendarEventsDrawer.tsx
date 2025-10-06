@@ -41,16 +41,20 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
 
 
   const loadEvents = useCallback(async () => {
+    console.log('🔍 CalendarEventsDrawer - loadEvents called');
     if (!isGapiLoaded) {
+      console.log('🔍 Google API not loaded');
       message.warning('Google API chưa sẵn sàng.');
       return;
     }
     
     if (!isSignedIn) {
+      console.log('🔍 Not signed in, showing warning');
       message.warning('Vui lòng đăng nhập Google Calendar từ sidebar để xem lịch.');
       return;
     }
     
+    console.log('🔍 About to call fetchCalendarEvents');
     setLoading(true);
     try {
       const fetched = await fetchCalendarEvents();

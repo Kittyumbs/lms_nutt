@@ -26,11 +26,14 @@ const CreateCalendarEventModal: React.FC<CreateCalendarEventModalProps> = ({
   }, [isOpen, form]);
 
   const handleSubmit = async () => {
+    console.log('🔍 CreateCalendarEventModal - handleSubmit called');
     if (!isSignedIn) {
+      console.log('🔍 Not signed in, showing warning');
       message.warning('Vui lòng đăng nhập Google Calendar từ sidebar để tạo lịch.');
       return;
     }
     
+    console.log('🔍 About to call createCalendarEvent');
     try {
       setLoading(true);
       const values = await form.validateFields();

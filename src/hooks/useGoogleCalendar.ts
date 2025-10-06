@@ -451,6 +451,7 @@ export function useGoogleCalendar() {
   }, []);
 
   const handleAuthClick = useCallback(() => {
+    console.log('🚨 handleAuthClick called - this should NOT happen from calendar features!');
     if (!tokenClient) {
       setError("Authentication not ready. Please wait and try again.");
       return;
@@ -458,6 +459,7 @@ export function useGoogleCalendar() {
     
     try {
       setError(null);
+      console.log('🚨 About to call requestAccessToken from handleAuthClick');
       tokenClient.requestAccessToken({ prompt: "" });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Authentication failed";
@@ -466,6 +468,7 @@ export function useGoogleCalendar() {
   }, [tokenClient]);
 
   const ensureSignedIn = useCallback(async () => {
+    console.log('🚨 ensureSignedIn called - this should NOT happen from calendar features!');
     // Always check for an existing token first.
     // First check localStorage
     const savedToken = localStorage.getItem('google_calendar_token');
@@ -511,6 +514,7 @@ export function useGoogleCalendar() {
     }
 
     // Request access token. The callback in useEffect will handle setting isSignedIn.
+    console.log('🚨 About to call requestAccessToken from ensureSignedIn');
     tokenClient.requestAccessToken({ prompt: "" });
 
     // Wait for the isSignedIn state to become true, or for a token to appear.
@@ -532,14 +536,17 @@ export function useGoogleCalendar() {
   }, [isSignedIn, tokenClient]);
 
   const fetchCalendarEvents = useCallback(async (): Promise<GEvent[]> => {
+    console.log('🔍 fetchCalendarEvents called');
     if (!isGapiLoaded) {
       throw new Error("Google Calendar API not ready");
     }
     
     if (!isSignedIn) {
+      console.log('🔍 Not signed in, throwing error');
       throw new Error("Not signed in to Google Calendar");
     }
     
+    console.log('🔍 About to call gapi.client.calendar.events.list');
     try {
       const now = new Date().toISOString();
       
@@ -561,14 +568,17 @@ export function useGoogleCalendar() {
   }, [isGapiLoaded, isSignedIn]);
 
   const createCalendarEvent = useCallback(async (event: GEvent) => {
+    console.log('🔍 createCalendarEvent called');
     if (!isGapiLoaded) {
       throw new Error("Google Calendar API not ready");
     }
     
     if (!isSignedIn) {
+      console.log('🔍 Not signed in, throwing error');
       throw new Error("Not signed in to Google Calendar");
     }
     
+    console.log('🔍 About to call gapi.client.calendar.events.insert');
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const response = await window.gapi.client.calendar.events.insert({
