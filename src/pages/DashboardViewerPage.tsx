@@ -158,22 +158,17 @@ const DashboardViewerPage: React.FC = () => {
               >
                 Back
               </Button>
-              <div>
-                <Title level={4} className="mb-0">
-                  {dashboard.name}
-                </Title>
-              </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              {/* Dashboard Switch Button */}
+            <div className="flex items-center space-x-2 flex-1 justify-center">
+              {/* Dashboard Switch Button - Moved to center */}
               {allDashboards.length > 1 && (
                 <Space>
-                  <Text className="text-gray-600">Switch:</Text>
+                  <Text className="text-gray-600">Switch Dashboard:</Text>
                   <Select
                     value={dashboard?.id}
                     onChange={handleDashboardSwitch}
-                    style={{ minWidth: 200 }}
+                    style={{ minWidth: 300 }}
                     suffixIcon={<SwapOutlined />}
                     options={allDashboards.map(d => ({
                       value: d.id,
@@ -182,6 +177,10 @@ const DashboardViewerPage: React.FC = () => {
                   />
                 </Space>
               )}
+            </div>
+            
+            <div className="w-20">
+              {/* Empty div for balance */}
             </div>
           </div>
         </div>

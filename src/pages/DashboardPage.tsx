@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col } from 'antd';
+import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col, Spin } from 'antd';
 import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ColumnWidthOutlined, EditOutlined, ColumnHeightOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useIframeHeight } from '../hooks/useIframeHeight';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -33,6 +34,7 @@ const DashboardPage: React.FC = () => {
     isPublic: boolean;
     isEmbed: boolean;
   }>({ isValid: false, isPublic: false, isEmbed: false });
+  const [detectedHeight, setDetectedHeight] = useState<number | null>(null);
   const navigate = useNavigate();
 
   // Load dashboards from localStorage on mount
@@ -47,6 +49,23 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('dashboard-configs', JSON.stringify(dashboards));
   }, [dashboards]);
+
+  // Watch form values for height detection
+  const formValues = Form.useWatch([], form);
+  const embedUrl = formValues?.embedUrl;
+  const formWidth = formValues?.width;
+  const formHeight = formValues?.height;
+
+  // Use iframe height detection hook
+  const { detectedHeight: hookDetectedHeight, isDetecting } = useIframeHeight({
+    url: embedUrl,
+    width: formWidth || '100%',
+    height: formHeight || '600px',
+    onHeightDetected: (height) => {
+      setDetectedHeight(height);
+      console.log('📏 Height detected from hook:', height);
+    }
+  });
 
   const handleAddDashboard = (type?: 'powerbi' | 'looker') => {
     setEditingDashboard(null);
@@ -150,9 +169,19 @@ const DashboardPage: React.FC = () => {
         width = '800px'; // Fixed width for portrait orientation
         height = '100vh';
       } else if (sizePreset === 'custom') {
-        // Use form values for custom size
+        // Use form values for custom size, but convert 'auto' to fixed values
         width = values.width || '100%';
         height = values.height || '600px';
+        
+        // Convert 'auto' to fixed values for iframe compatibility
+        if (width === 'auto') {
+          width = '100%';
+        }
+        if (height === 'auto') {
+          // Use detected height if available, otherwise fallback
+          height = detectedHeight ? `${detectedHeight}px` : '600px';
+          console.log('📏 Using detected height for auto:', detectedHeight);
+        }
       } else {
         // Default fallback
         width = '100%';
@@ -607,10 +636,30 @@ const DashboardPage: React.FC = () => {
                          label="Height"
                          rules={[{ required: true, message: 'Please enter height' }]}
                        >
-                         <Input placeholder="600px or 80vh" />
+                         <Input placeholder="600px or 80vh or auto" />
                        </Form.Item>
                      </Col>
                    </Row>
+                 )}
+                 
+                 {/* Height Detection Status */}
+                 {sizePreset === 'custom' && formValues?.height === 'auto' && embedUrl && (
+                   <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded">
+                     {isDetecting ? (
+                       <Space>
+                         <Spin size="small" />
+                         <Text className="text-blue-700">Detecting dashboard height...</Text>
+                       </Space>
+                     ) : detectedHeight ? (
+                       <Text className="text-blue-700">
+                         ✅ Detected height: <strong>{detectedHeight}px</strong> - Will be used for iframe
+                       </Text>
+                     ) : (
+                       <Text className="text-blue-700">
+                         ℹ️ Height detection in progress... Will use 600px as fallback
+                       </Text>
+                     )}
+                   </div>
                  )}
                </Space>
              </Form.Item>
