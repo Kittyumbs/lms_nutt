@@ -58,7 +58,31 @@ const DashboardViewerPage: React.FC = () => {
 
   const getEmbedUrl = (dashboard: DashboardConfig) => {
     if (dashboard.type === 'powerbi') {
-      return `${dashboard.embedUrl}?reportId=${dashboard.reportId}&accessToken=${dashboard.accessToken}`;
+      let url = dashboard.embedUrl;
+      
+      // Check if it's a public view URL or embed URL
+      if (url.includes('app.powerbi.com/view')) {
+        // Public view URL - use as is, just add filters if any
+        if (dashboard.filters) {
+          const separator = url.includes('?') ? '&' : '?';
+          url += `${separator}filter=${encodeURIComponent(dashboard.filters)}`;
+        }
+      } else {
+        // Embed URL - add reportId and accessToken
+        if (dashboard.reportId) {
+          url += `?reportId=${dashboard.reportId}`;
+        }
+        if (dashboard.accessToken) {
+          const separator = url.includes('?') ? '&' : '?';
+          url += `${separator}accessToken=${dashboard.accessToken}`;
+        }
+        if (dashboard.filters) {
+          const separator = url.includes('?') ? '&' : '?';
+          url += `${separator}filter=${encodeURIComponent(dashboard.filters)}`;
+        }
+      }
+      
+      return url;
     } else {
       // Looker Studio
       const baseUrl = dashboard.embedUrl;

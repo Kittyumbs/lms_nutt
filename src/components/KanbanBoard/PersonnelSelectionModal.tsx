@@ -87,7 +87,7 @@ const PersonnelSelectionModal: React.FC<PersonnelSelectionModalProps> = ({
           />
         </Form.Item>
 
-        <div style={{ textAlign: "center", margin: "10px 0" }}>Hoặc</div>
+        <div style={{ textAlign: "center", margin: "10px 0" }}>Or</div>
 
         {!isAddingNew ? (
           <Button
@@ -96,7 +96,7 @@ const PersonnelSelectionModal: React.FC<PersonnelSelectionModalProps> = ({
             block
             icon={<PlusOutlined />}
           >
-            Thêm người thực hiện mới
+            Add New Personnel
           </Button>
         ) : (
           <Form.Item label="New Personnel Name">

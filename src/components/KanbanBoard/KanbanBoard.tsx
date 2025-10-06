@@ -316,7 +316,7 @@ const KanbanBoard: React.FC = () => {
               items: [
                 {
                   key: 'create',
-                  label: 'Tạo lịch hẹn',
+                  label: 'Create Calendar Event',
                   onClick: () => {
                     if (!isSignedIn) {
                       message.warning('Vui lòng đăng nhập Google Calendar từ sidebar để tạo lịch.');
@@ -327,7 +327,7 @@ const KanbanBoard: React.FC = () => {
                 },
                 {
                   key: 'view',
-                  label: 'Xem sự kiện lịch',
+                  label: 'View Calendar Events',
                   onClick: () => {
                     if (!isSignedIn) {
                       message.warning('Vui lòng đăng nhập Google Calendar từ sidebar để xem lịch.');

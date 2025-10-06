@@ -76,6 +76,18 @@ const DashboardPage: React.FC = () => {
   const handleSaveDashboard = async () => {
     try {
       const values = await form.validateFields();
+      
+      // Smart validation based on URL type
+      if (values.type === 'powerbi') {
+        const isPublicView = values.embedUrl?.includes('app.powerbi.com/view');
+        const isEmbedUrl = values.embedUrl?.includes('app.powerbi.com/reportEmbed');
+        
+        if (isEmbedUrl && (!values.reportId || !values.accessToken)) {
+          message.error('Report ID and Access Token are required for PowerBI embed URLs');
+          return;
+        }
+      }
+      
       const newDashboard: DashboardConfig = {
         id: editingDashboard?.id || `dashboard_${Date.now()}`,
         name: values.name,
@@ -116,7 +128,31 @@ const DashboardPage: React.FC = () => {
 
   const getEmbedUrl = (dashboard: DashboardConfig) => {
     if (dashboard.type === 'powerbi') {
-      return `${dashboard.embedUrl}?reportId=${dashboard.reportId}&accessToken=${dashboard.accessToken}`;
+      let url = dashboard.embedUrl;
+      
+      // Check if it's a public view URL or embed URL
+      if (url.includes('app.powerbi.com/view')) {
+        // Public view URL - use as is, just add filters if any
+        if (dashboard.filters) {
+          const separator = url.includes('?') ? '&' : '?';
+          url += `${separator}filter=${encodeURIComponent(dashboard.filters)}`;
+        }
+      } else {
+        // Embed URL - add reportId and accessToken
+        if (dashboard.reportId) {
+          url += `?reportId=${dashboard.reportId}`;
+        }
+        if (dashboard.accessToken) {
+          const separator = url.includes('?') ? '&' : '?';
+          url += `${separator}accessToken=${dashboard.accessToken}`;
+        }
+        if (dashboard.filters) {
+          const separator = url.includes('?') ? '&' : '?';
+          url += `${separator}filter=${encodeURIComponent(dashboard.filters)}`;
+        }
+      }
+      
+      return url;
     } else {
       // Looker Studio
       const baseUrl = dashboard.embedUrl;
@@ -315,67 +351,127 @@ const DashboardPage: React.FC = () => {
               </Select>
             </Form.Item>
 
-            {/* PowerBI Configuration */}
-            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}>
-              {({ getFieldValue }) => {
-                const dashboardType = getFieldValue('type');
-                
-                if (dashboardType === 'powerbi') {
-                  return (
-                    <>
-                      <Form.Item
-                        name="embedUrl"
-                        label="PowerBI Embed URL"
-                        rules={[{ required: true, message: 'Please enter PowerBI embed URL' }]}
-                      >
-                        <Input placeholder="https://app.powerbi.com/reportEmbed" />
-                      </Form.Item>
+             {/* PowerBI Configuration */}
+             <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}>
+               {({ getFieldValue }) => {
+                 const dashboardType = getFieldValue('type');
+                 const embedUrl = getFieldValue('embedUrl') || '';
+                 
+                 if (dashboardType === 'powerbi') {
+                   const isPublicView = embedUrl.includes('app.powerbi.com/view');
+                   const isEmbedUrl = embedUrl.includes('app.powerbi.com/reportEmbed');
+                   
+                   return (
+                     <>
+                       <Form.Item
+                         name="embedUrl"
+                         label="PowerBI URL"
+                         rules={[{ required: true, message: 'Please enter PowerBI URL' }]}
+                         tooltip="Enter your PowerBI URL - we'll automatically detect the type"
+                       >
+                         <Input 
+                           placeholder="https://app.powerbi.com/view?r=... or https://app.powerbi.com/reportEmbed" 
+                           onChange={() => {
+                             // Trigger form update to show/hide fields
+                             form.validateFields(['embedUrl']);
+                           }}
+                         />
+                       </Form.Item>
 
-                      <Form.Item
-                        name="reportId"
-                        label="Report ID"
-                        rules={[{ required: true, message: 'Please enter PowerBI report ID' }]}
-                      >
-                        <Input placeholder="Enter PowerBI report ID (e.g., 12345678-1234-1234-1234-123456789012)" />
-                      </Form.Item>
+                       {/* Show URL type detection */}
+                       {embedUrl && (
+                         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                           <Text className="text-blue-700">
+                             {isPublicView && "🔓 Detected: Public View URL (no authentication needed)"}
+                             {isEmbedUrl && "🔐 Detected: Embed URL (authentication required)"}
+                             {!isPublicView && !isEmbedUrl && embedUrl && "❓ Unknown URL format - please check your URL"}
+                           </Text>
+                         </div>
+                       )}
 
-                      <Form.Item
-                        name="accessToken"
-                        label="Access Token"
-                        tooltip="Required for PowerBI authentication"
-                      >
-                        <Input.Password placeholder="Enter PowerBI access token" />
-                      </Form.Item>
-                    </>
-                  );
-                }
+                       {/* Show fields based on URL type */}
+                       {isEmbedUrl && (
+                         <>
+                           <Form.Item
+                             name="reportId"
+                             label="Report ID"
+                             rules={[{ required: true, message: 'Report ID is required for embed URLs' }]}
+                             tooltip="Required for PowerBI embed URLs"
+                           >
+                             <Input placeholder="Enter PowerBI report ID (e.g., 12345678-1234-1234-1234-123456789012)" />
+                           </Form.Item>
+
+                           <Form.Item
+                             name="accessToken"
+                             label="Access Token"
+                             tooltip="Required for PowerBI embed authentication"
+                           >
+                             <Input.Password placeholder="Enter PowerBI access token" />
+                           </Form.Item>
+                         </>
+                       )}
+
+                       {isPublicView && (
+                         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded">
+                           <Text className="text-green-700">
+                             ✅ Public view URL detected - no additional configuration needed!
+                           </Text>
+                         </div>
+                       )}
+                     </>
+                   );
+                 }
                 
                 if (dashboardType === 'looker') {
+                  const embedUrl = getFieldValue('embedUrl') || '';
+                  const isLookerUrl = embedUrl.includes('lookerstudio.google.com');
+                  
                   return (
                     <>
                       <Form.Item
                         name="embedUrl"
-                        label="Looker Studio Embed URL"
-                        rules={[{ required: true, message: 'Please enter Looker Studio embed URL' }]}
+                        label="Looker Studio URL"
+                        rules={[{ required: true, message: 'Please enter Looker Studio URL' }]}
+                        tooltip="Enter your Looker Studio URL - we'll automatically detect the type"
                       >
-                        <Input placeholder="https://lookerstudio.google.com/embed/reporting/..." />
+                        <Input 
+                          placeholder="https://lookerstudio.google.com/embed/reporting/... or https://lookerstudio.google.com/reporting/..." 
+                          onChange={() => {
+                            form.validateFields(['embedUrl']);
+                          }}
+                        />
                       </Form.Item>
 
-                      <Form.Item
-                        name="reportId"
-                        label="Report ID"
-                        rules={[{ required: true, message: 'Please enter Looker Studio report ID' }]}
-                      >
-                        <Input placeholder="Enter Looker Studio report ID" />
-                      </Form.Item>
+                      {/* Show URL type detection */}
+                      {embedUrl && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                          <Text className="text-blue-700">
+                            {isLookerUrl && "📊 Detected: Looker Studio URL"}
+                            {!isLookerUrl && embedUrl && "❓ Unknown URL format - please check your URL"}
+                          </Text>
+                        </div>
+                      )}
 
-                      <Form.Item
-                        name="pageId"
-                        label="Page ID"
-                        tooltip="Optional - specific page within the report"
-                      >
-                        <Input placeholder="Enter page ID (optional)" />
-                      </Form.Item>
+                      {/* Show fields for Looker Studio */}
+                      {isLookerUrl && (
+                        <>
+                          <Form.Item
+                            name="reportId"
+                            label="Report ID"
+                            tooltip="Extract from your Looker Studio URL"
+                          >
+                            <Input placeholder="Enter Looker Studio report ID (optional - will extract from URL if not provided)" />
+                          </Form.Item>
+
+                          <Form.Item
+                            name="pageId"
+                            label="Page ID"
+                            tooltip="Optional - specific page within the report"
+                          >
+                            <Input placeholder="Enter page ID (optional)" />
+                          </Form.Item>
+                        </>
+                      )}
                     </>
                   );
                 }
