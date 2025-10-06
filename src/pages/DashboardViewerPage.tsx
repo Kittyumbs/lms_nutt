@@ -126,39 +126,31 @@ const DashboardViewerPage: React.FC = () => {
       <div className="max-w-7xl mx-auto p-2">
         {/* Header */}
         <div className="bg-white shadow-sm p-4 rounded-lg mb-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <Button 
-                icon={<ArrowLeftOutlined />} 
-                onClick={handleGoBack}
-                className="flex items-center"
-              >
-                Back
-              </Button>
-            </div>
+          <div className="flex items-center space-x-4">
+            <Button 
+              icon={<ArrowLeftOutlined />} 
+              onClick={handleGoBack}
+              className="flex items-center"
+            >
+              Back
+            </Button>
             
-            <div className="flex items-center space-x-2 flex-1 justify-center">
-              {/* Dashboard Switch Button - Moved to center */}
-              {allDashboards.length > 1 && (
-                <Space>
-                  <Text className="text-gray-600">Switch Dashboard:</Text>
-                  <Select
-                    value={dashboard?.id}
-                    onChange={handleDashboardSwitch}
-                    style={{ minWidth: 300 }}
-                    suffixIcon={<SwapOutlined />}
-                    options={allDashboards.map(d => ({
-                      value: d.id,
-                      label: d.name
-                    }))}
-                  />
-                </Space>
-              )}
-            </div>
-            
-            <div className="w-20">
-              {/* Empty div for balance */}
-            </div>
+            {/* Dashboard Switch Button - Next to Back button */}
+            {allDashboards.length > 1 && (
+              <div className="flex items-center space-x-2 flex-1">
+                <Text className="text-gray-600 whitespace-nowrap">Switch Dashboard:</Text>
+                <Select
+                  value={dashboard?.id}
+                  onChange={handleDashboardSwitch}
+                  style={{ width: '100%' }}
+                  suffixIcon={<SwapOutlined />}
+                  options={allDashboards.map(d => ({
+                    value: d.id,
+                    label: d.name
+                  }))}
+                />
+              </div>
+            )}
           </div>
         </div>
 

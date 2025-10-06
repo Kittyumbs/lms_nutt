@@ -4,6 +4,7 @@ import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ColumnWidth
 import { useNavigate } from 'react-router-dom';
 import { useIframeHeight } from '../hooks/useIframeHeight';
 import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
+import { useDashboardDimensions } from '../hooks/useDashboardDimensions';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -16,13 +17,14 @@ const DashboardPage: React.FC = () => {
   const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState<DashboardConfig | null>(null);
   const [activeTab, setActiveTab] = useState<'powerbi' | 'looker'>('powerbi');
-  const [sizePreset, setSizePreset] = useState<'full-width' | 'full-height' | 'custom'>('full-width');
+  const [sizePreset, setSizePreset] = useState<'max-width' | 'max-height' | 'custom'>('max-width');
   const [urlValidation, setUrlValidation] = useState<{
     isValid: boolean;
     isPublic: boolean;
     isEmbed: boolean;
   }>({ isValid: false, isPublic: false, isEmbed: false });
   const [detectedHeight, setDetectedHeight] = useState<number | null>(null);
+  const [detectedWidth, setDetectedWidth] = useState<number | null>(null);
   const navigate = useNavigate();
   
   // Use Firestore hook
@@ -44,22 +46,26 @@ const DashboardPage: React.FC = () => {
   const formWidth = formValues?.width;
   const formHeight = formValues?.height;
 
-  // Use iframe height detection hook
-  const { detectedHeight: hookDetectedHeight, isDetecting } = useIframeHeight({
+  // Use dashboard dimensions detection hook
+  const { 
+    isDetecting: isDetectingDimensions, 
+    detectedDimensions, 
+    detectDimensions,
+    calculateProportionalDimensions 
+  } = useDashboardDimensions({
     url: embedUrl,
-    width: formWidth || '100%',
-    height: formHeight || '600px',
-    onHeightDetected: (height) => {
-      setDetectedHeight(height);
-      console.log('📏 Height detected from hook:', height);
+    onDimensionsDetected: (dimensions) => {
+      console.log('📏 Dimensions detected:', dimensions);
     }
   });
 
   const handleAddDashboard = (type?: 'powerbi' | 'looker') => {
     setEditingDashboard(null);
     form.resetFields();
-    setSizePreset('full-width');
+    setSizePreset('max-width');
     setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
+    setDetectedHeight(null);
+    setDetectedWidth(null);
     if (type) {
       form.setFieldsValue({ type });
     }
@@ -83,7 +89,7 @@ const DashboardPage: React.FC = () => {
       
       // Auto-set size based on URL type
       if (isPublic) {
-        setSizePreset('full-width');
+        setSizePreset('max-width');
         form.setFieldsValue({ width: '100%', height: 'auto' });
       }
     } else if (type === 'looker') {
@@ -102,10 +108,10 @@ const DashboardPage: React.FC = () => {
     }
     
     // Set size preset based on current dimensions
-    if (dashboard.width === '100%' && dashboard.height === 'auto') {
-      setSizePreset('full-width');
-    } else if (dashboard.width === 'auto' && dashboard.height === '100%') {
-      setSizePreset('full-height');
+    if (dashboard.width === '100%' && dashboard.height.includes('px')) {
+      setSizePreset('max-width');
+    } else if (dashboard.width.includes('px') && dashboard.height === '100vh') {
+      setSizePreset('max-height');
     } else {
       setSizePreset('custom');
     }
@@ -154,27 +160,32 @@ const DashboardPage: React.FC = () => {
       
       console.log('Size preset:', sizePreset);
       console.log('Form values:', { width: values.width, height: values.height });
+      console.log('Detected dimensions:', detectedDimensions);
       
-      if (sizePreset === 'full-width') {
+      if (sizePreset === 'max-width') {
         width = '100%';
-        height = '600px'; // Fixed height for landscape orientation
-      } else if (sizePreset === 'full-height') {
-        width = '800px'; // Fixed width for portrait orientation
+        if (detectedDimensions) {
+          // Calculate proportional height based on detected dimensions
+          const calculated = calculateProportionalDimensions(detectedDimensions, window.innerWidth - 100); // Account for padding
+          height = `${calculated.height}px`;
+          console.log('📏 Max width - calculated height:', calculated.height);
+        } else {
+          height = '600px'; // Fallback
+        }
+      } else if (sizePreset === 'max-height') {
         height = '100vh';
+        if (detectedDimensions) {
+          // Calculate proportional width based on detected dimensions
+          const calculated = calculateProportionalDimensions(detectedDimensions, undefined, window.innerHeight - 200); // Account for header/padding
+          width = `${calculated.width}px`;
+          console.log('📏 Max height - calculated width:', calculated.width);
+        } else {
+          width = '800px'; // Fallback
+        }
       } else if (sizePreset === 'custom') {
-        // Use form values for custom size, but convert 'auto' to fixed values
+        // Use form values for custom size
         width = values.width || '100%';
         height = values.height || '600px';
-        
-        // Convert 'auto' to fixed values for iframe compatibility
-        if (width === 'auto') {
-          width = '100%';
-        }
-        if (height === 'auto') {
-          // Use detected height if available, otherwise fallback
-          height = detectedHeight ? `${detectedHeight}px` : '600px';
-          console.log('📏 Using detected height for auto:', detectedHeight);
-        }
       } else {
         // Default fallback
         width = '100%';
@@ -216,7 +227,7 @@ const DashboardPage: React.FC = () => {
 
       setIsConfigModalVisible(false);
       form.resetFields();
-      setSizePreset('full-width');
+      setSizePreset('max-width');
       setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
     } catch (error) {
       console.error('Validation failed:', error);
@@ -582,33 +593,43 @@ const DashboardPage: React.FC = () => {
                <Space direction="vertical" style={{ width: '100%' }}>
                  <Space wrap>
                    <Button
-                     type={sizePreset === 'full-width' ? 'primary' : 'default'}
+                     type={sizePreset === 'max-width' ? 'primary' : 'default'}
                      icon={<ColumnWidthOutlined />}
-                     onClick={() => {
-                       console.log('Setting full-width preset');
-                       setSizePreset('full-width');
-                       form.setFieldsValue({ width: '100%', height: '600px' });
+                     onClick={async () => {
+                       console.log('Setting max-width preset');
+                       setSizePreset('max-width');
+                       form.setFieldsValue({ width: '100%', height: 'auto' });
+                       
+                       // Detect dimensions if URL is available
+                       if (embedUrl) {
+                         await detectDimensions();
+                       }
                      }}
                    >
-                     Full Width (100% × 600px)
+                     Max Width + Height Auto
                    </Button>
                    <Button
-                     type={sizePreset === 'full-height' ? 'primary' : 'default'}
+                     type={sizePreset === 'max-height' ? 'primary' : 'default'}
                      icon={<ColumnHeightOutlined />}
-                     onClick={() => {
-                       console.log('Setting full-height preset');
-                       setSizePreset('full-height');
-                       form.setFieldsValue({ width: '800px', height: '100vh' });
+                     onClick={async () => {
+                       console.log('Setting max-height preset');
+                       setSizePreset('max-height');
+                       form.setFieldsValue({ width: 'auto', height: '100vh' });
+                       
+                       // Detect dimensions if URL is available
+                       if (embedUrl) {
+                         await detectDimensions();
+                       }
                      }}
                    >
-                     Full Height (800px × 100vh)
+                     Max Height + Width Auto
                    </Button>
                    <Button
                      type={sizePreset === 'custom' ? 'primary' : 'default'}
                      icon={<EditOutlined />}
                      onClick={() => setSizePreset('custom')}
                    >
-                     Custom Size
+                     Custom Size (px)
                    </Button>
                  </Space>
                  
@@ -635,21 +656,27 @@ const DashboardPage: React.FC = () => {
                    </Row>
                  )}
                  
-                 {/* Height Detection Status */}
-                 {sizePreset === 'custom' && formValues?.height === 'auto' && embedUrl && (
+                 {/* Dimension Detection Status */}
+                 {(sizePreset === 'max-width' || sizePreset === 'max-height') && embedUrl && (
                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded">
-                     {isDetecting ? (
+                     {isDetectingDimensions ? (
                        <Space>
                          <Spin size="small" />
-                         <Text className="text-blue-700">Detecting dashboard height...</Text>
+                         <Text className="text-blue-700">Detecting dashboard dimensions...</Text>
                        </Space>
-                     ) : detectedHeight ? (
+                     ) : detectedDimensions ? (
                        <Text className="text-blue-700">
-                         ✅ Detected height: <strong>{detectedHeight}px</strong> - Will be used for iframe
+                         ✅ Detected: <strong>{detectedDimensions.width}px × {detectedDimensions.height}px</strong>
+                         {sizePreset === 'max-width' && (
+                           <span> → Will calculate proportional height for 100% width</span>
+                         )}
+                         {sizePreset === 'max-height' && (
+                           <span> → Will calculate proportional width for 100vh height</span>
+                         )}
                        </Text>
                      ) : (
                        <Text className="text-blue-700">
-                         ℹ️ Height detection in progress... Will use 600px as fallback
+                         ℹ️ Dimension detection in progress... Will use fallback values
                        </Text>
                      )}
                    </div>
