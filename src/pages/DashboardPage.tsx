@@ -3,28 +3,16 @@ import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider
 import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ColumnWidthOutlined, EditOutlined, ColumnHeightOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useIframeHeight } from '../hooks/useIframeHeight';
+import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
 
-interface DashboardConfig {
-  id: string;
-  name: string;
-  type: 'powerbi' | 'looker';
-  embedUrl: string;
-  accessToken?: string;
-  reportId?: string;
-  pageId?: string;
-  width: string;
-  height: string;
-  filters?: string;
-  isActive: boolean;
-}
+// DashboardConfig interface moved to useDashboards hook
 
 const DashboardPage: React.FC = () => {
   const [form] = Form.useForm();
-  const [dashboards, setDashboards] = useState<DashboardConfig[]>([]);
   const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState<DashboardConfig | null>(null);
   const [activeTab, setActiveTab] = useState<'powerbi' | 'looker'>('powerbi');
@@ -36,19 +24,19 @@ const DashboardPage: React.FC = () => {
   }>({ isValid: false, isPublic: false, isEmbed: false });
   const [detectedHeight, setDetectedHeight] = useState<number | null>(null);
   const navigate = useNavigate();
+  
+  // Use Firestore hook
+  const { 
+    dashboards, 
+    loading: dashboardsLoading, 
+    error: dashboardsError,
+    addDashboard,
+    updateDashboard,
+    deleteDashboard,
+    getDashboardsByType
+  } = useDashboards();
 
-  // Load dashboards from localStorage on mount
-  useEffect(() => {
-    const savedDashboards = localStorage.getItem('dashboard-configs');
-    if (savedDashboards) {
-      setDashboards(JSON.parse(savedDashboards));
-    }
-  }, []);
-
-  // Save dashboards to localStorage whenever dashboards change
-  useEffect(() => {
-    localStorage.setItem('dashboard-configs', JSON.stringify(dashboards));
-  }, [dashboards]);
+  // Dashboards are now loaded from Firestore via useDashboards hook
 
   // Watch form values for height detection
   const formValues = Form.useWatch([], form);
@@ -129,9 +117,14 @@ const DashboardPage: React.FC = () => {
     Modal.confirm({
       title: 'Delete Dashboard',
       content: 'Are you sure you want to delete this dashboard configuration?',
-      onOk: () => {
-        setDashboards(prev => prev.filter(d => d.id !== id));
-        message.success('Dashboard deleted successfully');
+      onOk: async () => {
+        try {
+          await deleteDashboard(id);
+          message.success('Dashboard deleted successfully');
+        } catch (error) {
+          console.error('Error deleting dashboard:', error);
+          message.error('Failed to delete dashboard');
+        }
       },
     });
   };
@@ -190,8 +183,7 @@ const DashboardPage: React.FC = () => {
       
       console.log('Final dimensions:', { width, height });
       
-      const newDashboard: DashboardConfig = {
-        id: editingDashboard?.id || `dashboard_${Date.now()}`,
+      const newDashboard = {
         name: values.name,
         type: values.type,
         embedUrl: values.embedUrl,
@@ -205,7 +197,7 @@ const DashboardPage: React.FC = () => {
       };
 
       if (editingDashboard) {
-        setDashboards(prev => prev.map(d => d.id === editingDashboard.id ? newDashboard : d));
+        await updateDashboard(editingDashboard.id, newDashboard);
         message.success('Dashboard updated successfully');
       } else {
         // Check limits
@@ -217,7 +209,7 @@ const DashboardPage: React.FC = () => {
           return;
         }
         
-        setDashboards(prev => [...prev, newDashboard]);
+        await addDashboard(newDashboard);
         message.success('Dashboard added successfully');
       }
 
@@ -266,8 +258,8 @@ const DashboardPage: React.FC = () => {
   };
 
 
-  const powerbiDashboards = dashboards.filter(d => d.type === 'powerbi');
-  const lookerDashboards = dashboards.filter(d => d.type === 'looker');
+  const powerbiDashboards = getDashboardsByType('powerbi');
+  const lookerDashboards = getDashboardsByType('looker');
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

@@ -2,65 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Typography, Spin, Alert, Select, Space } from 'antd';
 import { ArrowLeftOutlined, SwapOutlined } from '@ant-design/icons';
+import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
 
 const { Title, Text } = Typography;
 
-interface DashboardConfig {
-  id: string;
-  name: string;
-  type: 'powerbi' | 'looker';
-  embedUrl: string;
-  accessToken?: string;
-  reportId?: string;
-  pageId?: string;
-  width: string;
-  height: string;
-  filters?: string;
-  isActive: boolean;
-}
+// DashboardConfig interface moved to useDashboards hook
 
 const DashboardViewerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [dashboard, setDashboard] = useState<DashboardConfig | null>(null);
-  const [allDashboards, setAllDashboards] = useState<DashboardConfig[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use Firestore hook
+  const { dashboards: allDashboards, loading, error: dashboardsError } = useDashboards();
   // Removed fullscreen state - BI has built-in fullscreen
 
   useEffect(() => {
     if (!id) {
       setError('Dashboard ID not found');
-      setLoading(false);
       return;
     }
 
-    // Load all dashboards from localStorage
-    const savedDashboards = localStorage.getItem('dashboard-configs');
-    if (savedDashboards) {
-      try {
-        const dashboards: DashboardConfig[] = JSON.parse(savedDashboards);
-        setAllDashboards(dashboards);
-        console.log('📊 Loaded dashboards:', dashboards.length, dashboards.map(d => d.name));
-        
-        const foundDashboard = dashboards.find(d => d.id === id);
-        if (foundDashboard) {
-          setDashboard(foundDashboard);
-          // Save current dashboard to localStorage for sidebar redirect
-          localStorage.setItem('last-viewed-dashboard', id);
-          console.log('💾 Saved last viewed dashboard:', id);
-        } else {
-          setError('Dashboard not found');
-        }
-      } catch (error) {
-        setError('Failed to load dashboard configuration');
-      }
+    if (loading) return;
+
+    // Find dashboard from Firestore data
+    const foundDashboard = allDashboards.find(d => d.id === id);
+    if (foundDashboard) {
+      setDashboard(foundDashboard);
+      // Save current dashboard to localStorage for sidebar redirect
+      localStorage.setItem('last-viewed-dashboard', id);
+      console.log('💾 Saved last viewed dashboard:', id);
+      console.log('📊 Loaded dashboards:', allDashboards.length, allDashboards.map(d => d.name));
     } else {
-      setError('No dashboard configurations found');
+      setError('Dashboard not found');
     }
-    
-    setLoading(false);
-  }, [id]);
+  }, [id, allDashboards, loading]);
 
   const getEmbedUrl = (dashboard: DashboardConfig) => {
     if (dashboard.type === 'powerbi') {
