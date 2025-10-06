@@ -132,7 +132,7 @@ const DashboardViewerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-2">
         {/* Header */}
         <div className="bg-white shadow-sm p-4 rounded-lg mb-4">
           <div className="flex justify-between items-center">
@@ -158,25 +158,22 @@ const DashboardViewerPage: React.FC = () => {
         </div>
 
         {/* Dashboard Content */}
-        <div className="bg-white rounded-lg shadow-sm">
-          <div 
-            className="p-6"
-            style={{ 
-              width: dashboard.width, 
-              height: dashboard.height,
-              margin: '0 auto'
-            }}
-          >
-            <iframe
-              src={embedUrl}
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              allowFullScreen
-              title={dashboard.name}
-              className="rounded-lg"
-            />
-          </div>
+        <div 
+          style={{ 
+            width: dashboard.width, 
+            height: dashboard.height,
+            margin: '0 auto'
+          }}
+        >
+          <iframe
+            src={embedUrl}
+            width="100%"
+            height="100%"
+            frameBorder="0"
+            allowFullScreen
+            title={dashboard.name}
+            style={{ borderRadius: '8px' }}
+          />
         </div>
 
         {/* Footer Info removed to save space for dashboard */}
