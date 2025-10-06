@@ -9,6 +9,10 @@ const API_KEY = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY as string;
 const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
 const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
+// Token refresh interval (check every 45 minutes)
+const TOKEN_REFRESH_INTERVAL = 45 * 60 * 1000; // 45 minutes
+const TOKEN_EXPIRY_BUFFER = 5 * 60 * 1000; // 5 minutes buffer
+
 type GEvent = gapi.client.calendar.Event;
 
 interface TokenClient {
@@ -28,6 +32,138 @@ export function useGoogleCalendar() {
   const [error, setError] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [refreshInterval, setRefreshInterval] = useState<number | null>(null);
+
+  // Check if token is expired or about to expire
+  const isTokenExpired = useCallback((tokenData: any) => {
+    if (!tokenData || !tokenData.expires_at) return true;
+    const timeUntilExpiry = tokenData.expires_at - Date.now();
+    return timeUntilExpiry < TOKEN_EXPIRY_BUFFER; // Expired or expires within 5 minutes
+  }, []);
+
+  // Refresh token by requesting a new one
+  const refreshToken = useCallback(async () => {
+    if (!tokenClient) return false;
+    
+    try {
+      console.log('🔄 Refreshing Google Calendar token...');
+      return new Promise<boolean>((resolve) => {
+        tokenClient.requestAccessToken({ prompt: 'none' });
+        
+        // Set a timeout to resolve if no response
+        setTimeout(() => {
+          console.log('⏰ Token refresh timeout');
+          resolve(false);
+        }, 10000); // 10 second timeout
+      });
+    } catch (error) {
+      console.error('❌ Error refreshing token:', error);
+      return false;
+    }
+  }, [tokenClient]);
+
+  // Sign out function (defined early to avoid circular dependency)
+  const signOut = useCallback(() => {
+    try {
+      console.log('🚪 Signing out from Google Calendar...');
+      
+      // Stop token refresh interval
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        setRefreshInterval(null);
+      }
+      
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const currentToken = window.gapi?.client?.getToken();
+      
+      if (currentToken) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        window.gapi.client.setToken(null);
+        setIsSignedIn(false);
+        setUserProfile(null);
+        setError(null);
+        
+        // Remove token from localStorage
+        localStorage.removeItem('google_calendar_token');
+        
+        // Trigger storage event to notify other components
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'google_calendar_token',
+          newValue: null,
+          oldValue: localStorage.getItem('google_calendar_token')
+        }));
+
+        // Trigger custom event for synchronization
+        window.dispatchEvent(new CustomEvent('gapi_auth_signout'));
+
+        console.log('✅ Successfully signed out from Google Calendar');
+        void message.success("Successfully signed out from Google account.");
+      } else {
+        setIsSignedIn(false);
+        setUserProfile(null);
+        setError(null);
+        
+        // Also remove from localStorage even if no current token
+        localStorage.removeItem('google_calendar_token');
+        
+        // Trigger storage event to notify other components
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'google_calendar_token',
+          newValue: null,
+          oldValue: localStorage.getItem('google_calendar_token')
+        }));
+        
+        console.log('✅ Cleared Google Calendar state');
+        void message.info("You are not signed in to Google.");
+      }
+    } catch (error) {
+      console.error('❌ Error during sign out:', error);
+      // Force reset state even if there's an error
+      setIsSignedIn(false);
+      setUserProfile(null);
+      setError(null);
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        setRefreshInterval(null);
+      }
+    }
+  }, [refreshInterval]);
+
+  // Start token refresh interval
+  const startTokenRefresh = useCallback(() => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+    }
+    
+    const interval = setInterval(async () => {
+      const savedToken = localStorage.getItem('google_calendar_token');
+      if (savedToken) {
+        try {
+          const tokenData = JSON.parse(savedToken);
+          if (isTokenExpired(tokenData)) {
+            console.log('🔄 Token expired, refreshing...');
+            const success = await refreshToken();
+            if (!success) {
+              console.log('❌ Token refresh failed, signing out');
+              signOut();
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error checking token expiry:', error);
+        }
+      }
+    }, TOKEN_REFRESH_INTERVAL);
+    
+    setRefreshInterval(interval);
+  }, [refreshInterval, isTokenExpired, refreshToken, signOut]);
+
+  // Stop token refresh interval
+  const stopTokenRefresh = useCallback(() => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+      setRefreshInterval(null);
+    }
+  }, [refreshInterval]);
 
   // Load GIS + gapi scripts in browser only
   useEffect(() => {
@@ -58,19 +194,22 @@ export function useGoogleCalendar() {
           if (savedToken) {
             try {
               const tokenData = JSON.parse(savedToken);
-              const timeUntilExpiry = tokenData.expires_at - Date.now();
               
               // If token is still valid, restore it
-              if (timeUntilExpiry > 0) {
+              if (!isTokenExpired(tokenData)) {
+                console.log('✅ Restoring valid token from localStorage');
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                 window.gapi.client.setToken({ access_token: tokenData.access_token });
                 setIsSignedIn(true);
+                
+                // Start token refresh interval
+                startTokenRefresh();
               } else {
-                // Token expired, remove it
+                console.log('❌ Token expired, removing from localStorage');
                 localStorage.removeItem('google_calendar_token');
               }
             } catch (error) {
-              console.error('Error parsing saved token:', error);
+              console.error('❌ Error parsing saved token:', error);
               localStorage.removeItem('google_calendar_token');
             }
           } else {
@@ -79,7 +218,9 @@ export function useGoogleCalendar() {
             const existingToken = window.gapi.client.getToken();
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (existingToken?.access_token) {
+              console.log('✅ Found existing token in gapi client');
               setIsSignedIn(true);
+              startTokenRefresh();
             }
           }
 
@@ -89,6 +230,7 @@ export function useGoogleCalendar() {
             scope: SCOPE,
             callback: (resp: { access_token?: string; error?: string }) => {
               if (resp?.access_token) {
+                console.log('✅ Google Calendar authentication successful');
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                 window.gapi.client.setToken({ access_token: resp.access_token });
                 setIsSignedIn(true);
@@ -101,6 +243,9 @@ export function useGoogleCalendar() {
                 };
                 localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
                 
+                // Start token refresh interval
+                startTokenRefresh();
+                
                 // Trigger storage event to notify other components
                 window.dispatchEvent(new StorageEvent('storage', {
                   key: 'google_calendar_token',
@@ -108,6 +253,7 @@ export function useGoogleCalendar() {
                   oldValue: null
                 }));
               } else {
+                console.error('❌ Google Calendar authentication failed:', resp?.error);
                 setError(resp?.error || "No access token from Google");
               }
             },
@@ -131,6 +277,9 @@ export function useGoogleCalendar() {
     
     return () => {
       try {
+        // Stop token refresh interval
+        stopTokenRefresh();
+        
         // Clean up scripts
         if (gsi.parentNode) gsi.remove();
         if (api.parentNode) api.remove();
@@ -487,57 +636,6 @@ export function useGoogleCalendar() {
     }
   }, [isSignedIn, isGapiLoaded, fetchUserProfile]);
 
-  const signOut = useCallback(() => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const currentToken = window.gapi?.client?.getToken();
-      
-      if (currentToken) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        window.gapi.client.setToken(null);
-        setIsSignedIn(false);
-        setUserProfile(null);
-        setError(null);
-        
-        // Remove token from localStorage
-        localStorage.removeItem('google_calendar_token');
-        
-        // Trigger storage event to notify other components
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'google_calendar_token',
-          newValue: null,
-          oldValue: localStorage.getItem('google_calendar_token')
-        }));
-
-        // Trigger custom event for synchronization
-        window.dispatchEvent(new CustomEvent('gapi_auth_signout'));
-
-        void message.success("Successfully signed out from Google account.");
-      } else {
-        setIsSignedIn(false);
-        setUserProfile(null);
-        setError(null);
-        
-        // Also remove from localStorage even if no current token
-        localStorage.removeItem('google_calendar_token');
-        
-        // Trigger storage event to notify other components
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'google_calendar_token',
-          newValue: null,
-          oldValue: localStorage.getItem('google_calendar_token')
-        }));
-        
-        void message.info("You are not signed in to Google.");
-      }
-    } catch (error) {
-      console.error('Error during sign out:', error);
-      // Force reset state even if there's an error
-      setIsSignedIn(false);
-      setUserProfile(null);
-      setError(null);
-    }
-  }, []);
 
   return {
     isSignedIn,
