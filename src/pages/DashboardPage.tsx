@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col } from 'antd';
-import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ExpandOutlined, ColumnWidthOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
@@ -27,6 +27,12 @@ const DashboardPage: React.FC = () => {
   const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState<DashboardConfig | null>(null);
   const [activeTab, setActiveTab] = useState<'powerbi' | 'looker'>('powerbi');
+  const [sizePreset, setSizePreset] = useState<'full-width' | 'full-height' | 'custom'>('full-width');
+  const [urlValidation, setUrlValidation] = useState<{
+    isValid: boolean;
+    isPublic: boolean;
+    isEmbed: boolean;
+  }>({ isValid: false, isPublic: false, isEmbed: false });
   const navigate = useNavigate();
 
   // Load dashboards from localStorage on mount
@@ -45,10 +51,36 @@ const DashboardPage: React.FC = () => {
   const handleAddDashboard = (type?: 'powerbi' | 'looker') => {
     setEditingDashboard(null);
     form.resetFields();
+    setSizePreset('full-width');
+    setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
     if (type) {
       form.setFieldsValue({ type });
     }
     setIsConfigModalVisible(true);
+  };
+
+  const validateUrl = (url: string, type: 'powerbi' | 'looker') => {
+    if (!url) {
+      setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
+      return;
+    }
+
+    if (type === 'powerbi') {
+      const isPublic = url.includes('app.powerbi.com/view');
+      const isEmbed = url.includes('app.powerbi.com/reportEmbed');
+      const isValid = isPublic || isEmbed;
+      
+      setUrlValidation({ isValid, isPublic, isEmbed });
+      
+      // Auto-set size based on URL type
+      if (isPublic) {
+        setSizePreset('full-width');
+        form.setFieldsValue({ width: '100%', height: '600px' });
+      }
+    } else if (type === 'looker') {
+      const isLooker = url.includes('lookerstudio.google.com');
+      setUrlValidation({ isValid: isLooker, isPublic: false, isEmbed: isLooker });
+    }
   };
 
   const handleEditDashboard = (dashboard: DashboardConfig) => {
@@ -88,6 +120,21 @@ const DashboardPage: React.FC = () => {
         }
       }
       
+      // Set default dimensions based on preset
+      let width = '100%';
+      let height = '600px';
+      
+      if (sizePreset === 'full-width') {
+        width = '100%';
+        height = '600px';
+      } else if (sizePreset === 'full-height') {
+        width = '800px';
+        height = '100vh';
+      } else if (sizePreset === 'custom') {
+        width = values.width || '100%';
+        height = values.height || '600px';
+      }
+      
       const newDashboard: DashboardConfig = {
         id: editingDashboard?.id || `dashboard_${Date.now()}`,
         name: values.name,
@@ -96,8 +143,8 @@ const DashboardPage: React.FC = () => {
         accessToken: values.accessToken,
         reportId: values.reportId,
         pageId: values.pageId,
-        width: values.width || '100%',
-        height: values.height || '600px',
+        width: width,
+        height: height,
         filters: values.filters,
         isActive: true,
       };
@@ -121,6 +168,8 @@ const DashboardPage: React.FC = () => {
 
       setIsConfigModalVisible(false);
       form.resetFields();
+      setSizePreset('full-width');
+      setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
     } catch (error) {
       console.error('Validation failed:', error);
     }
@@ -358,9 +407,6 @@ const DashboardPage: React.FC = () => {
                  const embedUrl = getFieldValue('embedUrl') || '';
                  
                  if (dashboardType === 'powerbi') {
-                   const isPublicView = embedUrl.includes('app.powerbi.com/view');
-                   const isEmbedUrl = embedUrl.includes('app.powerbi.com/reportEmbed');
-                   
                    return (
                      <>
                        <Form.Item
@@ -368,29 +414,30 @@ const DashboardPage: React.FC = () => {
                          label="PowerBI URL"
                          rules={[{ required: true, message: 'Please enter PowerBI URL' }]}
                          tooltip="Enter your PowerBI URL - we'll automatically detect the type"
+                         validateStatus={urlValidation.isValid ? 'success' : (embedUrl && !urlValidation.isValid ? 'error' : '')}
+                         help={embedUrl && !urlValidation.isValid ? 'Invalid PowerBI URL format' : ''}
                        >
                          <Input 
                            placeholder="https://app.powerbi.com/view?r=... or https://app.powerbi.com/reportEmbed" 
+                           onBlur={(e) => validateUrl(e.target.value, 'powerbi')}
                            onChange={() => {
-                             // Trigger form update to show/hide fields
                              form.validateFields(['embedUrl']);
                            }}
                          />
                        </Form.Item>
 
                        {/* Show URL type detection */}
-                       {embedUrl && (
+                       {embedUrl && urlValidation.isValid && (
                          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
                            <Text className="text-blue-700">
-                             {isPublicView && "🔓 Detected: Public View URL (no authentication needed)"}
-                             {isEmbedUrl && "🔐 Detected: Embed URL (authentication required)"}
-                             {!isPublicView && !isEmbedUrl && embedUrl && "❓ Unknown URL format - please check your URL"}
+                             {urlValidation.isPublic && "🔓 Detected: Public View URL (no authentication needed)"}
+                             {urlValidation.isEmbed && "🔐 Detected: Embed URL (authentication required)"}
                            </Text>
                          </div>
                        )}
 
-                       {/* Show fields based on URL type */}
-                       {isEmbedUrl && (
+                       {/* Show fields based on URL type - only for embed URLs */}
+                       {urlValidation.isEmbed && (
                          <>
                            <Form.Item
                              name="reportId"
@@ -404,6 +451,7 @@ const DashboardPage: React.FC = () => {
                            <Form.Item
                              name="accessToken"
                              label="Access Token"
+                             rules={[{ required: true, message: 'Access Token is required for embed URLs' }]}
                              tooltip="Required for PowerBI embed authentication"
                            >
                              <Input.Password placeholder="Enter PowerBI access token" />
@@ -411,7 +459,7 @@ const DashboardPage: React.FC = () => {
                          </>
                        )}
 
-                       {isPublicView && (
+                       {urlValidation.isPublic && (
                          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded">
                            <Text className="text-green-700">
                              ✅ Public view URL detected - no additional configuration needed!
@@ -424,7 +472,6 @@ const DashboardPage: React.FC = () => {
                 
                 if (dashboardType === 'looker') {
                   const embedUrl = getFieldValue('embedUrl') || '';
-                  const isLookerUrl = embedUrl.includes('lookerstudio.google.com');
                   
                   return (
                     <>
@@ -432,10 +479,13 @@ const DashboardPage: React.FC = () => {
                         name="embedUrl"
                         label="Looker Studio URL"
                         rules={[{ required: true, message: 'Please enter Looker Studio URL' }]}
-                        tooltip="Enter your Looker Studio URL - we'll automatically detect the type"
+                        tooltip="Enter your Looker Studio URL"
+                        validateStatus={urlValidation.isValid ? 'success' : (embedUrl && !urlValidation.isValid ? 'error' : '')}
+                        help={embedUrl && !urlValidation.isValid ? 'Invalid Looker Studio URL format' : ''}
                       >
                         <Input 
                           placeholder="https://lookerstudio.google.com/embed/reporting/... or https://lookerstudio.google.com/reporting/..." 
+                          onBlur={(e) => validateUrl(e.target.value, 'looker')}
                           onChange={() => {
                             form.validateFields(['embedUrl']);
                           }}
@@ -443,17 +493,16 @@ const DashboardPage: React.FC = () => {
                       </Form.Item>
 
                       {/* Show URL type detection */}
-                      {embedUrl && (
+                      {embedUrl && urlValidation.isValid && (
                         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
                           <Text className="text-blue-700">
-                            {isLookerUrl && "📊 Detected: Looker Studio URL"}
-                            {!isLookerUrl && embedUrl && "❓ Unknown URL format - please check your URL"}
+                            📊 Detected: Looker Studio URL
                           </Text>
                         </div>
                       )}
 
                       {/* Show fields for Looker Studio */}
-                      {isLookerUrl && (
+                      {urlValidation.isValid && (
                         <>
                           <Form.Item
                             name="reportId"
@@ -480,24 +529,65 @@ const DashboardPage: React.FC = () => {
               }}
             </Form.Item>
 
-            {/* Common Configuration */}
-            <Divider>Display Settings</Divider>
-            
-            <Form.Item
-              name="width"
-              label="Width"
-              initialValue="100%"
-            >
-              <Input placeholder="100% or 800px" />
-            </Form.Item>
-
-            <Form.Item
-              name="height"
-              label="Height"
-              initialValue="600px"
-            >
-              <Input placeholder="600px or 80vh" />
-            </Form.Item>
+             {/* Common Configuration */}
+             <Divider>Display Settings</Divider>
+             
+             <Form.Item label="Size Preset">
+               <Space direction="vertical" style={{ width: '100%' }}>
+                 <Space wrap>
+                   <Button
+                     type={sizePreset === 'full-width' ? 'primary' : 'default'}
+                     icon={<ColumnWidthOutlined />}
+                     onClick={() => {
+                       setSizePreset('full-width');
+                       form.setFieldsValue({ width: '100%', height: '600px' });
+                     }}
+                   >
+                     Full Width (100% × 600px)
+                   </Button>
+                   <Button
+                     type={sizePreset === 'full-height' ? 'primary' : 'default'}
+                     icon={<ExpandOutlined />}
+                     onClick={() => {
+                       setSizePreset('full-height');
+                       form.setFieldsValue({ width: '800px', height: '100vh' });
+                     }}
+                   >
+                     Full Height (800px × 100vh)
+                   </Button>
+                   <Button
+                     type={sizePreset === 'custom' ? 'primary' : 'default'}
+                     icon={<EditOutlined />}
+                     onClick={() => setSizePreset('custom')}
+                   >
+                     Custom Size
+                   </Button>
+                 </Space>
+                 
+                 {sizePreset === 'custom' && (
+                   <Row gutter={16}>
+                     <Col span={12}>
+                       <Form.Item
+                         name="width"
+                         label="Width"
+                         rules={[{ required: true, message: 'Please enter width' }]}
+                       >
+                         <Input placeholder="100% or 800px" />
+                       </Form.Item>
+                     </Col>
+                     <Col span={12}>
+                       <Form.Item
+                         name="height"
+                         label="Height"
+                         rules={[{ required: true, message: 'Please enter height' }]}
+                       >
+                         <Input placeholder="600px or 80vh" />
+                       </Form.Item>
+                     </Col>
+                   </Row>
+                 )}
+               </Space>
+             </Form.Item>
 
             <Form.Item
               name="filters"
