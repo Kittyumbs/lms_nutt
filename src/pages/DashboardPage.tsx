@@ -587,9 +587,9 @@ const DashboardPage: React.FC = () => {
             </Form.Item>
 
              {/* Common Configuration */}
-             <Divider>Display Settings</Divider>
+             <Divider>Cài đặt hiển thị</Divider>
              
-             <Form.Item label="Size Preset">
+             <Form.Item label="Kích thước hiển thị">
                <Space direction="vertical" style={{ width: '100%' }}>
                  <Space wrap>
                    <Button
@@ -606,7 +606,7 @@ const DashboardPage: React.FC = () => {
                        }
                      }}
                    >
-                     Max Width + Height Auto
+                     Chiều ngang tối đa + Chiều cao tự động
                    </Button>
                    <Button
                      type={sizePreset === 'max-height' ? 'primary' : 'default'}
@@ -622,14 +622,14 @@ const DashboardPage: React.FC = () => {
                        }
                      }}
                    >
-                     Max Height + Width Auto
+                     Chiều cao tối đa + Chiều ngang tự động
                    </Button>
                    <Button
                      type={sizePreset === 'custom' ? 'primary' : 'default'}
                      icon={<EditOutlined />}
                      onClick={() => setSizePreset('custom')}
                    >
-                     Custom Size (px)
+                     Kích thước tùy chỉnh (px)
                    </Button>
                  </Space>
                  
@@ -638,10 +638,10 @@ const DashboardPage: React.FC = () => {
                      <Col span={12}>
                        <Form.Item
                          name="width"
-                         label="Width"
-                         rules={[{ required: true, message: 'Please enter width' }]}
+                         label="Chiều ngang"
+                         rules={[{ required: true, message: 'Vui lòng nhập chiều ngang' }]}
                        >
-                         <Input placeholder="100% or 800px" />
+                         <Input placeholder="100% hoặc 800px" />
                        </Form.Item>
                      </Col>
                      <Col span={12}>
@@ -662,21 +662,21 @@ const DashboardPage: React.FC = () => {
                      {isDetectingDimensions ? (
                        <Space>
                          <Spin size="small" />
-                         <Text className="text-blue-700">Detecting dashboard dimensions...</Text>
+                         <Text className="text-blue-700">Đang phát hiện kích thước dashboard...</Text>
                        </Space>
                      ) : detectedDimensions ? (
                        <Text className="text-blue-700">
-                         ✅ Detected: <strong>{detectedDimensions.width}px × {detectedDimensions.height}px</strong>
+                         ✅ Đã phát hiện: <strong>{detectedDimensions.width}px × {detectedDimensions.height}px</strong>
                          {sizePreset === 'max-width' && (
-                           <span> → Will calculate proportional height for 100% width</span>
+                           <span> → Sẽ tính chiều cao tỷ lệ cho 100% chiều ngang</span>
                          )}
                          {sizePreset === 'max-height' && (
-                           <span> → Will calculate proportional width for 100vh height</span>
+                           <span> → Sẽ tính chiều ngang tỷ lệ cho 100vh chiều cao</span>
                          )}
                        </Text>
                      ) : (
                        <Text className="text-blue-700">
-                         ℹ️ Dimension detection in progress... Will use fallback values
+                         ℹ️ Đang phát hiện kích thước... Sẽ dùng giá trị dự phòng
                        </Text>
                      )}
                    </div>
