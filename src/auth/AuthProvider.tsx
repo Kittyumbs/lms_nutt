@@ -164,12 +164,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const tokenData = JSON.parse(savedToken);
           const timeUntilExpiry = tokenData.expires_at - Date.now();
           
-          // If token expires in less than 5 minutes, try to refresh
+          // If token expires in less than 5 minutes, just mark as not authenticated
+          // Let useGoogleCalendar handle the refresh automatically
           if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
-            if (tokenClient) {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-              tokenClient.requestAccessToken({ prompt: '' });
-            }
+            setIsGoogleCalendarAuthed(false);
           } else if (timeUntilExpiry <= 0) {
             // Token expired
             localStorage.removeItem('google_calendar_token');
@@ -242,11 +240,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // First, sign in with Firebase
       await signInWithPopup(auth, googleProvider);
       
-      // Then, automatically request Calendar permissions if token client is ready
-      if (tokenClient) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        tokenClient.requestAccessToken({ prompt: '' });
-      }
+      // Note: Google Calendar permission will be requested separately from sidebar
     } catch (error) {
       console.error('Error signing in with Google:', error);
       

@@ -647,7 +647,6 @@ export function useGoogleCalendar() {
     isGapiLoaded,
     error,
     handleAuthClick,
-    ensureSignedIn,
     fetchCalendarEvents,
     createCalendarEvent,
     signOut,
