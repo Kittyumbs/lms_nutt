@@ -74,16 +74,14 @@ export const useDashboardDimensions = ({ url, onDimensionsDetected }: UseDashboa
       }
       
       document.body.removeChild(iframe);
-    } catch (error) {
-      console.error('❌ Error detecting dimensions:', error);
-      setError('Failed to detect dashboard dimensions');
-      // Fallback to default dimensions
-      const fallbackDimensions = { width: 1200, height: 800 };
-      setDetectedDimensions(fallbackDimensions);
-      onDimensionsDetected?.(fallbackDimensions);
-    } finally {
-      setIsDetecting(false);
-    }
+      } catch (error) {
+        console.error('❌ Error detecting dimensions:', error);
+        setError('Failed to detect dashboard dimensions');
+        // Don't set fallback dimensions, let the error be handled by the parent
+        throw error; // Re-throw to let parent handle the error
+      } finally {
+        setIsDetecting(false);
+      }
   }, [url, onDimensionsDetected]);
 
   const calculateProportionalDimensions = useCallback((

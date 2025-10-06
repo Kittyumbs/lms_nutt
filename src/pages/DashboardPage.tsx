@@ -25,6 +25,7 @@ const DashboardPage: React.FC = () => {
   }>({ isValid: false, isPublic: false, isEmbed: false });
   const [detectedHeight, setDetectedHeight] = useState<number | null>(null);
   const [detectedWidth, setDetectedWidth] = useState<number | null>(null);
+  const [dimensionDetectionError, setDimensionDetectionError] = useState<string | null>(null);
   const navigate = useNavigate();
   
   // Use Firestore hook
@@ -56,8 +57,28 @@ const DashboardPage: React.FC = () => {
     url: embedUrl,
     onDimensionsDetected: (dimensions) => {
       console.log('📏 Dimensions detected:', dimensions);
+      setDimensionDetectionError(null);
     }
   });
+
+  const handleDimensionDetection = async (preset: 'max-width' | 'max-height') => {
+    if (!embedUrl) {
+      setDimensionDetectionError('Vui lòng nhập URL dashboard trước khi chọn kích thước tự động');
+      return false;
+    }
+
+    setDimensionDetectionError(null);
+    setSizePreset(preset);
+    
+    try {
+      await detectDimensions();
+      return true;
+    } catch (error) {
+      console.error('Dimension detection failed:', error);
+      setDimensionDetectionError('Không thể phát hiện kích thước dashboard. Vui lòng chọn "Kích thước tùy chỉnh" và nhập thủ công.');
+      return false;
+    }
+  };
 
   const handleAddDashboard = (type?: 'powerbi' | 'looker') => {
     setEditingDashboard(null);
@@ -66,6 +87,7 @@ const DashboardPage: React.FC = () => {
     setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
     setDetectedHeight(null);
     setDetectedWidth(null);
+    setDimensionDetectionError(null);
     if (type) {
       form.setFieldsValue({ type });
     }
@@ -155,6 +177,12 @@ const DashboardPage: React.FC = () => {
         }
       }
       
+      // Check if dimensions are required but not detected
+      if ((sizePreset === 'max-width' || sizePreset === 'max-height') && !detectedDimensions) {
+        message.error('Vui lòng chờ hệ thống phát hiện kích thước dashboard hoặc chọn "Kích thước tùy chỉnh"');
+        return;
+      }
+
       // Set dimensions based on preset
       let width, height;
       
@@ -187,7 +215,8 @@ const DashboardPage: React.FC = () => {
           console.log('📏 Max width - container width:', maxContainerWidth, 'calculated height:', calculated.height);
           console.log('📏 Original dimensions:', detectedDimensions, 'Ratio:', detectedDimensions.height / detectedDimensions.width);
         } else {
-          height = '600px'; // Fallback
+          message.error('Không thể tính toán kích thước. Vui lòng chọn "Kích thước tùy chỉnh"');
+          return;
         }
       } else if (sizePreset === 'max-height') {
         height = '100vh';
@@ -214,7 +243,8 @@ const DashboardPage: React.FC = () => {
           console.log('📏 Max height - container height:', maxContainerHeight, 'calculated width:', calculated.width);
           console.log('📏 Original dimensions:', detectedDimensions, 'Ratio:', detectedDimensions.width / detectedDimensions.height);
         } else {
-          width = '800px'; // Fallback
+          message.error('Không thể tính toán kích thước. Vui lòng chọn "Kích thước tùy chỉnh"');
+          return;
         }
       } else if (sizePreset === 'custom') {
         // Use form values for custom size
@@ -629,14 +659,11 @@ const DashboardPage: React.FC = () => {
                    <Button
                      type={sizePreset === 'max-width' ? 'primary' : 'default'}
                      icon={<ColumnWidthOutlined />}
+                     loading={isDetectingDimensions && sizePreset === 'max-width'}
                      onClick={async () => {
-                       console.log('Setting max-width preset');
-                       setSizePreset('max-width');
-                       form.setFieldsValue({ width: '100%', height: 'auto' });
-                       
-                       // Detect dimensions if URL is available
-                       if (embedUrl) {
-                         await detectDimensions();
+                       await handleDimensionDetection('max-width');
+                       if (sizePreset === 'max-width') {
+                         form.setFieldsValue({ width: '100%', height: 'auto' });
                        }
                      }}
                    >
@@ -645,14 +672,11 @@ const DashboardPage: React.FC = () => {
                    <Button
                      type={sizePreset === 'max-height' ? 'primary' : 'default'}
                      icon={<ColumnHeightOutlined />}
+                     loading={isDetectingDimensions && sizePreset === 'max-height'}
                      onClick={async () => {
-                       console.log('Setting max-height preset');
-                       setSizePreset('max-height');
-                       form.setFieldsValue({ width: 'auto', height: '100vh' });
-                       
-                       // Detect dimensions if URL is available
-                       if (embedUrl) {
-                         await detectDimensions();
+                       await handleDimensionDetection('max-height');
+                       if (sizePreset === 'max-height') {
+                         form.setFieldsValue({ width: 'auto', height: '100vh' });
                        }
                      }}
                    >
@@ -691,15 +715,27 @@ const DashboardPage: React.FC = () => {
                  )}
                  
                  {/* Dimension Detection Status */}
-                 {(sizePreset === 'max-width' || sizePreset === 'max-height') && embedUrl && (
-                   <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded">
+                 {(sizePreset === 'max-width' || sizePreset === 'max-height') && (
+                   <div className={`mt-2 p-3 rounded border ${
+                     dimensionDetectionError 
+                       ? 'bg-red-50 border-red-200' 
+                       : isDetectingDimensions 
+                         ? 'bg-blue-50 border-blue-200' 
+                         : detectedDimensions 
+                           ? 'bg-green-50 border-green-200'
+                           : 'bg-yellow-50 border-yellow-200'
+                   }`}>
                      {isDetectingDimensions ? (
                        <Space>
                          <Spin size="small" />
                          <Text className="text-blue-700">Đang phát hiện kích thước dashboard...</Text>
                        </Space>
+                     ) : dimensionDetectionError ? (
+                       <Text className="text-red-700">
+                         ❌ {dimensionDetectionError}
+                       </Text>
                      ) : detectedDimensions ? (
-                       <Text className="text-blue-700">
+                       <Text className="text-green-700">
                          ✅ Đã phát hiện: <strong>{detectedDimensions.width}px × {detectedDimensions.height}px</strong>
                          {sizePreset === 'max-width' && (
                            <span> → Sẽ tính chiều cao tỷ lệ cho 100% chiều ngang</span>
@@ -709,8 +745,8 @@ const DashboardPage: React.FC = () => {
                          )}
                        </Text>
                      ) : (
-                       <Text className="text-blue-700">
-                         ℹ️ Đang phát hiện kích thước... Sẽ dùng giá trị dự phòng
+                       <Text className="text-yellow-700">
+                         ⚠️ Vui lòng nhập URL dashboard trước khi chọn kích thước tự động
                        </Text>
                      )}
                    </div>
