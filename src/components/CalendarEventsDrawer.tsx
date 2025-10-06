@@ -69,6 +69,9 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
   useEffect(() => {
     if (isOpen && isSignedIn && isGapiLoaded) {
       void loadEvents();
+    } else if (isOpen && !isSignedIn) {
+      // Clear events when not signed in
+      setEvents([]);
     }
   }, [isOpen, isSignedIn, isGapiLoaded, loadEvents]);
 

@@ -1,4 +1,4 @@
-import { PlusOutlined, LinkOutlined, DeleteOutlined, SearchOutlined, EditOutlined, CopyOutlined, StarOutlined, GlobalOutlined } from '@ant-design/icons';
+import { LinkOutlined, DeleteOutlined, SearchOutlined, EditOutlined, CopyOutlined, StarOutlined, GlobalOutlined } from '@ant-design/icons';
 import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Select, Card, Tag, Tooltip, Typography, Divider, Segmented } from 'antd';
 import {
   collection,
@@ -255,7 +255,7 @@ export default function UsefulDocsDrawer() {
       {contextHolder}
       <Button
         type="primary"
-        icon={<PlusOutlined />}
+        icon={<LinkOutlined />}
         onClick={handleOpen}
       >
         Documents

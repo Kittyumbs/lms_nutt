@@ -536,8 +536,11 @@ export function useGoogleCalendar() {
       throw new Error("Google Calendar API not ready");
     }
     
+    if (!isSignedIn) {
+      throw new Error("Not signed in to Google Calendar");
+    }
+    
     try {
-      await ensureSignedIn();
       const now = new Date().toISOString();
       
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -555,16 +558,18 @@ export function useGoogleCalendar() {
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch calendar events";
       throw new Error(errorMessage);
     }
-  }, [isGapiLoaded, ensureSignedIn]);
+  }, [isGapiLoaded, isSignedIn]);
 
   const createCalendarEvent = useCallback(async (event: GEvent) => {
     if (!isGapiLoaded) {
       throw new Error("Google Calendar API not ready");
     }
     
+    if (!isSignedIn) {
+      throw new Error("Not signed in to Google Calendar");
+    }
+    
     try {
-      await ensureSignedIn();
-      
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const response = await window.gapi.client.calendar.events.insert({
         calendarId: "primary",
@@ -579,7 +584,7 @@ export function useGoogleCalendar() {
       const errorMessage = error instanceof Error ? error.message : "Failed to create calendar event";
       throw new Error(errorMessage);
     }
-  }, [isGapiLoaded, ensureSignedIn]);
+  }, [isGapiLoaded, isSignedIn]);
 
   const fetchUserProfile = useCallback(async () => {
     if (!isGapiLoaded) return;
