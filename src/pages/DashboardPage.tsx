@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col } from 'antd';
 import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -23,10 +24,10 @@ interface DashboardConfig {
 const DashboardPage: React.FC = () => {
   const [form] = Form.useForm();
   const [dashboards, setDashboards] = useState<DashboardConfig[]>([]);
-  const [selectedDashboard, setSelectedDashboard] = useState<string | null>(null);
   const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState<DashboardConfig | null>(null);
   const [activeTab, setActiveTab] = useState<'powerbi' | 'looker'>('powerbi');
+  const navigate = useNavigate();
 
   // Load dashboards from localStorage on mount
   useEffect(() => {
@@ -59,12 +60,14 @@ const DashboardPage: React.FC = () => {
       content: 'Are you sure you want to delete this dashboard configuration?',
       onOk: () => {
         setDashboards(prev => prev.filter(d => d.id !== id));
-        if (selectedDashboard === id) {
-          setSelectedDashboard(null);
-        }
         message.success('Dashboard deleted successfully');
       },
     });
+  };
+
+  const handleViewDashboard = (dashboard: DashboardConfig) => {
+    // Navigate to dashboard viewer page
+    navigate(`/lms/dashboard/view/${dashboard.id}`);
   };
 
   const handleSaveDashboard = async () => {
@@ -119,31 +122,6 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const renderDashboardPreview = (dashboard: DashboardConfig) => {
-    const embedUrl = getEmbedUrl(dashboard);
-    
-    return (
-      <div 
-        key={dashboard.id}
-        style={{ 
-          width: dashboard.width, 
-          height: dashboard.height,
-          border: '1px solid #d9d9d9',
-          borderRadius: '6px',
-          overflow: 'hidden'
-        }}
-      >
-        <iframe
-          src={embedUrl}
-          width="100%"
-          height="100%"
-          frameBorder="0"
-          allowFullScreen
-          title={dashboard.name}
-        />
-      </div>
-    );
-  };
 
   const powerbiDashboards = dashboards.filter(d => d.type === 'powerbi');
   const lookerDashboards = dashboards.filter(d => d.type === 'looker');
@@ -184,22 +162,32 @@ const DashboardPage: React.FC = () => {
                           <Button 
                             type="text" 
                             icon={<EyeOutlined />} 
-                            onClick={() => setSelectedDashboard(dashboard.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDashboard(dashboard);
+                            }}
                           />
                           <Button 
                             type="text" 
                             icon={<SettingOutlined />} 
-                            onClick={() => handleEditDashboard(dashboard)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditDashboard(dashboard);
+                            }}
                           />
                           <Button 
                             type="text" 
                             danger 
                             icon={<DeleteOutlined />} 
-                            onClick={() => handleDeleteDashboard(dashboard.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteDashboard(dashboard.id);
+                            }}
                           />
                         </Space>
                       }
-                      className="h-full"
+                      className="h-full cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                      onClick={() => handleViewDashboard(dashboard)}
                     >
                       <div className="text-center">
                         <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center mb-2">
@@ -239,22 +227,32 @@ const DashboardPage: React.FC = () => {
                           <Button 
                             type="text" 
                             icon={<EyeOutlined />} 
-                            onClick={() => setSelectedDashboard(dashboard.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDashboard(dashboard);
+                            }}
                           />
                           <Button 
                             type="text" 
                             icon={<SettingOutlined />} 
-                            onClick={() => handleEditDashboard(dashboard)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditDashboard(dashboard);
+                            }}
                           />
                           <Button 
                             type="text" 
                             danger 
                             icon={<DeleteOutlined />} 
-                            onClick={() => handleDeleteDashboard(dashboard.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteDashboard(dashboard.id);
+                            }}
                           />
                         </Space>
                       }
-                      className="h-full"
+                      className="h-full cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                      onClick={() => handleViewDashboard(dashboard)}
                     >
                       <div className="text-center">
                         <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center mb-2">
@@ -285,18 +283,6 @@ const DashboardPage: React.FC = () => {
           </Tabs>
         </Card>
 
-        {/* Dashboard Viewer */}
-        {selectedDashboard && (
-          <Card>
-            <div className="flex justify-between items-center mb-4">
-              <Title level={4}>
-                {dashboards.find(d => d.id === selectedDashboard)?.name}
-              </Title>
-              <Button onClick={() => setSelectedDashboard(null)}>Close</Button>
-            </div>
-            {renderDashboardPreview(dashboards.find(d => d.id === selectedDashboard)!)}
-          </Card>
-        )}
 
         {/* Configuration Modal */}
         <Modal

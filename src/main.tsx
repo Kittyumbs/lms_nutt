@@ -9,6 +9,7 @@ import CourseDetailPage from './pages/lms/CourseDetailPage';
 import CourseEditorPage from './pages/lms/CourseEditorPage';
 import CoursesPage from './pages/lms/CoursesPage';
 import DashboardPage from './pages/DashboardPage';
+import DashboardViewerPage from './pages/DashboardViewerPage';
 import LessonPlayerPage from './pages/lms/LessonPlayerPage';
 import NotesCenterPage from './pages/lms/NotesCenterPage';
 import TaskManageHome from './pages/taskmanage/TaskManageHome';
@@ -40,6 +41,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/lms/course/learn/:cid/:lid" element={<LessonPlayerPage />} />
             <Route path="/lms/catalog" element={<Catalog />} />
             <Route path="/lms/dashboard" element={<DashboardPage />} />
+            <Route path="/lms/dashboard/view/:id" element={<DashboardViewerPage />} />
             <Route path="/lms/notes" element={<NotesCenterPage />} />
           </Route>
         </Routes>
