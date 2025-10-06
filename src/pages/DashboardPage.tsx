@@ -75,7 +75,7 @@ const DashboardPage: React.FC = () => {
       // Auto-set size based on URL type
       if (isPublic) {
         setSizePreset('full-width');
-        form.setFieldsValue({ width: '100%', height: '600px' });
+        form.setFieldsValue({ width: '100%', height: 'auto' });
       }
     } else if (type === 'looker') {
       const isLooker = url.includes('lookerstudio.google.com');
@@ -122,17 +122,17 @@ const DashboardPage: React.FC = () => {
       
       // Set default dimensions based on preset
       let width = '100%';
-      let height = '600px';
+      let height = 'auto';
       
       if (sizePreset === 'full-width') {
         width = '100%';
-        height = '600px';
+        height = 'auto';
       } else if (sizePreset === 'full-height') {
-        width = '800px';
+        width = 'auto';
         height = '100vh';
       } else if (sizePreset === 'custom') {
         width = values.width || '100%';
-        height = values.height || '600px';
+        height = values.height || 'auto';
       }
       
       const newDashboard: DashboardConfig = {
@@ -540,20 +540,20 @@ const DashboardPage: React.FC = () => {
                      icon={<ColumnWidthOutlined />}
                      onClick={() => {
                        setSizePreset('full-width');
-                       form.setFieldsValue({ width: '100%', height: '600px' });
+                       form.setFieldsValue({ width: '100%', height: 'auto' });
                      }}
                    >
-                     Full Width (100% × 600px)
+                     Full Width (100% × auto)
                    </Button>
                    <Button
                      type={sizePreset === 'full-height' ? 'primary' : 'default'}
                      icon={<ExpandOutlined />}
                      onClick={() => {
                        setSizePreset('full-height');
-                       form.setFieldsValue({ width: '800px', height: '100vh' });
+                       form.setFieldsValue({ width: 'auto', height: '100vh' });
                      }}
                    >
-                     Full Height (800px × 100vh)
+                     Full Height (auto × 100%)
                    </Button>
                    <Button
                      type={sizePreset === 'custom' ? 'primary' : 'default'}
