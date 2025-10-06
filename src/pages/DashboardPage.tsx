@@ -166,9 +166,26 @@ const DashboardPage: React.FC = () => {
         width = '100%';
         if (detectedDimensions) {
           // Calculate proportional height based on detected dimensions
-          const calculated = calculateProportionalDimensions(detectedDimensions, window.innerWidth - 100); // Account for padding
+          // Try to get actual container width, fallback to reasonable estimate
+          let maxContainerWidth;
+          try {
+            // Look for the actual container element (max-w-7xl mx-auto)
+            const container = document.querySelector('.max-w-7xl');
+            if (container) {
+              maxContainerWidth = container.clientWidth;
+            } else {
+              // Fallback: estimate based on screen size
+              maxContainerWidth = Math.min(1200, window.innerWidth - 200);
+            }
+          } catch (error) {
+            // Fallback: use reasonable estimate
+            maxContainerWidth = Math.min(1200, window.innerWidth - 200);
+          }
+          
+          const calculated = calculateProportionalDimensions(detectedDimensions, maxContainerWidth);
           height = `${calculated.height}px`;
-          console.log('📏 Max width - calculated height:', calculated.height);
+          console.log('📏 Max width - container width:', maxContainerWidth, 'calculated height:', calculated.height);
+          console.log('📏 Original dimensions:', detectedDimensions, 'Ratio:', detectedDimensions.height / detectedDimensions.width);
         } else {
           height = '600px'; // Fallback
         }
@@ -176,9 +193,26 @@ const DashboardPage: React.FC = () => {
         height = '100vh';
         if (detectedDimensions) {
           // Calculate proportional width based on detected dimensions
-          const calculated = calculateProportionalDimensions(detectedDimensions, undefined, window.innerHeight - 200); // Account for header/padding
+          // Try to get actual container height, fallback to reasonable estimate
+          let maxContainerHeight;
+          try {
+            // Look for the actual container element (max-w-7xl mx-auto)
+            const container = document.querySelector('.max-w-7xl');
+            if (container) {
+              maxContainerHeight = container.clientHeight;
+            } else {
+              // Fallback: estimate based on screen size
+              maxContainerHeight = Math.min(800, window.innerHeight - 300);
+            }
+          } catch (error) {
+            // Fallback: use reasonable estimate
+            maxContainerHeight = Math.min(800, window.innerHeight - 300);
+          }
+          
+          const calculated = calculateProportionalDimensions(detectedDimensions, undefined, maxContainerHeight);
           width = `${calculated.width}px`;
-          console.log('📏 Max height - calculated width:', calculated.width);
+          console.log('📏 Max height - container height:', maxContainerHeight, 'calculated width:', calculated.width);
+          console.log('📏 Original dimensions:', detectedDimensions, 'Ratio:', detectedDimensions.width / detectedDimensions.height);
         } else {
           width = '800px'; // Fallback
         }
