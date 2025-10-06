@@ -145,18 +145,18 @@ const DashboardPage: React.FC = () => {
       
       if (sizePreset === 'full-width') {
         width = '100%';
-        height = 'auto';
+        height = '600px'; // Fixed height for landscape orientation
       } else if (sizePreset === 'full-height') {
-        width = 'auto';
-        height = '100%';
+        width = '800px'; // Fixed width for portrait orientation
+        height = '100vh';
       } else if (sizePreset === 'custom') {
         // Use form values for custom size
         width = values.width || '100%';
-        height = values.height || 'auto';
+        height = values.height || '600px';
       } else {
         // Default fallback
         width = '100%';
-        height = 'auto';
+        height = '600px';
       }
       
       console.log('Final dimensions:', { width, height });
@@ -565,10 +565,10 @@ const DashboardPage: React.FC = () => {
                      onClick={() => {
                        console.log('Setting full-width preset');
                        setSizePreset('full-width');
-                       form.setFieldsValue({ width: '100%', height: 'auto' });
+                       form.setFieldsValue({ width: '100%', height: '600px' });
                      }}
                    >
-                     Full Width (100% × auto)
+                     Full Width (100% × 600px)
                    </Button>
                    <Button
                      type={sizePreset === 'full-height' ? 'primary' : 'default'}
@@ -576,10 +576,10 @@ const DashboardPage: React.FC = () => {
                      onClick={() => {
                        console.log('Setting full-height preset');
                        setSizePreset('full-height');
-                       form.setFieldsValue({ width: 'auto', height: '100%' });
+                       form.setFieldsValue({ width: '800px', height: '100vh' });
                      }}
                    >
-                     Full Height (auto × 100%)
+                     Full Height (800px × 100vh)
                    </Button>
                    <Button
                      type={sizePreset === 'custom' ? 'primary' : 'default'}
