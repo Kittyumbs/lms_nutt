@@ -8,10 +8,17 @@ import useAuth from '../../auth/useAuth';
 const LS_KEY = 'sidebar-collapsed'; // 'true' = collapsed
 
 function Item({ to, label, collapsed, icon, onClick }: { to: string; label: string; collapsed: boolean; icon: React.ReactNode; onClick?: () => void }) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <NavLink
       to={to}
-      onClick={onClick}
+      onClick={handleClick}
       className={({ isActive, isPending }) => {
         // Special handling for Courses - should be active for all /lms/course/* routes
         const isCoursesActive = to === '/lms/courses' && (isActive || window.location.pathname.startsWith('/lms/course/'));
@@ -63,11 +70,15 @@ export default function Sidebar() {
   const handleDashboardClick = () => {
     // Check if there's a last viewed dashboard
     const lastViewedDashboard = localStorage.getItem('last-viewed-dashboard');
+    console.log('🏠 Dashboard click - last viewed:', lastViewedDashboard);
+    
     if (lastViewedDashboard) {
       // Navigate to the last viewed dashboard
+      console.log('📍 Navigating to last viewed dashboard:', lastViewedDashboard);
       navigate(`/lms/dashboard/view/${lastViewedDashboard}`);
     } else {
       // Navigate to dashboard list
+      console.log('📍 No last viewed dashboard, going to list');
       navigate('/lms/dashboard');
     }
   };

@@ -41,12 +41,14 @@ const DashboardViewerPage: React.FC = () => {
       try {
         const dashboards: DashboardConfig[] = JSON.parse(savedDashboards);
         setAllDashboards(dashboards);
+        console.log('📊 Loaded dashboards:', dashboards.length, dashboards.map(d => d.name));
         
         const foundDashboard = dashboards.find(d => d.id === id);
         if (foundDashboard) {
           setDashboard(foundDashboard);
           // Save current dashboard to localStorage for sidebar redirect
           localStorage.setItem('last-viewed-dashboard', id);
+          console.log('💾 Saved last viewed dashboard:', id);
         } else {
           setError('Dashboard not found');
         }
@@ -102,6 +104,7 @@ const DashboardViewerPage: React.FC = () => {
   };
 
   const handleDashboardSwitch = (newDashboardId: string) => {
+    console.log('🔄 Switching to dashboard:', newDashboardId);
     navigate(`/lms/dashboard/view/${newDashboardId}`);
   };
 
@@ -174,8 +177,7 @@ const DashboardViewerPage: React.FC = () => {
                     suffixIcon={<SwapOutlined />}
                     options={allDashboards.map(d => ({
                       value: d.id,
-                      label: d.name,
-                      disabled: d.id === dashboard?.id
+                      label: d.name
                     }))}
                   />
                 </Space>
