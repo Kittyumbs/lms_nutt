@@ -129,6 +129,9 @@ const DashboardViewerPage: React.FC = () => {
   }
 
   const embedUrl = getEmbedUrl(dashboard);
+  
+  console.log('Dashboard config:', dashboard);
+  console.log('Dashboard dimensions:', { width: dashboard.width, height: dashboard.height });
 
   return (
     <div className="min-h-screen bg-gray-50">
