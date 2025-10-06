@@ -292,14 +292,11 @@ const DashboardPage: React.FC = () => {
                       className="h-full cursor-pointer hover:shadow-lg transition-shadow duration-200"
                       onClick={() => handleViewDashboard(dashboard)}
                     >
-                      <div className="text-center">
-                        <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center mb-2">
-                          <Text type="secondary">PowerBI Preview</Text>
-                        </div>
-                        <Text type="secondary" className="text-xs">
-                          {dashboard.embedUrl}
-                        </Text>
-                      </div>
+                       <div className="text-center">
+                         <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center">
+                           <Text type="secondary">PowerBI Preview</Text>
+                         </div>
+                       </div>
                     </Card>
                   </Col>
                 ))}
@@ -357,14 +354,11 @@ const DashboardPage: React.FC = () => {
                       className="h-full cursor-pointer hover:shadow-lg transition-shadow duration-200"
                       onClick={() => handleViewDashboard(dashboard)}
                     >
-                      <div className="text-center">
-                        <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center mb-2">
-                          <Text type="secondary">Looker Studio Preview</Text>
-                        </div>
-                        <Text type="secondary" className="text-xs">
-                          {dashboard.embedUrl}
-                        </Text>
-                      </div>
+                       <div className="text-center">
+                         <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center">
+                           <Text type="secondary">Looker Studio Preview</Text>
+                         </div>
+                       </div>
                     </Card>
                   </Col>
                 ))}

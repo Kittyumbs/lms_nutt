@@ -134,7 +134,7 @@ const DashboardViewerPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="bg-white shadow-sm p-6 rounded-lg mb-6">
+        <div className="bg-white shadow-sm p-4 rounded-lg mb-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
               <Button 
@@ -145,12 +145,9 @@ const DashboardViewerPage: React.FC = () => {
                 Back
               </Button>
               <div>
-                <Title level={3} className="mb-0">
+                <Title level={4} className="mb-0">
                   {dashboard.name}
                 </Title>
-                <Text type="secondary">
-                  {dashboard.type === 'powerbi' ? 'PowerBI Dashboard' : 'Looker Studio Dashboard'}
-                </Text>
               </div>
             </div>
             
@@ -182,12 +179,7 @@ const DashboardViewerPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer Info */}
-        <div className="mt-4 text-center">
-          <Text type="secondary" className="text-sm">
-            Dashboard URL: {embedUrl}
-          </Text>
-        </div>
+        {/* Footer Info removed to save space for dashboard */}
       </div>
     </div>
   );
