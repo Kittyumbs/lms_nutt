@@ -42,9 +42,12 @@ const DashboardPage: React.FC = () => {
     localStorage.setItem('dashboard-configs', JSON.stringify(dashboards));
   }, [dashboards]);
 
-  const handleAddDashboard = () => {
+  const handleAddDashboard = (type?: 'powerbi' | 'looker') => {
     setEditingDashboard(null);
     form.resetFields();
+    if (type) {
+      form.setFieldsValue({ type });
+    }
     setIsConfigModalVisible(true);
   };
 
@@ -143,7 +146,7 @@ const DashboardPage: React.FC = () => {
               <Button 
                 type="primary" 
                 icon={<PlusOutlined />} 
-                onClick={handleAddDashboard}
+                onClick={() => handleAddDashboard()}
               >
                 Add Dashboard
               </Button>
@@ -204,7 +207,7 @@ const DashboardPage: React.FC = () => {
                   <Col span={8}>
                     <Card 
                       className="h-full border-dashed border-2 flex items-center justify-center cursor-pointer hover:border-blue-400"
-                      onClick={handleAddDashboard}
+                      onClick={() => handleAddDashboard('powerbi')}
                     >
                       <div className="text-center">
                         <PlusOutlined className="text-4xl text-gray-400 mb-2" />
@@ -269,7 +272,7 @@ const DashboardPage: React.FC = () => {
                   <Col span={8}>
                     <Card 
                       className="h-full border-dashed border-2 flex items-center justify-center cursor-pointer hover:border-blue-400"
-                      onClick={handleAddDashboard}
+                      onClick={() => handleAddDashboard('looker')}
                     >
                       <div className="text-center">
                         <PlusOutlined className="text-4xl text-gray-400 mb-2" />
@@ -306,42 +309,84 @@ const DashboardPage: React.FC = () => {
               label="Dashboard Type"
               rules={[{ required: true, message: 'Please select dashboard type' }]}
             >
-              <Select placeholder="Select dashboard type">
+              <Select placeholder="Select dashboard type" disabled={!!editingDashboard}>
                 <Option value="powerbi">PowerBI</Option>
                 <Option value="looker">Looker Studio</Option>
               </Select>
             </Form.Item>
 
-            <Form.Item
-              name="embedUrl"
-              label="Embed URL"
-              rules={[{ required: true, message: 'Please enter embed URL' }]}
-            >
-              <Input placeholder="https://app.powerbi.com/reportEmbed or https://lookerstudio.google.com/embed/reporting/..." />
+            {/* PowerBI Configuration */}
+            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}>
+              {({ getFieldValue }) => {
+                const dashboardType = getFieldValue('type');
+                
+                if (dashboardType === 'powerbi') {
+                  return (
+                    <>
+                      <Form.Item
+                        name="embedUrl"
+                        label="PowerBI Embed URL"
+                        rules={[{ required: true, message: 'Please enter PowerBI embed URL' }]}
+                      >
+                        <Input placeholder="https://app.powerbi.com/reportEmbed" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="reportId"
+                        label="Report ID"
+                        rules={[{ required: true, message: 'Please enter PowerBI report ID' }]}
+                      >
+                        <Input placeholder="Enter PowerBI report ID (e.g., 12345678-1234-1234-1234-123456789012)" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="accessToken"
+                        label="Access Token"
+                        tooltip="Required for PowerBI authentication"
+                      >
+                        <Input.Password placeholder="Enter PowerBI access token" />
+                      </Form.Item>
+                    </>
+                  );
+                }
+                
+                if (dashboardType === 'looker') {
+                  return (
+                    <>
+                      <Form.Item
+                        name="embedUrl"
+                        label="Looker Studio Embed URL"
+                        rules={[{ required: true, message: 'Please enter Looker Studio embed URL' }]}
+                      >
+                        <Input placeholder="https://lookerstudio.google.com/embed/reporting/..." />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="reportId"
+                        label="Report ID"
+                        rules={[{ required: true, message: 'Please enter Looker Studio report ID' }]}
+                      >
+                        <Input placeholder="Enter Looker Studio report ID" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="pageId"
+                        label="Page ID"
+                        tooltip="Optional - specific page within the report"
+                      >
+                        <Input placeholder="Enter page ID (optional)" />
+                      </Form.Item>
+                    </>
+                  );
+                }
+                
+                return null;
+              }}
             </Form.Item>
 
-            <Form.Item
-              name="reportId"
-              label="Report ID"
-              rules={[{ required: true, message: 'Please enter report ID' }]}
-            >
-              <Input placeholder="Enter report ID" />
-            </Form.Item>
-
-            <Form.Item
-              name="pageId"
-              label="Page ID (Looker Studio only)"
-            >
-              <Input placeholder="Enter page ID (optional for Looker Studio)" />
-            </Form.Item>
-
-            <Form.Item
-              name="accessToken"
-              label="Access Token (PowerBI only)"
-            >
-              <Input.Password placeholder="Enter access token (optional for PowerBI)" />
-            </Form.Item>
-
+            {/* Common Configuration */}
+            <Divider>Display Settings</Divider>
+            
             <Form.Item
               name="width"
               label="Width"
@@ -361,6 +406,7 @@ const DashboardPage: React.FC = () => {
             <Form.Item
               name="filters"
               label="Filters (JSON format)"
+              tooltip="Optional filters to apply to the dashboard"
             >
               <Input.TextArea 
                 placeholder='{"dateRange": "last_30_days", "category": "all"}' 
