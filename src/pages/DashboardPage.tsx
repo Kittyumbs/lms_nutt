@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col, Spin } from 'antd';
-import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, ColumnWidthOutlined, EditOutlined, ColumnHeightOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
+import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col } from 'antd';
+import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useIframeHeight } from '../hooks/useIframeHeight';
 import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
-import { useDashboardDimensions } from '../hooks/useDashboardDimensions';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -17,15 +16,11 @@ const DashboardPage: React.FC = () => {
   const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState<DashboardConfig | null>(null);
   const [activeTab, setActiveTab] = useState<'powerbi' | 'looker'>('powerbi');
-  const [sizePreset, setSizePreset] = useState<'max-width' | 'max-height' | 'custom'>('max-width');
   const [urlValidation, setUrlValidation] = useState<{
     isValid: boolean;
     isPublic: boolean;
     isEmbed: boolean;
   }>({ isValid: false, isPublic: false, isEmbed: false });
-  const [detectedHeight, setDetectedHeight] = useState<number | null>(null);
-  const [detectedWidth, setDetectedWidth] = useState<number | null>(null);
-  const [dimensionDetectionError, setDimensionDetectionError] = useState<string | null>(null);
   const navigate = useNavigate();
   
   // Use Firestore hook
@@ -47,52 +42,16 @@ const DashboardPage: React.FC = () => {
   const formWidth = formValues?.width;
   const formHeight = formValues?.height;
 
-  // Use dashboard dimensions detection hook
-  const { 
-    isDetecting: isDetectingDimensions, 
-    detectedDimensions, 
-    detectDimensions,
-    calculateProportionalDimensions 
-  } = useDashboardDimensions({
-    url: embedUrl,
-    onDimensionsDetected: (dimensions) => {
-      console.log('📏 Dimensions detected:', dimensions);
-      setDimensionDetectionError(null);
-    }
-  });
-
-  const handleDimensionDetection = async (preset: 'max-width' | 'max-height') => {
-    if (!embedUrl) {
-      setDimensionDetectionError('Vui lòng nhập URL dashboard trước khi chọn kích thước tự động');
-      return false;
-    }
-
-    setDimensionDetectionError(null);
-    setSizePreset(preset);
-    
-    try {
-      await detectDimensions();
-      return true;
-    } catch (error) {
-      console.error('Dimension detection failed:', error);
-      setDimensionDetectionError('Không thể phát hiện kích thước dashboard. Vui lòng chọn "Kích thước tùy chỉnh" và nhập thủ công.');
-      return false;
-    }
-  };
 
   const handleAddDashboard = (type?: 'powerbi' | 'looker') => {
     setEditingDashboard(null);
     form.resetFields();
-    setSizePreset('max-width');
     setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
-    setDetectedHeight(null);
-    setDetectedWidth(null);
-    setDimensionDetectionError(null);
     if (type) {
       form.setFieldsValue({ type });
     }
     // Set default values for new dashboard
-    form.setFieldsValue({ width: '100%', height: 'auto' });
+    form.setFieldsValue({ width: '100%', height: '600px' });
     setIsConfigModalVisible(true);
   };
 
@@ -111,8 +70,7 @@ const DashboardPage: React.FC = () => {
       
       // Auto-set size based on URL type
       if (isPublic) {
-        setSizePreset('max-width');
-        form.setFieldsValue({ width: '100%', height: 'auto' });
+        form.setFieldsValue({ width: '100%', height: '600px' });
       }
     } else if (type === 'looker') {
       const isLooker = url.includes('lookerstudio.google.com');
@@ -127,15 +85,6 @@ const DashboardPage: React.FC = () => {
     // Auto-validate URL when editing
     if (dashboard.embedUrl) {
       validateUrl(dashboard.embedUrl, dashboard.type);
-    }
-    
-    // Set size preset based on current dimensions
-    if (dashboard.width === '100%' && dashboard.height.includes('px')) {
-      setSizePreset('max-width');
-    } else if (dashboard.width.includes('px') && dashboard.height === '100vh') {
-      setSizePreset('max-height');
-    } else {
-      setSizePreset('custom');
     }
     
     setIsConfigModalVisible(true);
@@ -177,84 +126,9 @@ const DashboardPage: React.FC = () => {
         }
       }
       
-      // Check if dimensions are required but not detected
-      if ((sizePreset === 'max-width' || sizePreset === 'max-height') && !detectedDimensions) {
-        message.error('Vui lòng chờ hệ thống phát hiện kích thước dashboard hoặc chọn "Kích thước tùy chỉnh"');
-        return;
-      }
-
-      // Set dimensions based on preset
-      let width, height;
-      
-      console.log('Size preset:', sizePreset);
-      console.log('Form values:', { width: values.width, height: values.height });
-      console.log('Detected dimensions:', detectedDimensions);
-      
-      if (sizePreset === 'max-width') {
-        width = '100%';
-        if (detectedDimensions) {
-          // Calculate proportional height based on detected dimensions
-          // Try to get actual container width, fallback to reasonable estimate
-          let maxContainerWidth;
-          try {
-            // Look for the actual container element (max-w-7xl mx-auto)
-            const container = document.querySelector('.max-w-7xl');
-            if (container) {
-              maxContainerWidth = container.clientWidth;
-            } else {
-              // Fallback: estimate based on screen size
-              maxContainerWidth = Math.min(1200, window.innerWidth - 200);
-            }
-          } catch (error) {
-            // Fallback: use reasonable estimate
-            maxContainerWidth = Math.min(1200, window.innerWidth - 200);
-          }
-          
-          const calculated = calculateProportionalDimensions(detectedDimensions, maxContainerWidth);
-          height = `${calculated.height}px`;
-          console.log('📏 Max width - container width:', maxContainerWidth, 'calculated height:', calculated.height);
-          console.log('📏 Original dimensions:', detectedDimensions, 'Ratio:', detectedDimensions.height / detectedDimensions.width);
-        } else {
-          message.error('Không thể tính toán kích thước. Vui lòng chọn "Kích thước tùy chỉnh"');
-          return;
-        }
-      } else if (sizePreset === 'max-height') {
-        height = '100vh';
-        if (detectedDimensions) {
-          // Calculate proportional width based on detected dimensions
-          // Try to get actual container height, fallback to reasonable estimate
-          let maxContainerHeight;
-          try {
-            // Look for the actual container element (max-w-7xl mx-auto)
-            const container = document.querySelector('.max-w-7xl');
-            if (container) {
-              maxContainerHeight = container.clientHeight;
-            } else {
-              // Fallback: estimate based on screen size
-              maxContainerHeight = Math.min(800, window.innerHeight - 300);
-            }
-          } catch (error) {
-            // Fallback: use reasonable estimate
-            maxContainerHeight = Math.min(800, window.innerHeight - 300);
-          }
-          
-          const calculated = calculateProportionalDimensions(detectedDimensions, undefined, maxContainerHeight);
-          width = `${calculated.width}px`;
-          console.log('📏 Max height - container height:', maxContainerHeight, 'calculated width:', calculated.width);
-          console.log('📏 Original dimensions:', detectedDimensions, 'Ratio:', detectedDimensions.width / detectedDimensions.height);
-        } else {
-          message.error('Không thể tính toán kích thước. Vui lòng chọn "Kích thước tùy chỉnh"');
-          return;
-        }
-      } else if (sizePreset === 'custom') {
-        // Use form values for custom size
-        width = values.width || '100%';
-        height = values.height || '600px';
-      } else {
-        // Default fallback
-        width = '100%';
-        height = '600px';
-      }
+      // Use form values for dimensions
+      const width = values.width || '100%';
+      const height = values.height || '600px';
       
       console.log('Final dimensions:', { width, height });
       
@@ -291,7 +165,6 @@ const DashboardPage: React.FC = () => {
 
       setIsConfigModalVisible(false);
       form.resetFields();
-      setSizePreset('max-width');
       setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
     } catch (error) {
       console.error('Validation failed:', error);
@@ -653,106 +526,30 @@ const DashboardPage: React.FC = () => {
              {/* Common Configuration */}
              <Divider>Cài đặt hiển thị</Divider>
              
-             <Form.Item label="Kích thước hiển thị">
-               <Space direction="vertical" style={{ width: '100%' }}>
-                 <Space wrap>
-                   <Button
-                     type={sizePreset === 'max-width' ? 'primary' : 'default'}
-                     icon={<ColumnWidthOutlined />}
-                     loading={isDetectingDimensions && sizePreset === 'max-width'}
-                     onClick={async () => {
-                       await handleDimensionDetection('max-width');
-                       if (sizePreset === 'max-width') {
-                         form.setFieldsValue({ width: '100%', height: 'auto' });
-                       }
-                     }}
-                   >
-                     Chiều ngang tối đa + Chiều cao tự động
-                   </Button>
-                   <Button
-                     type={sizePreset === 'max-height' ? 'primary' : 'default'}
-                     icon={<ColumnHeightOutlined />}
-                     loading={isDetectingDimensions && sizePreset === 'max-height'}
-                     onClick={async () => {
-                       await handleDimensionDetection('max-height');
-                       if (sizePreset === 'max-height') {
-                         form.setFieldsValue({ width: 'auto', height: '100vh' });
-                       }
-                     }}
-                   >
-                     Chiều cao tối đa + Chiều ngang tự động
-                   </Button>
-                   <Button
-                     type={sizePreset === 'custom' ? 'primary' : 'default'}
-                     icon={<EditOutlined />}
-                     onClick={() => setSizePreset('custom')}
-                   >
-                     Kích thước tùy chỉnh (px)
-                   </Button>
-                 </Space>
-                 
-                 {sizePreset === 'custom' && (
-                   <Row gutter={16}>
-                     <Col span={12}>
-                       <Form.Item
-                         name="width"
-                         label="Chiều ngang"
-                         rules={[{ required: true, message: 'Vui lòng nhập chiều ngang' }]}
-                       >
-                         <Input placeholder="100% hoặc 800px" />
-                       </Form.Item>
-                     </Col>
-                     <Col span={12}>
-                       <Form.Item
-                         name="height"
-                         label="Height"
-                         rules={[{ required: true, message: 'Please enter height' }]}
-                       >
-                         <Input placeholder="600px or 80vh or auto" />
-                       </Form.Item>
-                     </Col>
-                   </Row>
-                 )}
-                 
-                 {/* Dimension Detection Status */}
-                 {(sizePreset === 'max-width' || sizePreset === 'max-height') && (
-                   <div className={`mt-2 p-3 rounded border ${
-                     dimensionDetectionError 
-                       ? 'bg-red-50 border-red-200' 
-                       : isDetectingDimensions 
-                         ? 'bg-blue-50 border-blue-200' 
-                         : detectedDimensions 
-                           ? 'bg-green-50 border-green-200'
-                           : 'bg-yellow-50 border-yellow-200'
-                   }`}>
-                     {isDetectingDimensions ? (
-                       <Space>
-                         <Spin size="small" />
-                         <Text className="text-blue-700">Đang phát hiện kích thước dashboard...</Text>
-                       </Space>
-                     ) : dimensionDetectionError ? (
-                       <Text className="text-red-700">
-                         ❌ {dimensionDetectionError}
-                       </Text>
-                     ) : detectedDimensions ? (
-                       <Text className="text-green-700">
-                         ✅ Đã phát hiện: <strong>{detectedDimensions.width}px × {detectedDimensions.height}px</strong>
-                         {sizePreset === 'max-width' && (
-                           <span> → Sẽ tính chiều cao tỷ lệ cho 100% chiều ngang</span>
-                         )}
-                         {sizePreset === 'max-height' && (
-                           <span> → Sẽ tính chiều ngang tỷ lệ cho 100vh chiều cao</span>
-                         )}
-                       </Text>
-                     ) : (
-                       <Text className="text-yellow-700">
-                         ⚠️ Vui lòng nhập URL dashboard trước khi chọn kích thước tự động
-                       </Text>
-                     )}
-                   </div>
-                 )}
-               </Space>
-             </Form.Item>
+            <Form.Item label="Kích thước hiển thị">
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="width"
+                    label="Chiều rộng"
+                    rules={[{ required: true, message: 'Vui lòng nhập chiều rộng' }]}
+                    help="Ví dụ: 100%, 800px, 50vw"
+                  >
+                    <Input placeholder="e.g., 100%, 800px, 50vw" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="height"
+                    label="Chiều cao"
+                    rules={[{ required: true, message: 'Vui lòng nhập chiều cao' }]}
+                    help="Ví dụ: 600px, 100vh, 50vh"
+                  >
+                    <Input placeholder="e.g., 600px, 100vh, 50vh" />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Form.Item>
 
             <Form.Item
               name="filters"
