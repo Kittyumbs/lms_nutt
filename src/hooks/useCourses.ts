@@ -175,7 +175,6 @@ export async function duplicateCourse(id: string): Promise<Course> {
       coverUrl: originalCourse.coverUrl,
       tags: originalCourse.tags,
       status: 'Draft', // Always start as draft
-      ownerUid: originalCourse.ownerUid,
     });
 
     // Duplicate modules and lessons
