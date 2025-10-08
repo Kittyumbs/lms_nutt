@@ -1,5 +1,5 @@
 import { PlusOutlined, EditOutlined, CopyOutlined, CheckOutlined, CloseOutlined, ReadOutlined } from '@ant-design/icons';
-import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag } from 'antd';
+import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ import CourseQuickView from './components/CourseQuickView';
 
 const { Search } = Input;
 const { Option } = Select;
+const { Title } = Typography;
 
 // Safe HTML renderer component for ReactQuill content
 const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ content, className }) => {
@@ -190,10 +191,10 @@ const CoursesPage: React.FC = () => {
 
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold flex items-center">
+        <Title level={2} className="!mb-1 flex items-center">
           <ReadOutlined className="mr-2 text-[#057EC8]" />
           Courses
-        </h2>
+        </Title>
         <Space>
           <RequireInstructor>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
