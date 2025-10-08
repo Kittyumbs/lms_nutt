@@ -329,16 +329,24 @@ const NotesCenterPage: React.FC = () => {
                     key="edit"
                     type="text"
                     icon={<EditOutlined />}
-                    onClick={() => handleEditNote(note)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditNote(note);
+                    }}
                     title="Edit note"
+                    size="small"
                   />,
                   <Button
                     key="pin"
                     type="text"
                     icon={note.pinned ? <PushpinFilled /> : <PushpinOutlined />}
-                    onClick={() => handleTogglePin(note.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTogglePin(note.id);
+                    }}
                     title={note.pinned ? 'Unpin note' : 'Pin note'}
                     style={{ color: note.pinned ? '#057EC8' : undefined }}
+                    size="small"
                   />,
                   <Popconfirm
                     key="delete"
@@ -353,6 +361,7 @@ const NotesCenterPage: React.FC = () => {
                       danger
                       icon={<DeleteOutlined />}
                       title="Delete note"
+                      size="small"
                     />
                   </Popconfirm>
                 ]}

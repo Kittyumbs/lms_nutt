@@ -24,6 +24,8 @@ import {
   SaveOutlined,
   EyeOutlined
 } from '@ant-design/icons';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useDebounce } from 'use-debounce';
@@ -32,6 +34,70 @@ import type { Note } from '../../../hooks/useNotes';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
+
+// Simple ReactQuill component that works directly with Ant Design Form
+const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) => void }> = ({ value, onChange }) => {
+  const [isInitialized, setIsInitialized] = React.useState(false);
+  
+  // Set initialized after a short delay to prevent initial onChange
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  const handleChange = (newValue: string) => {
+    // Only trigger onChange if it's not the initial render
+    if (isInitialized && onChange) {
+      onChange(newValue);
+    }
+  };
+  
+  const handleFocus = () => {
+    if (!isInitialized) {
+      setIsInitialized(true);
+    }
+  };
+  
+  return (
+    <ReactQuill
+      theme="snow"
+      value={value || ''}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      style={{ height: '200px', marginBottom: '50px' }}
+      modules={{
+        toolbar: [
+          [{ 'size': ['small', false, 'large', 'huge'] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'color': [] }, { 'background': [] }],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'align': [] }],
+          ['link'],
+          ['clean']
+        ],
+        clipboard: {
+          matchVisual: false,
+          allowed: {
+            tags: ['p', 'br', 'strong', 'em', 'u', 's', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'span'],
+            attributes: ['href', 'target', 'style', 'class']
+          }
+        },
+        history: {
+          delay: 2000,
+          maxStack: 500,
+          userOnly: true
+        }
+      }}
+      formats={[
+        'size', 'bold', 'italic', 'underline', 'strike',
+        'color', 'background', 'list', 'bullet', 'align', 'link'
+      ]}
+    />
+  );
+};
 
 interface NotesEditorProps {
   isOpen: boolean;
@@ -127,22 +193,6 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
     }
   }, [note?.id, onTogglePin]);
 
-  const insertMarkdown = useCallback((markdown: string) => {
-    const textarea = document.querySelector('.notes-editor-textarea textarea') as HTMLTextAreaElement;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = content.substring(start, end);
-      const newText = content.substring(0, start) + markdown + selectedText + content.substring(end);
-      setContent(newText);
-      
-      // Focus back to textarea after a short delay
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + markdown.length, start + markdown.length + selectedText.length);
-      }, 0);
-    }
-  }, [content]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { 
@@ -213,43 +263,9 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
           </div>
         </div>
 
-        {/* Toolbar */}
+        {/* Preview Toggle */}
         <div className="p-3 border-b border-gray-200 bg-white">
-          <div className="flex items-center justify-between">
-            <Space.Compact>
-              <Button
-                type="text"
-                icon={<BoldOutlined />}
-                onClick={() => insertMarkdown('**')}
-                title="Bold"
-              />
-              <Button
-                type="text"
-                icon={<ItalicOutlined />}
-                onClick={() => insertMarkdown('*')}
-                title="Italic"
-              />
-              <Button
-                type="text"
-                icon={<UnorderedListOutlined />}
-                onClick={() => insertMarkdown('- ')}
-                title="Bullet List"
-              />
-              <Button
-                type="text"
-                icon={<LinkOutlined />}
-                onClick={() => insertMarkdown('[link](url)')}
-                title="Link"
-              />
-              <Button
-                type="text"
-                onClick={() => insertMarkdown('# ')}
-                title="Heading"
-              >
-                H1
-              </Button>
-            </Space.Compact>
-            
+          <div className="flex items-center justify-end">
             <Button
               type={showPreview ? 'primary' : 'default'}
               icon={<EyeOutlined />}
@@ -274,19 +290,9 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
                 {getWordCount(content)} words
               </Text>
             </div>
-            <TextArea
-              className="notes-editor-textarea"
-              placeholder="Start writing your note in Markdown..."
+            <SimpleReactQuill
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              autoSize={{ minRows: 20 }}
-              style={{
-                border: 'none',
-                boxShadow: 'none',
-                fontSize: '14px',
-                lineHeight: '1.6',
-                resize: 'none'
-              }}
+              onChange={setContent}
             />
           </div>
 
