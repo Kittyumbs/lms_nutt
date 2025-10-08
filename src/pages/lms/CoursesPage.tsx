@@ -1,4 +1,4 @@
-import { PlusOutlined, EditOutlined, CopyOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, CopyOutlined, CheckOutlined, CloseOutlined, ReadOutlined } from '@ant-design/icons';
 import { Button, Input, Select, Segmented, Card, Space, Empty, Tooltip, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -190,7 +190,10 @@ const CoursesPage: React.FC = () => {
 
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Courses</h2>
+        <h2 className="text-xl font-semibold flex items-center">
+          <ReadOutlined className="mr-2 text-[#057EC8]" />
+          Courses
+        </h2>
         <Space>
           <RequireInstructor>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleNewCourse}>
