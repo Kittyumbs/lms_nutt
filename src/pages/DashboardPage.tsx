@@ -42,16 +42,31 @@ const DashboardPage: React.FC = () => {
   const formWidth = formValues?.width;
   const formHeight = formValues?.height;
 
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isConfigModalVisible) {
+      form.resetFields();
+      setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
+    }
+  }, [isConfigModalVisible, form]);
+
 
   const handleAddDashboard = (type?: 'powerbi' | 'looker') => {
+    console.log('Adding new dashboard, type:', type);
     setEditingDashboard(null);
     form.resetFields();
     setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
-    if (type) {
-      form.setFieldsValue({ type });
-    }
+    
     // Set default values for new dashboard
-    form.setFieldsValue({ width: '100%', height: '600px' });
+    const defaultData = {
+      type: type || 'powerbi',
+      width: '100%',
+      height: '600px',
+      filters: ''
+    };
+    
+    console.log('Setting default form data:', defaultData);
+    form.setFieldsValue(defaultData);
     setIsConfigModalVisible(true);
   };
 
@@ -79,8 +94,27 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleEditDashboard = (dashboard: DashboardConfig) => {
+    console.log('Editing dashboard:', dashboard);
     setEditingDashboard(dashboard);
-    form.setFieldsValue(dashboard);
+    
+    // Reset form first to clear any previous data
+    form.resetFields();
+    
+    // Set form values with proper mapping
+    const formData = {
+      name: dashboard.name,
+      type: dashboard.type,
+      embedUrl: dashboard.embedUrl,
+      accessToken: dashboard.accessToken || '',
+      reportId: dashboard.reportId || '',
+      pageId: dashboard.pageId || '',
+      width: dashboard.width,
+      height: dashboard.height,
+      filters: dashboard.filters || ''
+    };
+    
+    console.log('Setting form data:', formData);
+    form.setFieldsValue(formData);
     
     // Auto-validate URL when editing
     if (dashboard.embedUrl) {
