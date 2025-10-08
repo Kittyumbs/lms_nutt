@@ -49,6 +49,7 @@ const DashboardPage: React.FC = () => {
     if (!isConfigModalVisible) {
       form.resetFields();
       setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
+      setEditingDashboard(null);
     }
   }, [isConfigModalVisible, form]);
 
@@ -95,6 +96,26 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  // Separate function for display-only validation (used when editing)
+  const validateUrlForDisplay = (url: string, type: 'powerbi' | 'looker') => {
+    if (!url) {
+      setUrlValidation({ isValid: false, isPublic: false, isEmbed: false });
+      return;
+    }
+
+    if (type === 'powerbi') {
+      const isPublic = url.includes('app.powerbi.com/view');
+      const isEmbed = url.includes('app.powerbi.com/reportEmbed');
+      const isValid = isPublic || isEmbed;
+      
+      setUrlValidation({ isValid, isPublic, isEmbed });
+      // Don't set any form values - just validate for display
+    } else if (type === 'looker') {
+      const isLooker = url.includes('lookerstudio.google.com');
+      setUrlValidation({ isValid: isLooker, isPublic: false, isEmbed: isLooker });
+    }
+  };
+
   const handleEditDashboard = (dashboard: DashboardConfig) => {
     console.log('Editing dashboard:', dashboard);
     setEditingDashboard(dashboard);
@@ -121,9 +142,16 @@ const DashboardPage: React.FC = () => {
     setTimeout(() => {
       form.setFieldsValue(formData);
       
-      // Auto-validate URL when editing (but don't override form values)
+      // Debug: Check if form values are set correctly
+      setTimeout(() => {
+        const currentValues = form.getFieldsValue();
+        console.log('Form values after setFieldsValue:', currentValues);
+        console.log('Expected width/height:', { width: dashboard.width, height: dashboard.height });
+      }, 100);
+      
+      // Only validate URL for display purposes, don't override form values
       if (dashboard.embedUrl) {
-        validateUrl(dashboard.embedUrl, dashboard.type);
+        validateUrlForDisplay(dashboard.embedUrl, dashboard.type);
       }
     }, 0);
     
@@ -453,7 +481,7 @@ const DashboardPage: React.FC = () => {
                        >
                          <Input 
                            placeholder="https://app.powerbi.com/view?r=... or https://app.powerbi.com/reportEmbed" 
-                           onBlur={(e) => validateUrl(e.target.value, 'powerbi')}
+                           onBlur={(e) => editingDashboard ? validateUrlForDisplay(e.target.value, 'powerbi') : validateUrl(e.target.value, 'powerbi')}
                            onChange={() => {
                              form.validateFields(['embedUrl']);
                            }}
@@ -519,7 +547,7 @@ const DashboardPage: React.FC = () => {
                       >
                         <Input 
                           placeholder="https://lookerstudio.google.com/embed/reporting/... or https://lookerstudio.google.com/reporting/..." 
-                          onBlur={(e) => validateUrl(e.target.value, 'looker')}
+                          onBlur={(e) => editingDashboard ? validateUrlForDisplay(e.target.value, 'looker') : validateUrl(e.target.value, 'looker')}
                           onChange={() => {
                             form.validateFields(['embedUrl']);
                           }}
