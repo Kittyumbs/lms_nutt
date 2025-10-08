@@ -17,6 +17,7 @@ type GEvent = gapi.client.calendar.Event;
 
 interface TokenClient {
   requestAccessToken: (options?: { prompt?: string }) => void;
+  callback?: (resp: { access_token?: string; error?: string }) => void;
 }
 
 interface UserProfile {
