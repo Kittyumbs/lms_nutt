@@ -286,14 +286,29 @@ export function useNotes() {
   }, [notes]);
 
   // Clear all notes (for debugging)
-  const clearAllNotes = useCallback(() => {
+  const clearAllNotes = useCallback(async () => {
     console.log('🧹 Clearing all notes...');
-    if (user?.uid) {
-      const storageKey = `notes:${user.uid}`;
-      localStorage.removeItem(storageKey);
-      console.log('✅ localStorage cleared');
+    if (!user?.uid) return;
+    
+    try {
+      setLoading(true);
+      
+      // Delete all notes from Firestore
+      const notesRef = collection(db, 'notes');
+      const q = query(notesRef, where('uid', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      
+      const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      
+      console.log('✅ All notes deleted from Firestore');
+      setNotes([]);
+    } catch (error) {
+      console.error('❌ Error clearing notes:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
-    setNotes([]);
   }, [user?.uid]);
 
   return {

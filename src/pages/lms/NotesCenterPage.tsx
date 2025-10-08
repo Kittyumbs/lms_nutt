@@ -208,8 +208,15 @@ const NotesCenterPage: React.FC = () => {
           </Button>
           <Popconfirm
             title="Clear all notes?"
-            description="This will delete all notes from localStorage. Are you sure?"
-            onConfirm={clearAllNotes}
+            description="This will delete all notes from the database. Are you sure?"
+            onConfirm={async () => {
+              try {
+                await clearAllNotes();
+                message.success('All notes cleared successfully');
+              } catch (error) {
+                message.error('Failed to clear notes');
+              }
+            }}
             okText="Clear All"
             cancelText="Cancel"
           >
@@ -287,52 +294,36 @@ const NotesCenterPage: React.FC = () => {
 
       {/* Notes Grid */}
       {filteredNotes.length === 0 ? (
-        <div className="text-center py-8">
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <div>
-                <div className="text-base font-medium mb-2">
-                  {searchText || selectedTag || showPinnedOnly
-                    ? 'No notes found' 
-                    : 'No notes yet'
-                  }
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <span>
+              {searchText || selectedTag || showPinnedOnly
+                ? 'No notes found' 
+                : 'No notes yet'
+              }
+              {!searchText && !selectedTag && !showPinnedOnly && (
+                <div className="mt-2">
+                  <Button type="link" onClick={handleNewNote}>Create a new note</Button>
                 </div>
-                <div className="text-gray-500 mb-4 text-sm">
-                  {searchText || selectedTag || showPinnedOnly
-                    ? 'Try adjusting your search or filters'
-                    : 'Create your first note to get started'
-                  }
-                </div>
-                {!searchText && !selectedTag && !showPinnedOnly && (
-                  <Button 
-                    type="primary" 
-                    icon={<PlusOutlined />}
-                    onClick={handleNewNote}
-                    style={{ 
-                      backgroundColor: '#057EC8',
-                      borderColor: '#057EC8'
-                    }}
-                  >
-                    Create First Note
-                  </Button>
-                )}
-              </div>
-            }
-          />
-        </div>
+              )}
+            </span>
+          }
+        />
       ) : (
         <Row gutter={[16, 16]}>
           {filteredNotes.map((note) => (
             <Col xs={24} sm={12} lg={8} key={note.id}>
               <Card
                 hoverable
-                className="h-full transition-all duration-200 hover:shadow-lg"
+                className="h-full transition-all duration-200 hover:shadow-lg mb-4"
                 style={{
                   borderRadius: '8px',
-                  border: note.pinned ? '2px solid #77BEF0' : '1px solid rgba(0,0,0,0.08)'
+                  border: note.pinned ? '2px solid #77BEF0' : '1px solid rgba(0,0,0,0.08)',
+                  backgroundColor: '#FFFACD', // Light yellow background like a sticky note
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                 }}
-                bodyStyle={{ padding: '12px' }}
+                bodyStyle={{ padding: '16px' }}
                 actions={[
                   <Button
                     key="edit"
@@ -368,15 +359,11 @@ const NotesCenterPage: React.FC = () => {
               >
                 <div className="h-full flex flex-col">
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <Title level={5} className="!mb-1 !text-sm line-clamp-2">
+                      <Title level={5} className="!mb-2 !text-sm line-clamp-2">
                         {getNoteTitle(note)}
                       </Title>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <ClockCircleOutlined className="mr-1" />
-                        {formatDate(note.updatedAt)}
-                      </div>
                     </div>
                     {note.pinned && (
                       <Badge 
