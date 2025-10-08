@@ -136,21 +136,19 @@ const DashboardViewerPage: React.FC = () => {
             </Button>
             
             {/* Dashboard Switch Button - Next to Back button */}
-            {allDashboards.length > 1 && (
-              <div className="flex items-center space-x-2 flex-1">
-                <Text className="text-gray-600 whitespace-nowrap">Switch Dashboard:</Text>
-                <Select
-                  value={dashboard?.id}
-                  onChange={handleDashboardSwitch}
-                  style={{ width: '100%' }}
-                  suffixIcon={<SwapOutlined />}
-                  options={allDashboards.map(d => ({
-                    value: d.id,
-                    label: d.name
-                  }))}
-                />
-              </div>
-            )}
+            <div className="flex items-center space-x-2 flex-1">
+              <Text className="text-gray-600 whitespace-nowrap">Switch Dashboard:</Text>
+              <Select
+                value={dashboard?.id}
+                onChange={handleDashboardSwitch}
+                style={{ width: '100%' }}
+                suffixIcon={<SwapOutlined />}
+                options={allDashboards.map(d => ({
+                  value: d.id,
+                  label: d.name
+                }))}
+              />
+            </div>
           </div>
         </div>
 
