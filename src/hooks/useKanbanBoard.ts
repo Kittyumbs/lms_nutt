@@ -1,18 +1,23 @@
 import { collection, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy, setDoc, getDocs, where, documentId, deleteField, serverTimestamp, type UpdateData } from "firebase/firestore"; // Import deleteField
 import { useState, useRef, useCallback, useEffect } from "react";
 
+import useAuth from "../auth/useAuth";
 import { db } from "../lib/firebase";
 import { initialColumns } from "../utils/constants";
 
 import type { Column, Ticket, TicketFormData } from "../types/kanban";
 export const useKanbanBoard = () => {
+  const { user } = useAuth();
   const [columns, setColumns] = useState<Column[]>(initialColumns);
   const existingTicketIds = useRef<Set<string>>(new Set()); // Store existing 5-digit IDs
 
   useEffect(() => {
-    // Query to fetch tickets that are not archived, ordered by creation date
+    if (!user?.uid) return;
+    
+    // Query to fetch tickets that are not archived, ordered by creation date, filtered by user
     const q = query(
       collection(db, "tickets"),
+      where("uid", "==", user.uid),
       where("archived", "==", false), // Filter out archived tickets
       orderBy("createdAt", "asc")
     );
@@ -79,11 +84,16 @@ export const useKanbanBoard = () => {
   }, []);
 
   const addTicket = useCallback(async (ticketData: TicketFormData) => {
+    if (!user?.uid) {
+      throw new Error('User not authenticated');
+    }
+    
     const newId = await generateUnique5DigitId(); // Generate custom unique ID
 
     const newTicket: Ticket = { // Change Omit<Ticket, "id"> to Ticket
       id: newId, // Assign the custom ID
       ...ticketData,
+      uid: user.uid, // Add user ID
       createdAt: new Date(),
       urls: ticketData.urls || [],
       deadline: ticketData.deadline ? new Date(ticketData.deadline) : undefined,
@@ -93,7 +103,7 @@ export const useKanbanBoard = () => {
     };
 
     await setDoc(doc(db, "tickets", newId), newTicket); // Use setDoc with custom ID
-  }, [generateUnique5DigitId]);
+  }, [generateUnique5DigitId, user?.uid]);
 
   const updateTicket = useCallback(async (ticketId: string, updatedData: Partial<Ticket>) => {
     const ticketRef = doc(db, "tickets", ticketId);

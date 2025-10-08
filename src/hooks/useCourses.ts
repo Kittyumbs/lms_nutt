@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { useState, useEffect, useCallback } from 'react';
 
+import useAuth from '../auth/useAuth';
 import { db } from '../lib/firebase'; // Import the Firestore instance
 
 export type CourseStatus = 'Draft' | 'Published' | 'Archived';
@@ -35,6 +36,7 @@ const COURSES_COLLECTION = 'courses';
 export function useCourses(params: { search?: string; tags?: string[]; status?: 'All' | CourseStatus; pageSize?: number }): {
   items: Course[]; loading: boolean; hasMore: boolean; loadMore: () => void; refresh: () => void;
 } {
+  const { user } = useAuth();
   const { search, tags, status } = params;
   const [items, setItems] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,10 +48,20 @@ export function useCourses(params: { search?: string; tags?: string[]; status?: 
   }, []);
 
   useEffect(() => {
+    if (!user?.uid) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     
-    // Build query
-    let q = query(collection(db, COURSES_COLLECTION), orderBy('createdAt', 'desc'));
+    // Build query - filter by ownerUid first
+    let q = query(
+      collection(db, COURSES_COLLECTION), 
+      where('ownerUid', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
     
     // Apply filters
     if (status && status !== 'All') {
@@ -106,10 +118,17 @@ export function useCourses(params: { search?: string; tags?: string[]; status?: 
   return { items, loading, hasMore, loadMore, refresh };
 }
 
-export async function createCourse(input: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>): Promise<Course> {
+export async function createCourse(input: Omit<Course, 'id' | 'createdAt' | 'updatedAt' | 'ownerUid'>): Promise<Course> {
   try {
+    // Get current user
+    const { user } = useAuth();
+    if (!user?.uid) {
+      throw new Error('User not authenticated');
+    }
+
     const docRef = await addDoc(collection(db, COURSES_COLLECTION), {
       ...input,
+      ownerUid: user.uid,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -117,6 +136,7 @@ export async function createCourse(input: Omit<Course, 'id' | 'createdAt' | 'upd
     return {
       id: docRef.id,
       ...input,
+      ownerUid: user.uid,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };

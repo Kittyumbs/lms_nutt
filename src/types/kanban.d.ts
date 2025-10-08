@@ -2,6 +2,7 @@ export type IssueType = "Task" | "Bug" | "Story";
 
 export interface Ticket {
   id: string;
+  uid: string; // User ID who created the ticket
   title: string;
   description: string;
   priority: string;

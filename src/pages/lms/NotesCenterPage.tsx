@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import { useDebounce } from 'use-debounce';
 
+import useAuth from '../../auth/useAuth';
 import { useNotes, type Note } from '../../hooks/useNotes';
 import { useSidebar } from '../../hooks/useSidebar';
 import NotesEditor from './components/NotesEditor';
@@ -38,8 +39,24 @@ const { Search } = Input;
 type SortOption = 'newest' | 'oldest' | 'alphabetical';
 
 const NotesCenterPage: React.FC = () => {
+  const { user, signInWithGoogle } = useAuth();
   const { list, upsert, remove, togglePin, getAllTags, getStats, clearAllNotes } = useNotes();
   const { isOpen: sidebarOpen } = useSidebar();
+
+  // Authentication guard
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Login Required</h2>
+          <p className="text-gray-600 mb-6">Please sign in to access your notes</p>
+          <Button type="primary" size="large" onClick={signInWithGoogle}>
+            Sign in with Google
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   // State
   const [searchText, setSearchText] = useState('');

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col } from 'antd';
 import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import useAuth from '../auth/useAuth';
 import { useIframeHeight } from '../hooks/useIframeHeight';
 import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
 import { useSidebar } from '../hooks/useSidebar';
@@ -13,6 +14,7 @@ const { Title, Text } = Typography;
 // DashboardConfig interface moved to useDashboards hook
 
 const DashboardPage: React.FC = () => {
+  const { user, signInWithGoogle } = useAuth();
   const [form] = Form.useForm();
   const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState<DashboardConfig | null>(null);
@@ -24,6 +26,21 @@ const DashboardPage: React.FC = () => {
   }>({ isValid: false, isPublic: false, isEmbed: false });
   const navigate = useNavigate();
   const { isOpen: sidebarOpen } = useSidebar();
+
+  // Authentication guard
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Login Required</h2>
+          <p className="text-gray-600 mb-6">Please sign in to access your dashboards</p>
+          <Button type="primary" size="large" onClick={signInWithGoogle}>
+            Sign in with Google
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   // Use Firestore hook
   const { 
