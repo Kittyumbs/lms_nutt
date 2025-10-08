@@ -44,13 +44,13 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
     console.log('🔍 CalendarEventsDrawer - loadEvents called');
     if (!isGapiLoaded) {
       console.log('🔍 Google API not loaded');
-      message.warning('Google API chưa sẵn sàng.');
+      message.warning('Google API is not ready.');
       return;
     }
     
     if (!isSignedIn) {
       console.log('🔍 Not signed in, showing warning');
-      message.warning('Vui lòng đăng nhập Google Calendar từ sidebar để xem lịch.');
+      message.warning('Please sign in to Google Calendar from the sidebar to view calendar events.');
       return;
     }
     
@@ -60,10 +60,10 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
       const fetched = await fetchCalendarEvents();
       const valid = (fetched ?? []).filter(e => !!(e.id && e.summary));
       setEvents(valid as GoogleCalendarEvent[]);
-      void message.success('Đã tải sự kiện lịch.');
+      void message.success('Successfully loaded calendar events.');
     } catch (err) {
       console.error('Error fetching calendar events:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Không thể tải sự kiện lịch.';
+      const errorMessage = err instanceof Error ? err.message : 'Unable to load calendar events.';
       void message.error(error || errorMessage);
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
       >
         <div style={{ textAlign: 'center', padding: '20px' }}>
           <Spin size="large" />
-          <p style={{ marginTop: 10 }}>Đang kiểm tra trạng thái đăng nhập...</p>
+          <p style={{ marginTop: 10 }}>Checking login status...</p>
         </div>
       </Drawer>
     );
@@ -155,7 +155,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
 
   return (
     <Drawer
-      title="Sự kiện Google Calendar"
+      title="Google Calendar Events"
       placement="right"
       width="33vw"
       open={isOpen}
@@ -167,14 +167,14 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
           loading={loading}
           disabled={!isGapiLoaded || !isSignedIn}
         >
-          Làm mới
+          Refresh
         </Button>
       }
     >
       {loading ? (
         <div style={{ textAlign: 'center', padding: '20px' }}>
           <Spin size="large" />
-          <p style={{ marginTop: 10 }}>Đang tải sự kiện...</p>
+          <p style={{ marginTop: 10 }}>Loading calendar events...</p>
         </div>
       ) : (
         <List
@@ -185,16 +185,16 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
             <List.Item
               actions={[
                 event.htmlLink ? (
-                  <a key="view" href={event.htmlLink} target="_blank" rel="noreferrer">Xem trên Google Calendar</a>
+                  <a key="view" href={event.htmlLink} target="_blank" rel="noreferrer">View on Google Calendar</a>
                 ) : null,
               ]}
             >
               <List.Item.Meta
                 avatar={<Avatar icon={<UserOutlined />} />}
                 title={event.htmlLink ? (
-                  <a href={event.htmlLink} target="_blank" rel="noreferrer">{event.summary || 'Không có tiêu đề'}</a>
+                  <a href={event.htmlLink} target="_blank" rel="noreferrer">{event.summary || 'No title'}</a>
                 ) : (
-                  event.summary || 'Không có tiêu đề'
+                  event.summary || 'No title'
                 )}
                 description={
                   <Space direction="vertical" size={4}>
@@ -215,7 +215,7 @@ const CalendarEventsDrawer: React.FC<CalendarEventsDrawerProps> = ({
                               <List.Item.Meta
                                 avatar={<Avatar size="small" icon={<UserOutlined />} />}
                                 title={attendee.email || 'Không rõ'}
-                                description={attendee.responseStatus ? getAttendeeStatusTag(attendee.responseStatus) : <Tag>Không rõ</Tag>}
+                                description={attendee.responseStatus ? getAttendeeStatusTag(attendee.responseStatus) : <Tag>Unknown</Tag>}
                               />
                             </List.Item>
                           )}
