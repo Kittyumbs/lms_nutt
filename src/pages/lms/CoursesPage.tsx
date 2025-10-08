@@ -7,6 +7,7 @@ import { RequireInstructor } from '../../auth/guards';
 import useAuth from '../../auth/useAuth';
 import useRole from '../../auth/useRole';
 import { useCourses, duplicateCourse, setCourseStatus, type Course, type CourseStatus } from '../../hooks/useCourses';
+import { useSidebar } from '../../hooks/useSidebar';
 import { PageSEO } from '../../utils/seo';
 
 import CourseFormDrawer from './components/CourseFormDrawer';
@@ -48,6 +49,7 @@ const SafeHTMLRenderer: React.FC<{ content: string; className?: string }> = ({ c
 const CoursesPage: React.FC = () => {
   const { user } = useAuth();
   const { role } = useRole();
+  const { isOpen: sidebarOpen } = useSidebar();
 
   // Check permissions
   // const canSeeActions = role === 'instructor' || role === 'admin';
@@ -186,7 +188,7 @@ const CoursesPage: React.FC = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-7xl mx-auto px-6'} py-4`}>
       <PageSEO title="Courses" description="Manage your courses" />
 
       {/* Header */}

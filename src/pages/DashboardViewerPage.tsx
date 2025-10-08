@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Typography, Spin, Alert, Select, Space } from 'antd';
 import { ArrowLeftOutlined, SwapOutlined } from '@ant-design/icons';
 import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
+import { useSidebar } from '../hooks/useSidebar';
 
 const { Title, Text } = Typography;
 
@@ -16,6 +17,7 @@ const DashboardViewerPage: React.FC = () => {
   
   // Use Firestore hook
   const { dashboards: allDashboards, loading, error: dashboardsError } = useDashboards();
+  const { isOpen: sidebarOpen } = useSidebar();
   // Removed fullscreen state - BI has built-in fullscreen
 
   useEffect(() => {
@@ -123,7 +125,7 @@ const DashboardViewerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-2">
+      <div className={`${sidebarOpen ? 'w-full px-2' : 'max-w-7xl mx-auto px-2'} py-2`}>
         {/* Header */}
         <div className="bg-white shadow-sm p-4 rounded-lg mb-4">
           <div className="flex items-center space-x-4">

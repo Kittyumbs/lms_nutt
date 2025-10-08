@@ -29,6 +29,7 @@ import {
 import { useDebounce } from 'use-debounce';
 
 import { useNotes, type Note } from '../../hooks/useNotes';
+import { useSidebar } from '../../hooks/useSidebar';
 import NotesEditor from './components/NotesEditor';
 
 const { Title, Text } = Typography;
@@ -38,6 +39,7 @@ type SortOption = 'newest' | 'oldest' | 'alphabetical';
 
 const NotesCenterPage: React.FC = () => {
   const { list, upsert, remove, togglePin, getAllTags, getStats, clearAllNotes } = useNotes();
+  const { isOpen: sidebarOpen } = useSidebar();
   
   // State
   const [searchText, setSearchText] = useState('');
@@ -180,7 +182,7 @@ const NotesCenterPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-7xl mx-auto px-6'} py-4`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>

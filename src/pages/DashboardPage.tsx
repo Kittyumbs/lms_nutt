@@ -4,6 +4,7 @@ import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, BarChartOut
 import { useNavigate } from 'react-router-dom';
 import { useIframeHeight } from '../hooks/useIframeHeight';
 import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
+import { useSidebar } from '../hooks/useSidebar';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -22,6 +23,7 @@ const DashboardPage: React.FC = () => {
     isEmbed: boolean;
   }>({ isValid: false, isPublic: false, isEmbed: false });
   const navigate = useNavigate();
+  const { isOpen: sidebarOpen } = useSidebar();
   
   // Use Firestore hook
   const { 
@@ -249,8 +251,8 @@ const DashboardPage: React.FC = () => {
   const lookerDashboards = getDashboardsByType('looker');
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-7xl mx-auto px-6'} py-6`}>
         <div className="mb-6">
           <Title level={2}>Business Intelligence Dashboard</Title>
           <Text type="secondary">

@@ -7,6 +7,7 @@ import useAuth from '../../auth/useAuth';
 import useRole from '../../auth/useRole';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
 import { useEnrollment } from '../../hooks/useEnrollment';
+import { useSidebar } from '../../hooks/useSidebar';
 import { PageSEO } from '../../utils/seo';
 
 const { Panel } = Collapse;
@@ -69,6 +70,7 @@ export default function CourseDetailPage() {
   const { role } = useRole();
   const { course, modules, lessons, loading, error } = useCourseDetail(cid || '');
   const { enrolled, enroll } = useEnrollment(cid || '');
+  const { isOpen: sidebarOpen } = useSidebar();
 
   const firstLessonId = lessons.length > 0 ? lessons[0]?.id : undefined;
 
@@ -84,7 +86,7 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-4">
+      <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-5xl mx-auto px-6'} py-4`}>
         <Skeleton active />
         <Skeleton active />
         <Skeleton active />
@@ -94,7 +96,7 @@ export default function CourseDetailPage() {
 
   if (error || !course) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-4">
+      <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-5xl mx-auto px-6'} py-4`}>
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
@@ -111,7 +113,7 @@ export default function CourseDetailPage() {
     <>
       <PageSEO title={course.title} description={course.desc || 'Course details'} />
 
-      <div className="max-w-5xl mx-auto px-6 py-4">
+      <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-5xl mx-auto px-6'} py-4`}>
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
           <Breadcrumb.Item>
