@@ -67,7 +67,7 @@ const SimpleReactQuill: React.FC<{ value?: string; onChange?: (value: string) =>
       value={value || ''}
       onChange={handleChange}
       onFocus={handleFocus}
-      style={{ height: '200px', marginBottom: '50px' }}
+      style={{ height: 'calc(100vh - 400px)', minHeight: '500px' }}
       modules={{
         toolbar: [
           [{ 'size': ['small', false, 'large', 'huge'] }],
@@ -235,7 +235,7 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
       open={isOpen}
       onClose={onClose}
       styles={{
-        body: { padding: 0 }
+        body: { padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }
       }}
     >
       <div className="h-full flex flex-col">
@@ -305,7 +305,7 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
                   {getWordCount(content)} words
                 </Text>
               </div>
-              <div className="prose prose-sm max-w-none overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+              <div className="prose prose-sm max-w-none overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
                 {content ? (
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}

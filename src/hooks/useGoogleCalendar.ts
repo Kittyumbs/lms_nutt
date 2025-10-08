@@ -9,8 +9,8 @@ const API_KEY = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY as string;
 const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
 const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
-// Token refresh interval (check every 45 minutes)
-const TOKEN_REFRESH_INTERVAL = 45 * 60 * 1000; // 45 minutes
+// Token refresh interval (check every 30 minutes)
+const TOKEN_REFRESH_INTERVAL = 30 * 60 * 1000;
 const TOKEN_EXPIRY_BUFFER = 5 * 60 * 1000; // 5 minutes buffer
 
 type GEvent = gapi.client.calendar.Event;
@@ -48,13 +48,46 @@ export function useGoogleCalendar() {
     try {
       console.log('🔄 Refreshing Google Calendar token...');
       return new Promise<boolean>((resolve) => {
+        // Set up a one-time listener for the callback
+        const originalCallback = tokenClient.callback;
+        
+        tokenClient.callback = (resp: { access_token?: string; error?: string }) => {
+          // Restore original callback
+          tokenClient.callback = originalCallback;
+          
+          if (resp?.access_token) {
+            console.log('✅ Token refreshed successfully');
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            window.gapi.client.setToken({ access_token: resp.access_token });
+            
+            // Save new token to localStorage
+            const tokenData = {
+              access_token: resp.access_token,
+              expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours from now
+            };
+            localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
+            
+            // Trigger storage event to notify other components
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: 'google_calendar_token',
+              newValue: JSON.stringify(tokenData)
+            }));
+            
+            resolve(true);
+          } else {
+            console.log('❌ Token refresh failed:', resp?.error);
+            resolve(false);
+          }
+        };
+        
         tokenClient.requestAccessToken({ prompt: 'none' });
         
         // Set a timeout to resolve if no response
         setTimeout(() => {
           console.log('⏰ Token refresh timeout');
+          tokenClient.callback = originalCallback; // Restore original callback
           resolve(false);
-        }, 10000); // 10 second timeout
+        }, 15000); // 15 second timeout
       });
     } catch (error) {
       console.error('❌ Error refreshing token:', error);
@@ -140,7 +173,16 @@ export function useGoogleCalendar() {
       if (savedToken) {
         try {
           const tokenData = JSON.parse(savedToken);
-          if (isTokenExpired(tokenData)) {
+          const timeUntilExpiry = tokenData.expires_at - Date.now();
+          
+          // If token expires in less than 5 minutes, refresh it
+          if (timeUntilExpiry < TOKEN_EXPIRY_BUFFER && timeUntilExpiry > 0) {
+            console.log('🔄 Token expires soon, refreshing proactively...');
+            const success = await refreshToken();
+            if (!success) {
+              console.log('❌ Proactive token refresh failed, will retry later');
+            }
+          } else if (isTokenExpired(tokenData)) {
             console.log('🔄 Token expired, refreshing...');
             const success = await refreshToken();
             if (!success) {
@@ -239,7 +281,7 @@ export function useGoogleCalendar() {
                 // Save token to localStorage for persistence
                 const tokenData = {
                   access_token: resp.access_token,
-                  expires_at: Date.now() + (60 * 60 * 1000) // 1 hour from now
+                  expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours from now
                 };
                 localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
                 
