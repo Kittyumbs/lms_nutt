@@ -83,8 +83,8 @@ const DashboardPage: React.FC = () => {
       
       setUrlValidation({ isValid, isPublic, isEmbed });
       
-      // Auto-set size based on URL type
-      if (isPublic) {
+      // Only auto-set size for new dashboards, not when editing
+      if (isPublic && !editingDashboard) {
         form.setFieldsValue({ width: '100%', height: '600px' });
       }
     } else if (type === 'looker') {
@@ -114,12 +114,16 @@ const DashboardPage: React.FC = () => {
     };
     
     console.log('Setting form data:', formData);
-    form.setFieldsValue(formData);
     
-    // Auto-validate URL when editing
-    if (dashboard.embedUrl) {
-      validateUrl(dashboard.embedUrl, dashboard.type);
-    }
+    // Use setTimeout to ensure form is set after reset
+    setTimeout(() => {
+      form.setFieldsValue(formData);
+      
+      // Auto-validate URL when editing (but don't override form values)
+      if (dashboard.embedUrl) {
+        validateUrl(dashboard.embedUrl, dashboard.type);
+      }
+    }, 0);
     
     setIsConfigModalVisible(true);
   };
