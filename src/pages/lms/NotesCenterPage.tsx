@@ -316,7 +316,7 @@ const NotesCenterPage: React.FC = () => {
             <Col xs={24} sm={12} lg={8} key={note.id}>
               <Card
                 hoverable
-                className="h-full transition-all duration-200 hover:shadow-lg mb-4"
+                className="h-full transition-all duration-200 hover:shadow-lg mb-4 group relative"
                 style={{
                   borderRadius: '8px',
                   border: note.pinned ? '2px solid #77BEF0' : '1px solid rgba(0,0,0,0.08)',
@@ -324,47 +324,6 @@ const NotesCenterPage: React.FC = () => {
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                 }}
                 bodyStyle={{ padding: '16px' }}
-                actions={[
-                  <Button
-                    key="edit"
-                    type="text"
-                    icon={<EditOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditNote(note);
-                    }}
-                    title="Edit note"
-                    size="small"
-                  />,
-                  <Button
-                    key="pin"
-                    type="text"
-                    icon={note.pinned ? <PushpinFilled /> : <PushpinOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTogglePin(note.id);
-                    }}
-                    title={note.pinned ? 'Unpin note' : 'Pin note'}
-                    style={{ color: note.pinned ? '#057EC8' : undefined }}
-                    size="small"
-                  />,
-                  <Popconfirm
-                    key="delete"
-                    title="Delete note?"
-                    description="Are you sure you want to delete this note?"
-                    onConfirm={() => handleDeleteNote(note.id)}
-                    okText="Delete"
-                    cancelText="Cancel"
-                  >
-                    <Button
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      title="Delete note"
-                      size="small"
-                    />
-                  </Popconfirm>
-                ]}
               >
                 <div className="h-full flex flex-col">
                   {/* Header */}
@@ -416,6 +375,51 @@ const NotesCenterPage: React.FC = () => {
                       )}
                     </div>
                   )}
+
+                  {/* Hover Actions */}
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-lg">
+                    <Space size="small">
+                      <Button
+                        type="text"
+                        icon={<EditOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditNote(note);
+                        }}
+                        title="Edit note"
+                        size="small"
+                        className="hover:bg-blue-50"
+                      />
+                      <Button
+                        type="text"
+                        icon={note.pinned ? <PushpinFilled /> : <PushpinOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTogglePin(note.id);
+                        }}
+                        title={note.pinned ? 'Unpin note' : 'Pin note'}
+                        style={{ color: note.pinned ? '#057EC8' : undefined }}
+                        size="small"
+                        className="hover:bg-blue-50"
+                      />
+                      <Popconfirm
+                        title="Delete note?"
+                        description="Are you sure you want to delete this note?"
+                        onConfirm={() => handleDeleteNote(note.id)}
+                        okText="Delete"
+                        cancelText="Cancel"
+                      >
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          title="Delete note"
+                          size="small"
+                          className="hover:bg-red-50"
+                        />
+                      </Popconfirm>
+                    </Space>
+                  </div>
                 </div>
               </Card>
             </Col>
