@@ -132,8 +132,7 @@ export default function Sidebar() {
                 style={{ 
                   maxWidth: '100%', 
                   maxHeight: '100%', 
-                  objectFit: 'contain',
-                  filter: 'brightness(0) invert(1)' // Make it white
+                  objectFit: 'contain'
                 }} 
               />
             </div>
@@ -153,8 +152,7 @@ export default function Sidebar() {
                 style={{ 
                   width: '24px', 
                   height: '24px', 
-                  objectFit: 'contain',
-                  filter: 'brightness(0) invert(1)' // Make it white
+                  objectFit: 'contain'
                 }} 
               />
             </div>
