@@ -6,6 +6,7 @@ import useAuth from '../auth/useAuth';
 import { useIframeHeight } from '../hooks/useIframeHeight';
 import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
 import { useSidebar } from '../hooks/useSidebar';
+import { PageSEO } from '../utils/seo';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -30,15 +31,18 @@ const DashboardPage: React.FC = () => {
   // Authentication guard
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Login Required</h2>
-          <p className="text-gray-600 mb-6">Please sign in to access your dashboards</p>
-          <Button type="primary" size="large" onClick={signInWithGoogle}>
-            Sign in with Google
-          </Button>
+      <>
+        <PageSEO title="Dashboard - Login Required" description="Please sign in to access your dashboards" />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Login Required</h2>
+            <p className="text-gray-600 mb-6">Please sign in to access your dashboards</p>
+            <Button type="primary" size="large" onClick={signInWithGoogle}>
+              Sign in with Google
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
   
@@ -296,8 +300,10 @@ const DashboardPage: React.FC = () => {
   const lookerDashboards = getDashboardsByType('looker');
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-7xl mx-auto px-6'} py-6`}>
+    <>
+      <PageSEO title="Dashboard" description="Manage your business intelligence dashboards" />
+      <div className="min-h-screen bg-gray-50">
+        <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-7xl mx-auto px-6'} py-6`}>
         <div className="mb-6">
           <Title level={2}>Business Intelligence Dashboard</Title>
           <Text type="secondary">
@@ -650,6 +656,7 @@ const DashboardPage: React.FC = () => {
         </Modal>
       </div>
     </div>
+    </>
   );
 };
 

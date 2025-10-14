@@ -31,6 +31,7 @@ import { useDebounce } from 'use-debounce';
 import useAuth from '../../auth/useAuth';
 import { useNotes, type Note } from '../../hooks/useNotes';
 import { useSidebar } from '../../hooks/useSidebar';
+import { PageSEO } from '../../utils/seo';
 import NotesEditor from './components/NotesEditor';
 
 const { Title, Text } = Typography;
@@ -46,15 +47,18 @@ const NotesCenterPage: React.FC = () => {
   // Authentication guard
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Login Required</h2>
-          <p className="text-gray-600 mb-6">Please sign in to access your notes</p>
-          <Button type="primary" size="large" onClick={signInWithGoogle}>
-            Sign in with Google
-          </Button>
+      <>
+        <PageSEO title="Notes - Login Required" description="Please sign in to access your notes" />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Login Required</h2>
+            <p className="text-gray-600 mb-6">Please sign in to access your notes</p>
+            <Button type="primary" size="large" onClick={signInWithGoogle}>
+              Sign in with Google
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
   
@@ -199,7 +203,9 @@ const NotesCenterPage: React.FC = () => {
   };
 
   return (
-    <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-7xl mx-auto px-6'} py-4`}>
+    <>
+      <PageSEO title="Notes" description="Manage your personal notes and documentation" />
+      <div className={`${sidebarOpen ? 'w-full px-6' : 'max-w-7xl mx-auto px-6'} py-4`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -454,6 +460,7 @@ const NotesCenterPage: React.FC = () => {
         onTogglePin={handleTogglePin}
       />
     </div>
+    </>
   );
 };
 
