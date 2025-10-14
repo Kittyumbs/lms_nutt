@@ -137,26 +137,6 @@ export default function Sidebar() {
               />
             </div>
           )}
-          {collapsed && (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              width: '100%',
-              height: '30px',
-              marginBottom: '8px'
-            }}>
-              <img 
-                src="/nuttency.png" 
-                alt="Nuttency" 
-                style={{ 
-                  width: '24px', 
-                  height: '24px', 
-                  objectFit: 'contain'
-                }} 
-              />
-            </div>
-          )}
           <button
             onClick={() => setCollapsed((v) => !v)}
             aria-label="Toggle sidebar"
