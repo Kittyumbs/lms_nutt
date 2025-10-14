@@ -9,9 +9,10 @@ const API_KEY = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY as string;
 const DISCOVERY = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
 const SCOPE     = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
-// Token refresh interval (check every 30 minutes)
-const TOKEN_REFRESH_INTERVAL = 30 * 60 * 1000;
-const TOKEN_EXPIRY_BUFFER = 5 * 60 * 1000; // 5 minutes buffer
+// Token refresh interval (check every 10 minutes for better reliability)
+const TOKEN_REFRESH_INTERVAL = 10 * 60 * 1000;
+const TOKEN_EXPIRY_BUFFER = 10 * 60 * 1000; // 10 minutes buffer for more safety
+const TOKEN_LIFETIME = 24 * 60 * 60 * 1000; // 24 hours
 
 type GEvent = gapi.client.calendar.Event;
 
@@ -39,7 +40,14 @@ export function useGoogleCalendar() {
   const isTokenExpired = useCallback((tokenData: any) => {
     if (!tokenData || !tokenData.expires_at) return true;
     const timeUntilExpiry = tokenData.expires_at - Date.now();
-    return timeUntilExpiry < TOKEN_EXPIRY_BUFFER; // Expired or expires within 5 minutes
+    return timeUntilExpiry < TOKEN_EXPIRY_BUFFER; // Expired or expires within 10 minutes
+  }, []);
+
+  // Check if token is valid (not expired)
+  const isTokenValid = useCallback((tokenData: any) => {
+    if (!tokenData || !tokenData.expires_at) return false;
+    const timeUntilExpiry = tokenData.expires_at - Date.now();
+    return timeUntilExpiry > 0;
   }, []);
 
   // Refresh token by requesting a new one
@@ -64,7 +72,7 @@ export function useGoogleCalendar() {
             // Save new token to localStorage
             const tokenData = {
               access_token: resp.access_token,
-              expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours from now
+              expires_at: Date.now() + TOKEN_LIFETIME // 24 hours from now
             };
             localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
             
@@ -174,17 +182,22 @@ export function useGoogleCalendar() {
       if (savedToken) {
         try {
           const tokenData = JSON.parse(savedToken);
-          const timeUntilExpiry = tokenData.expires_at - Date.now();
           
-          // If token expires in less than 5 minutes, refresh it
-          if (timeUntilExpiry < TOKEN_EXPIRY_BUFFER && timeUntilExpiry > 0) {
-            console.log('🔄 Token expires soon, refreshing proactively...');
-            const success = await refreshToken();
-            if (!success) {
-              console.log('❌ Proactive token refresh failed, will retry later');
+          // If token is valid, continue
+          if (isTokenValid(tokenData)) {
+            const timeUntilExpiry = tokenData.expires_at - Date.now();
+            const minutesUntilExpiry = Math.floor(timeUntilExpiry / (60 * 1000));
+            
+            // If token expires in less than 10 minutes, refresh it proactively
+            if (timeUntilExpiry < TOKEN_EXPIRY_BUFFER && timeUntilExpiry > 0) {
+              console.log(`🔄 Token expires in ${minutesUntilExpiry} minutes, refreshing proactively...`);
+              const success = await refreshToken();
+              if (!success) {
+                console.log('❌ Proactive token refresh failed, will retry later');
+              }
             }
           } else if (isTokenExpired(tokenData)) {
-            console.log('🔄 Token expired, refreshing...');
+            console.log('🔄 Token expired, attempting refresh...');
             const success = await refreshToken();
             if (!success) {
               console.log('❌ Token refresh failed, signing out');
@@ -193,12 +206,15 @@ export function useGoogleCalendar() {
           }
         } catch (error) {
           console.error('❌ Error checking token expiry:', error);
+          // If there's an error parsing token, remove it and sign out
+          localStorage.removeItem('google_calendar_token');
+          signOut();
         }
       }
     }, TOKEN_REFRESH_INTERVAL);
     
     setRefreshInterval(interval);
-  }, [refreshInterval, isTokenExpired, refreshToken, signOut]);
+  }, [refreshInterval, isTokenValid, isTokenExpired, refreshToken, signOut]);
 
   // Stop token refresh interval
   const stopTokenRefresh = useCallback(() => {
@@ -239,7 +255,7 @@ export function useGoogleCalendar() {
               const tokenData = JSON.parse(savedToken);
               
               // If token is still valid, restore it
-              if (!isTokenExpired(tokenData)) {
+              if (isTokenValid(tokenData)) {
                 console.log('✅ Restoring valid token from localStorage');
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                 window.gapi.client.setToken({ access_token: tokenData.access_token });
@@ -248,7 +264,7 @@ export function useGoogleCalendar() {
                 // Start token refresh interval
                 startTokenRefresh();
               } else {
-                console.log('❌ Token expired, removing from localStorage');
+                console.log('❌ Token expired or invalid, removing from localStorage');
                 localStorage.removeItem('google_calendar_token');
               }
             } catch (error) {
@@ -282,7 +298,7 @@ export function useGoogleCalendar() {
                 // Save token to localStorage for persistence
                 const tokenData = {
                   access_token: resp.access_token,
-                  expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours from now
+                  expires_at: Date.now() + TOKEN_LIFETIME // 24 hours from now
                 };
                 localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
                 
@@ -339,7 +355,7 @@ export function useGoogleCalendar() {
     };
   }, []);
 
-  // Optimized token synchronization - reduced polling frequency
+  // Simplified token status check - only on gapi load
   useEffect(() => {
     if (!isGapiLoaded) return;
     
@@ -350,9 +366,8 @@ export function useGoogleCalendar() {
         if (savedToken) {
           try {
             const tokenData = JSON.parse(savedToken);
-            const timeUntilExpiry = tokenData.expires_at - Date.now();
             
-            if (timeUntilExpiry > 0) {
+            if (isTokenValid(tokenData)) {
               // Token is still valid
               setIsSignedIn(true);
               setIsAuthLoading(false);
@@ -382,16 +397,9 @@ export function useGoogleCalendar() {
       }
     };
 
-    // Initial check
+    // Initial check only
     checkTokenStatus();
-    
-    // Reduced polling frequency from 200ms to 2000ms (2 seconds)
-    const intervalId = setInterval(checkTokenStatus, 2000);
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [isGapiLoaded]);
+  }, [isGapiLoaded, isTokenValid]);
 
   // Window event for additional synchronization - with proper cleanup
   useEffect(() => {
@@ -404,9 +412,8 @@ export function useGoogleCalendar() {
         if (newToken) {
           try {
             const tokenData = JSON.parse(newToken);
-            const timeUntilExpiry = tokenData.expires_at - Date.now();
             
-            if (timeUntilExpiry > 0) {
+            if (isTokenValid(tokenData)) {
               setIsSignedIn(true);
               // Restore token to gapi client
               // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -437,9 +444,8 @@ export function useGoogleCalendar() {
         if (savedToken) {
           try {
             const tokenData = JSON.parse(savedToken);
-            const timeUntilExpiry = tokenData.expires_at - Date.now();
             
-            if (timeUntilExpiry > 0) {
+            if (isTokenValid(tokenData)) {
               setIsSignedIn(true);
               return;
             } else {
@@ -518,9 +524,8 @@ export function useGoogleCalendar() {
     if (savedToken) {
       try {
         const tokenData = JSON.parse(savedToken);
-        const timeUntilExpiry = tokenData.expires_at - Date.now();
         
-        if (timeUntilExpiry > 0) {
+        if (isTokenValid(tokenData)) {
           // Token is still valid, restore it
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           window.gapi.client.setToken({ access_token: tokenData.access_token });
@@ -576,7 +581,7 @@ export function useGoogleCalendar() {
         reject(new Error("Authentication timed out."));
       }, 10000); // 10 seconds timeout
     });
-  }, [isSignedIn, tokenClient]);
+  }, [isSignedIn, tokenClient, isTokenValid]);
 
   const fetchCalendarEvents = useCallback(async (): Promise<GEvent[]> => {
     console.log('🔍 fetchCalendarEvents called');
