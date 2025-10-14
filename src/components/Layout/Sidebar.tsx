@@ -118,7 +118,47 @@ export default function Sidebar() {
             color: 'white',
           }}
         >
-          {!collapsed && <div style={{ fontWeight: 700, fontSize: '18px', letterSpacing: '0.5px' }}>Nuttency</div>}
+          {!collapsed && (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: '100%',
+              height: '40px'
+            }}>
+              <img 
+                src="/nuttency_home.png" 
+                alt="Nuttency Logo" 
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '100%', 
+                  objectFit: 'contain',
+                  filter: 'brightness(0) invert(1)' // Make it white
+                }} 
+              />
+            </div>
+          )}
+          {collapsed && (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: '100%',
+              height: '30px',
+              marginBottom: '8px'
+            }}>
+              <img 
+                src="/nuttency.png" 
+                alt="Nuttency" 
+                style={{ 
+                  width: '24px', 
+                  height: '24px', 
+                  objectFit: 'contain',
+                  filter: 'brightness(0) invert(1)' // Make it white
+                }} 
+              />
+            </div>
+          )}
           <button
             onClick={() => setCollapsed((v) => !v)}
             aria-label="Toggle sidebar"
