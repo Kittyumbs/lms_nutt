@@ -10,8 +10,10 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import React, { useEffect, useState, useMemo } from 'react';
+import useAuth from '../auth/useAuth';
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -31,6 +33,7 @@ type ResourceLink = {
   category?: string;
   isFavorite?: boolean;
   accessCount?: number;
+  uid: string;
 };
 
 function toFavicon(url: string) {
@@ -52,6 +55,7 @@ function toHostname(url: string) {
 }
 
 export default function UsefulDocsDrawer() {
+  const { user } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
   const [open, setOpen] = useState(false);
   const [links, setLinks] = useState<ResourceLink[]>([]);
@@ -64,14 +68,23 @@ export default function UsefulDocsDrawer() {
 
   // Load realtime list
   useEffect(() => {
-    const q = query(collection(db, 'usefulLinks'), orderBy('createdAt', 'desc'));
+    if (!user?.uid) {
+      setLinks([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'usefulLinks'), 
+      where('uid', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
     const unsub = onSnapshot(q, (snap) => {
       const items: ResourceLink[] = [];
       snap.forEach((d) => items.push({ id: d.id, ...(d.data() as Omit<ResourceLink, 'id'>) }));
       setLinks(items);
     });
     return () => unsub();
-  }, []);
+  }, [user?.uid]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -132,6 +145,11 @@ export default function UsefulDocsDrawer() {
   }, [links, filterCategory, searchText]);
 
   const onAdd = async () => {
+    if (!user?.uid) {
+      messageApi.error('Vui lòng đăng nhập để thêm liên kết');
+      return;
+    }
+
     try {
       setLoading(true);
       const values = await form.validateFields();
@@ -153,6 +171,7 @@ export default function UsefulDocsDrawer() {
       const docData: Omit<ResourceLink, 'id'> = {
         url,
         domain,
+        uid: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         accessCount: 0,
@@ -174,7 +193,15 @@ export default function UsefulDocsDrawer() {
   };
 
   const onDelete = async (id?: string) => {
-    if (!id) return;
+    if (!id || !user?.uid) return;
+    
+    // Find the link to check ownership
+    const link = links.find(l => l.id === id);
+    if (link && link.uid !== user.uid) {
+      messageApi.error('Bạn không có quyền xóa liên kết này');
+      return;
+    }
+    
     try {
       await deleteDoc(doc(db, 'usefulLinks', id));
       messageApi.success('Đã xoá');
@@ -193,7 +220,14 @@ export default function UsefulDocsDrawer() {
   };
 
   const onUpdate = async () => {
-    if (!editingLink?.id) return;
+    if (!editingLink?.id || !user?.uid) return;
+    
+    // Check if the link belongs to the current user
+    if (editingLink.uid !== user.uid) {
+      messageApi.error('Bạn không có quyền chỉnh sửa liên kết này');
+      return;
+    }
+    
     try {
       setLoading(true);
       const values = await editForm.validateFields();
@@ -220,7 +254,14 @@ export default function UsefulDocsDrawer() {
   };
 
   const onToggleFavorite = async (link: ResourceLink) => {
-    if (!link.id) return;
+    if (!link.id || !user?.uid) return;
+    
+    // Check if the link belongs to the current user
+    if (link.uid !== user.uid) {
+      messageApi.error('Bạn không có quyền thay đổi trạng thái yêu thích');
+      return;
+    }
+    
     try {
       await updateDoc(doc(db, 'usefulLinks', link.id), {
         isFavorite: !link.isFavorite,

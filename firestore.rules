@@ -52,5 +52,8 @@ service cloud.firestore {
     match /dashboards/{did} {
       allow read, create, update, delete: if authed() && resource.data.uid == userId();
     }
+    match /usefulLinks/{lid} {
+      allow read, create, update, delete: if authed() && resource.data.uid == userId();
+    }
   }
 }
