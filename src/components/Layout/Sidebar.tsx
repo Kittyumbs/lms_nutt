@@ -114,7 +114,7 @@ export default function Sidebar() {
             justifyContent: collapsed ? 'center' : 'space-between',
             padding: '16px 12px',
             borderBottom: '1px solid #e5e7eb',
-            background: 'linear-gradient(135deg, #1C6EA4 0%, #33A1E0 100%)', /* New gradient colors */
+            background: 'linear-gradient(135deg, #1CA7EC 0%, #7BD5F5 100%)', /* New gradient colors */
             color: 'white',
           }}
         >
