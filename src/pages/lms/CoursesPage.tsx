@@ -58,9 +58,6 @@ const CoursesPage: React.FC = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Login Required</h2>
           <p className="text-gray-600 mb-6">Please sign in to access your courses</p>
-          <Button type="primary" size="large" onClick={signInWithGoogle}>
-            Sign in with Google
-          </Button>
         </div>
       </div>
     );
