@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import { AuthProvider } from './auth/AuthProvider';
 import AppLayout from './components/Layout/AppLayout';
-import Catalog from './pages/lms/Catalog';
 import CourseDetailPage from './pages/lms/CourseDetailPage';
 import CourseEditorPage from './pages/lms/CourseEditorPage';
 import CoursesPage from './pages/lms/CoursesPage';
@@ -39,7 +38,6 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/lms/course/:cid" element={<CourseDetailPage />} />
             <Route path="/lms/course/:cid/edit" element={<CourseEditorPage />} />
             <Route path="/lms/course/learn/:cid/:lid" element={<LessonPlayerPage />} />
-            <Route path="/lms/catalog" element={<Catalog />} />
             <Route path="/lms/dashboard" element={<DashboardPage />} />
             <Route path="/lms/dashboard/view/:id" element={<DashboardViewerPage />} />
             <Route path="/lms/notes" element={<NotesCenterPage />} />
