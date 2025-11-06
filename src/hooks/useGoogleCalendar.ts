@@ -301,6 +301,8 @@ export function useGoogleCalendar() {
                   expires_at: Date.now() + TOKEN_LIFETIME // 24 hours from now
                 };
                 localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
+                // Mark that user previously connected successfully
+                localStorage.setItem('google_calendar_was_connected', 'true');
                 
                 // Start token refresh interval
                 startTokenRefresh();
@@ -318,6 +320,27 @@ export function useGoogleCalendar() {
             },
           });
           setTokenClient(tc as TokenClient);
+
+          // Attempt silent token fetch if user connected before and no valid token is present
+          try {
+            const wasConnected = localStorage.getItem('google_calendar_was_connected') === 'true';
+            const hasCurrentToken = !!window.gapi.client.getToken()?.access_token;
+            const saved = localStorage.getItem('google_calendar_token');
+            const savedValid = (() => {
+              try {
+                if (!saved) return false;
+                const data = JSON.parse(saved);
+                return !isTokenExpired(data);
+              } catch { return false; }
+            })();
+
+            if (wasConnected && !hasCurrentToken && !savedValid) {
+              console.log('🔐 Attempting silent Google token request (prompt: none)');
+              (tc as TokenClient).requestAccessToken({ prompt: 'none' });
+            }
+          } catch (e) {
+            console.warn('Silent token attempt failed to start:', e);
+          }
         } catch (e) {
           const errorMessage = e instanceof Error ? e.message : "Failed to init Google API client";
           setError(errorMessage);
