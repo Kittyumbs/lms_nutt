@@ -194,7 +194,7 @@ const DashboardPage: React.FC = () => {
 
   const handleViewDashboard = (dashboard: DashboardConfig) => {
     // Navigate to dashboard viewer page
-    navigate(`/lms/dashboard/view/${dashboard.id}`);
+    navigate(`/dashboard/view/${dashboard.id}`);
   };
 
   const handleSaveDashboard = async () => {

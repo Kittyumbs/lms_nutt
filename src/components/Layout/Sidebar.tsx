@@ -75,11 +75,11 @@ export default function Sidebar() {
     if (lastViewedDashboard) {
       // Navigate to the last viewed dashboard
       console.log('📍 Navigating to last viewed dashboard:', lastViewedDashboard);
-      navigate(`/lms/dashboard/view/${lastViewedDashboard}`);
+      navigate(`/dashboard/view/${lastViewedDashboard}`);
     } else {
       // Navigate to dashboard list
       console.log('📍 No last viewed dashboard, going to list');
-      navigate('/lms/dashboard');
+      navigate('/dashboard');
     }
   };
 
@@ -156,7 +156,7 @@ export default function Sidebar() {
         <nav style={{ padding: 8 }}>
           <div style={{ fontSize: 12, color: '#6b7280', padding: '6px 8px' }}>{collapsed ? 'M' : 'MAIN'}</div>
           <Item to="/taskmanage" label="TaskManage" collapsed={collapsed} icon={<CheckSquareOutlined />} />
-          <Item to="/lms/dashboard" label="Dashboard" collapsed={collapsed} icon={<BarChartOutlined />} onClick={handleDashboardClick} />
+          <Item to="/dashboard" label="Dashboard" collapsed={collapsed} icon={<BarChartOutlined />} onClick={handleDashboardClick} />
 
           <div style={{ fontSize: 12, color: '#6b7280', padding: '10px 8px 6px' }}>{collapsed ? 'L' : 'LMS'}</div>
           <Item to="/lms/courses" label="Courses" collapsed={collapsed} icon={<BookOutlined />} />

@@ -38,8 +38,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/lms/course/:cid" element={<CourseDetailPage />} />
             <Route path="/lms/course/:cid/edit" element={<CourseEditorPage />} />
             <Route path="/lms/course/learn/:cid/:lid" element={<LessonPlayerPage />} />
-            <Route path="/lms/dashboard" element={<DashboardPage />} />
-            <Route path="/lms/dashboard/view/:id" element={<DashboardViewerPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/view/:id" element={<DashboardViewerPage />} />
             <Route path="/lms/notes" element={<NotesCenterPage />} />
           </Route>
         </Routes>

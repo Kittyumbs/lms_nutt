@@ -79,12 +79,12 @@ const DashboardViewerPage: React.FC = () => {
   // Removed fullscreen handler - BI has built-in fullscreen
 
   const handleGoBack = () => {
-    navigate('/lms/dashboard');
+    navigate('/dashboard');
   };
 
   const handleDashboardSwitch = (newDashboardId: string) => {
     console.log('🔄 Switching to dashboard:', newDashboardId);
-    navigate(`/lms/dashboard/view/${newDashboardId}`);
+    navigate(`/dashboard/view/${newDashboardId}`);
   };
 
   if (loading) {
