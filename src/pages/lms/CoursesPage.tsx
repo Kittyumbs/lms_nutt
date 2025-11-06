@@ -51,7 +51,13 @@ const CoursesPage: React.FC = () => {
   const { role } = useRole();
   const { isOpen: sidebarOpen } = useSidebar();
 
-  // Authentication guard
+  // filters - MUST be called before any conditional returns
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'All' | CourseStatus>('All');
+
+  // Authentication guard - AFTER all hooks
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -65,12 +71,6 @@ const CoursesPage: React.FC = () => {
 
   // Check permissions
   // const canSeeActions = role === 'instructor' || role === 'admin';
-
-  // filters
-  const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [statusFilter, setStatusFilter] = useState<'All' | CourseStatus>('All');
 
   // For learners, default to 'Published' filter and disable other options
   useEffect(() => {

@@ -43,8 +43,19 @@ const NotesCenterPage: React.FC = () => {
   const { user, signInWithGoogle } = useAuth();
   const { list, upsert, remove, togglePin, getAllTags, getStats, clearAllNotes } = useNotes();
   const { isOpen: sidebarOpen } = useSidebar();
+  
+  // State - MUST be called before any conditional returns
+  const [searchText, setSearchText] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string | undefined>();
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  
+  // Debounced search - MUST be called before any conditional returns
+  const [debouncedSearch] = useDebounce(searchText, 300);
 
-  // Authentication guard
+  // Authentication guard - AFTER all hooks
   if (!user) {
     return (
       <>
@@ -58,17 +69,6 @@ const NotesCenterPage: React.FC = () => {
       </>
     );
   }
-  
-  // State
-  const [searchText, setSearchText] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string | undefined>();
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [showPinnedOnly, setShowPinnedOnly] = useState(false);
-  const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-
-  // Debounced search
-  const [debouncedSearch] = useDebounce(searchText, 300);
 
   // Get filtered and sorted notes
   const getFilteredNotes = useCallback(() => {

@@ -27,8 +27,19 @@ const DashboardPage: React.FC = () => {
   }>({ isValid: false, isPublic: false, isEmbed: false });
   const navigate = useNavigate();
   const { isOpen: sidebarOpen } = useSidebar();
+  
+  // Use Firestore hook - MUST be called before any conditional returns
+  const { 
+    dashboards, 
+    loading: dashboardsLoading, 
+    error: dashboardsError,
+    addDashboard,
+    updateDashboard,
+    deleteDashboard,
+    getDashboardsByType
+  } = useDashboards();
 
-  // Authentication guard
+  // Authentication guard - AFTER all hooks
   if (!user) {
     return (
       <>
@@ -42,17 +53,6 @@ const DashboardPage: React.FC = () => {
       </>
     );
   }
-  
-  // Use Firestore hook
-  const { 
-    dashboards, 
-    loading: dashboardsLoading, 
-    error: dashboardsError,
-    addDashboard,
-    updateDashboard,
-    deleteDashboard,
-    getDashboardsByType
-  } = useDashboards();
 
   // Dashboards are now loaded from Firestore via useDashboards hook
 
