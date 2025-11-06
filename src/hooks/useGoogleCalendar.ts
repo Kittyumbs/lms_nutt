@@ -228,6 +228,24 @@ export function useGoogleCalendar() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Validate environment variables
+    if (!CLIENT_ID || !API_KEY) {
+      const missing = [];
+      if (!CLIENT_ID) missing.push('VITE_GOOGLE_CALENDAR_CLIENT_ID');
+      if (!API_KEY) missing.push('VITE_GOOGLE_CALENDAR_API_KEY');
+      console.error('❌ Missing environment variables:', missing);
+      setError(`Missing environment variables: ${missing.join(', ')}`);
+      setIsAuthLoading(false);
+      return;
+    }
+
+    console.log('🔧 Initializing Google API with:', {
+      hasClientId: !!CLIENT_ID,
+      hasApiKey: !!API_KEY,
+      clientIdPrefix: CLIENT_ID?.substring(0, 20) + '...',
+      apiKeyPrefix: API_KEY?.substring(0, 10) + '...'
+    });
+
     setIsAuthLoading(true); // Start authentication loading
 
     const gsi = document.createElement("script");
@@ -242,10 +260,14 @@ export function useGoogleCalendar() {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       window.gapi.load("client:auth2", async () => {
         try {
+          console.log('📡 Initializing gapi.client with API key...');
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           await window.gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY });
+          console.log('✅ gapi.client initialized successfully');
+          
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           await window.gapi.client.load("calendar", "v3");
+          console.log('✅ Calendar API loaded successfully');
           setIsGapiLoaded(true);
 
           // Check for existing token in localStorage first
@@ -342,17 +364,46 @@ export function useGoogleCalendar() {
             console.warn('Silent token attempt failed to start:', e);
           }
         } catch (e) {
-          const errorMessage = e instanceof Error ? e.message : "Failed to init Google API client";
-          setError(errorMessage);
+          console.error('❌ Error initializing Google API:', e);
+          
+          // Extract detailed error information
+          let errorMessage = "Failed to init Google API client";
+          let errorDetails = {};
+          
+          if (e instanceof Error) {
+            errorMessage = e.message;
+            errorDetails = { message: e.message, stack: e.stack };
+          } else if (typeof e === 'object' && e !== null) {
+            // Google API errors often have specific structure
+            errorDetails = e;
+            const errorObj = e as Record<string, unknown>;
+            if ('error' in errorObj && errorObj.error && typeof errorObj.error === 'object') {
+              const err = errorObj.error as Record<string, unknown>;
+              errorMessage = (err.message as string) || (err.error_description as string) || JSON.stringify(err);
+            } else if ('message' in errorObj) {
+              errorMessage = String(errorObj.message);
+            }
+          }
+          
+          console.error('❌ Error details:', {
+            errorMessage,
+            errorDetails,
+            apiKey: API_KEY ? `${API_KEY.substring(0, 10)}...` : 'MISSING',
+            clientId: CLIENT_ID ? `${CLIENT_ID.substring(0, 20)}...` : 'MISSING',
+            discoveryDocs: DISCOVERY
+          });
+          
+          setError(`Google API Error: ${errorMessage}. Check console for details.`);
         } finally {
           setIsAuthLoading(false);
         }
       });
     };
     api.onerror = () => {
-      setError("Failed to load Google API script");
+      const errorMsg = "Failed to load Google API script";
+      console.error("❌ useGoogleCalendar: Failed to load Google API script.");
+      setError(errorMsg);
       setIsAuthLoading(false); // Authentication loading is complete even on error
-      console.error("useGoogleCalendar: Failed to load Google API script.");
     };
 
     document.body.append(gsi, api);
