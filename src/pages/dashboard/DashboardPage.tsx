@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, Select, Button, Input, Form, Modal, Tabs, message, Space, Divider, Typography, Row, Col } from 'antd';
 import { PlusOutlined, SettingOutlined, EyeOutlined, DeleteOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import useAuth from '../auth/useAuth';
-import { useIframeHeight } from '../hooks/useIframeHeight';
-import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
-import { useSidebar } from '../hooks/useSidebar';
-import { PageSEO } from '../utils/seo';
+import useAuth from '../../auth/useAuth';
+import { useIframeHeight } from '../../hooks/useIframeHeight';
+import { useDashboards, DashboardConfig } from '../../hooks/useDashboards';
+import { useSidebar } from '../../hooks/useSidebar';
+import { PageSEO } from '../../utils/seo';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -658,3 +658,4 @@ const DashboardPage: React.FC = () => {
 };
 
 export default DashboardPage;
+

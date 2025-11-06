@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Typography, Spin, Alert, Select, Space } from 'antd';
 import { ArrowLeftOutlined, SwapOutlined } from '@ant-design/icons';
-import { useDashboards, DashboardConfig } from '../hooks/useDashboards';
-import { useSidebar } from '../hooks/useSidebar';
+import { useDashboards, DashboardConfig } from '../../hooks/useDashboards';
+import { useSidebar } from '../../hooks/useSidebar';
 
 const { Title, Text } = Typography;
 
@@ -166,7 +166,7 @@ const DashboardViewerPage: React.FC = () => {
             src={embedUrl}
             width="100%"
             height="100%"
-            frameBorder="0"
+            frameBorder={0}
             allowFullScreen
             title={dashboard.name}
             style={{ borderRadius: '8px' }}
@@ -180,3 +180,4 @@ const DashboardViewerPage: React.FC = () => {
 };
 
 export default DashboardViewerPage;
+
