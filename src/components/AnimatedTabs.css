@@ -1,0 +1,58 @@
+.animated-tabs-container {
+  position: relative;
+  width: 100%;
+}
+
+.animated-tabs-wrapper {
+  position: relative;
+  display: flex;
+  gap: 0;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.animated-tab {
+  position: relative;
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  z-index: 1;
+  border-radius: 6px;
+}
+
+.animated-tab:hover {
+  color: #1890ff;
+}
+
+.animated-tab.active {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.animated-tab-indicator {
+  position: absolute;
+  bottom: 4px;
+  height: calc(100% - 8px);
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 0;
+  /* Smooth transition - this is the key! */
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animated-tab-indicator.animating {
+  /* Ensure smooth animation even during transition */
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+

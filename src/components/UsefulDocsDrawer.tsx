@@ -1,5 +1,6 @@
 import { LinkOutlined, DeleteOutlined, SearchOutlined, EditOutlined, CopyOutlined, StarOutlined, GlobalOutlined } from '@ant-design/icons';
-import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Select, Card, Tag, Tooltip, Typography, Divider, Segmented } from 'antd';
+import { Button, Drawer, Form, Input, List, Avatar, Space, Popconfirm, message, Select, Card, Tag, Tooltip, Typography, Divider } from 'antd';
+import AnimatedTabs from './AnimatedTabs';
 import {
   collection,
   addDoc,
@@ -388,14 +389,13 @@ export default function UsefulDocsDrawer() {
             allowClear
           />
           
-          <Segmented
-            value={filterCategory}
-            onChange={(value) => setFilterCategory(value as string)}
-            options={[
+          <AnimatedTabs
+            items={[
               { label: 'All', value: 'ALL' },
               ...categoryOptions.map(cat => ({ label: cat, value: cat }))
             ]}
-            style={{ width: '100%' }}
+            value={filterCategory}
+            onChange={(value) => setFilterCategory(value as string)}
           />
         </div>
 
