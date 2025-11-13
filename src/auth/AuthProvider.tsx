@@ -47,17 +47,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
       
       // Auto-connect Google Calendar when user logs in
+      // Try silent refresh first (no popup), only show popup if needed
       if (wasLoggedOut && firebaseUser && tokenClient && !isGoogleCalendarAuthed) {
         // Small delay to ensure everything is ready
         setTimeout(() => {
           try {
-            console.log('🔄 Auto-connecting Google Calendar after login...');
+            console.log('🔄 Attempting silent Google Calendar connection after login...');
+            // Try silent refresh first (no popup - won't be blocked)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            tokenClient.requestAccessToken({ prompt: 'consent' });
+            tokenClient.requestAccessToken({ prompt: 'none' });
+            
+            // If silent refresh fails, we'll show a message to user to click "Kết nối" button
+            // We don't auto-open popup because browser will block it (no user interaction)
           } catch (calendarError) {
-            console.warn('⚠️ Auto-connect Calendar failed (user can connect manually later):', calendarError);
+            console.warn('⚠️ Silent Calendar connection failed (user can connect manually):', calendarError);
+            // Don't show error - user can click "Kết nối" button if needed
           }
-        }, 1000);
+        }, 1500);
       }
     });
 
@@ -132,8 +138,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       detail: { tokenData }
                     }));
                   } else if (response.error) {
-                    console.error('❌ Google Calendar connection error:', response.error);
-                    setIsGoogleCalendarAuthed(false);
+                    // Handle different error types
+                    if (response.error === 'popup_closed_by_user' || response.error === 'popup_blocked') {
+                      console.warn('⚠️ Calendar popup was blocked or closed. User can connect manually from sidebar.');
+                      // Don't set to false - keep current state, user can retry manually
+                    } else {
+                      console.error('❌ Google Calendar connection error:', response.error);
+                      setIsGoogleCalendarAuthed(false);
+                    }
                   }
                 }
               });
