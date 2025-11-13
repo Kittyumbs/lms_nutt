@@ -202,13 +202,12 @@ export default function Sidebar() {
             </div>
           ) : (
             <div className={`flex items-center p-2 bg-gray-50 rounded-lg ${collapsed ? 'justify-center' : ''}`}>
-              <span title={collapsed ? 'Sign out' : user?.displayName || 'Google Account'}>
+              <span title={collapsed ? user?.displayName || 'Google Account' : user?.displayName || 'Google Account'}>
                 <Avatar
                   size={32}
                   src={user?.photoURL}
                   icon={<UserOutlined />}
-                  className="bg-[#1C6EA4] cursor-pointer"
-                  onClick={signOut}
+                  className="bg-[#1C6EA4]"
                 />
               </span>
               {!collapsed && (
