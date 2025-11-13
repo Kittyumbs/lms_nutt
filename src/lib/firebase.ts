@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration with null checks
@@ -21,5 +21,11 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
+// Set persistence to local storage to maintain login across browser sessions
+// This ensures users stay logged in even after closing the browser
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error('Error setting Firebase auth persistence:', error);
+});
+
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);

@@ -42,12 +42,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      const wasLoggedOut = !user && firebaseUser; // User just logged in
       setUser(firebaseUser);
       setLoading(false);
+      
+      // Auto-connect Google Calendar when user logs in
+      if (wasLoggedOut && firebaseUser && tokenClient && !isGoogleCalendarAuthed) {
+        // Small delay to ensure everything is ready
+        setTimeout(() => {
+          try {
+            console.log('🔄 Auto-connecting Google Calendar after login...');
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+          } catch (calendarError) {
+            console.warn('⚠️ Auto-connect Calendar failed (user can connect manually later):', calendarError);
+          }
+        }, 1000);
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user, tokenClient, isGoogleCalendarAuthed]);
 
   // Initialize Google Calendar API
   useEffect(() => {
@@ -76,35 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
               });
 
-              // Check existing token from localStorage first
-              const savedToken = localStorage.getItem('google_calendar_token');
-              if (savedToken) {
-                try {
-                  const tokenData = JSON.parse(savedToken);
-                  // Check if token is still valid (not expired)
-                  if (tokenData.expires_at && Date.now() < tokenData.expires_at) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                    window.gapi.client.setToken({ access_token: tokenData.access_token });
-                    setIsGoogleCalendarAuthed(true);
-                  } else {
-                    // Token expired, remove it
-                    localStorage.removeItem('google_calendar_token');
-                  }
-                } catch (error) {
-                  console.error('Error parsing saved token:', error);
-                  localStorage.removeItem('google_calendar_token');
-                }
-              }
-
-              // Also check current token from gapi
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-              const existingToken = window.gapi.client.getToken();
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              if (existingToken?.access_token) {
-                setIsGoogleCalendarAuthed(true);
-              }
-
-              // Initialize token client
+              // Initialize token client first
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
               const tc = window.google?.accounts?.oauth2?.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
@@ -116,14 +103,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     setIsGoogleCalendarAuthed(true);
                     
                     // Save token to localStorage with expiration
+                    // Google OAuth tokens typically expire in 1 hour (3600 seconds)
+                    // But we'll use the actual expires_in from response, or default to 1 hour
                     const expiresIn = response.expires_in || 3600; // Default 1 hour
                     const expiresAt = Date.now() + (expiresIn * 1000);
                     const tokenData = {
                       access_token: response.access_token,
                       expires_at: expiresAt,
+                      expires_in: expiresIn, // Store for reference
                       created_at: Date.now()
                     };
                     localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
+                    // Mark that user has connected successfully for silent refresh
+                    localStorage.setItem('google_calendar_was_connected', 'true');
                     
                     // Trigger storage event to notify other components
                     window.dispatchEvent(new StorageEvent('storage', {
@@ -135,6 +127,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 }
               });
               setTokenClient(tc);
+
+              // Check existing token from localStorage first
+              const savedToken = localStorage.getItem('google_calendar_token');
+              if (savedToken) {
+                try {
+                  const tokenData = JSON.parse(savedToken);
+                  // Check if token is still valid (not expired)
+                  if (tokenData.expires_at && Date.now() < tokenData.expires_at) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                    window.gapi.client.setToken({ access_token: tokenData.access_token });
+                    setIsGoogleCalendarAuthed(true);
+                    console.log('✅ Restored valid Google Calendar token from localStorage');
+                  } else {
+                    // Token expired, try silent refresh if user was previously connected
+                    const wasConnected = localStorage.getItem('google_calendar_was_connected') === 'true';
+                    if (wasConnected && tc) {
+                      console.log('🔄 Token expired, attempting silent refresh...');
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                      tc.requestAccessToken({ prompt: 'none' });
+                    } else {
+                      // Remove expired token
+                      localStorage.removeItem('google_calendar_token');
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error parsing saved token:', error);
+                  localStorage.removeItem('google_calendar_token');
+                }
+              } else {
+                // No saved token, try silent refresh if user was previously connected
+                const wasConnected = localStorage.getItem('google_calendar_was_connected') === 'true';
+                if (wasConnected && tc) {
+                  console.log('🔄 No saved token, attempting silent refresh...');
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                  tc.requestAccessToken({ prompt: 'none' });
+                }
+              }
+
+              // Also check current token from gapi
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+              const existingToken = window.gapi.client.getToken();
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              if (existingToken?.access_token) {
+                setIsGoogleCalendarAuthed(true);
+                console.log('✅ Found existing token in gapi client');
+              }
             } catch (error) {
               console.error('Error initializing Google API:', error);
             }
@@ -238,9 +276,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       // First, sign in with Firebase
+      // Auto-connect Calendar will be handled by onAuthStateChanged listener
       await signInWithPopup(auth, googleProvider);
-      
-      // Note: Google Calendar permission will be requested separately from sidebar
     } catch (error) {
       console.error('Error signing in with Google:', error);
       

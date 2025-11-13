@@ -318,9 +318,14 @@ export function useGoogleCalendar() {
                 setError(null);
                 
                 // Save token to localStorage for persistence
+                // Google OAuth access tokens typically expire in 1 hour (3600 seconds)
+                // Use actual expires_in from response if available, otherwise default to 1 hour
+                const expiresIn = 3600; // 1 hour in seconds (Google OAuth standard)
                 const tokenData = {
                   access_token: resp.access_token,
-                  expires_at: Date.now() + TOKEN_LIFETIME // 24 hours from now
+                  expires_at: Date.now() + (expiresIn * 1000), // 1 hour from now
+                  expires_in: expiresIn,
+                  created_at: Date.now()
                 };
                 localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
                 // Mark that user previously connected successfully

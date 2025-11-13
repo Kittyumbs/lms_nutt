@@ -159,8 +159,8 @@ export default function Sidebar() {
           <Item to="/dashboard" label="Dashboard" collapsed={collapsed} icon={<BarChartOutlined />} onClick={handleDashboardClick} />
 
           <div style={{ fontSize: 12, color: '#6b7280', padding: '10px 8px 6px' }}>{collapsed ? 'L' : 'LMS'}</div>
-          <Item to="/lms/courses" label="Courses" collapsed={collapsed} icon={<BookOutlined />} />
-          <Item to="/lms/notes" label="Notes" collapsed={collapsed} icon={<FileTextOutlined />} />
+          <Item to="/lms/courses" label="Courses (Coming Soon)" collapsed={collapsed} icon={<BookOutlined />} />
+          <Item to="/lms/notes" label="Notes (Coming Soon)" collapsed={collapsed} icon={<FileTextOutlined />} />
         </nav>
 
         {/* User Profile Section */}
