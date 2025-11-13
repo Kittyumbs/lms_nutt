@@ -309,9 +309,17 @@ export default function UsefulDocsDrawer() {
         width="40vw"
         open={open}
         onClose={handleClose}
+        style={{ height: '100vh' }}
+        bodyStyle={{ 
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column',
+          padding: '24px',
+          overflow: 'hidden'
+        }}
       >
         {/* Add Form Section - Compact */}
-        <Card title="Add New Link" size="small" style={{ marginBottom: 12 }}>
+        <Card title="Add New Link" size="small" style={{ marginBottom: 12, flexShrink: 0 }}>
           <Form form={form} layout="vertical" autoComplete="off">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Form.Item
@@ -377,10 +385,10 @@ export default function UsefulDocsDrawer() {
           </Form>
         </Card>
 
-        <Divider />
+        <Divider style={{ margin: '12px 0', flexShrink: 0 }} />
 
         {/* Search and Filter Section */}
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 16, flexShrink: 0 }}>
           <Search
             placeholder="Search links..."
             value={searchText}
@@ -400,7 +408,12 @@ export default function UsefulDocsDrawer() {
         </div>
 
         {/* Links List */}
-        <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <div style={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          overflowX: 'hidden',
+          minHeight: 0 // Important for flex child to respect overflow
+        }}>
           {filteredLinks.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
               {searchText || filterCategory !== 'ALL' 
