@@ -558,11 +558,24 @@ export function useGoogleCalendar() {
       setError(null);
     };
 
+    // Handle custom event for same-tab token updates (storage events don't fire in same tab)
+    const handleTokenUpdate = (e: CustomEvent) => {
+      const tokenData = e.detail?.tokenData;
+      if (tokenData && isTokenValid(tokenData)) {
+        console.log('🔄 Token updated via custom event, updating isSignedIn');
+        setIsSignedIn(true);
+        // Restore token to gapi client
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        window.gapi?.client?.setToken({ access_token: tokenData.access_token });
+      }
+    };
+
     // Add event listeners with proper error handling
     try {
       window.addEventListener('storage', handleStorageChange, { passive: true });
       window.addEventListener('gapi_auth_changed', handleAuthStateChange as EventListener, { passive: true });
       window.addEventListener('gapi_auth_signout', handleSignOutEvent, { passive: true });
+      window.addEventListener('google_calendar_token_updated', handleTokenUpdate as EventListener, { passive: true });
     } catch (error) {
       console.error('Error adding event listeners:', error);
     }
@@ -572,11 +585,12 @@ export function useGoogleCalendar() {
         window.removeEventListener('storage', handleStorageChange);
         window.removeEventListener('gapi_auth_changed', handleAuthStateChange as EventListener);
         window.removeEventListener('gapi_auth_signout', handleSignOutEvent);
+        window.removeEventListener('google_calendar_token_updated', handleTokenUpdate as EventListener);
       } catch (error) {
         console.error('Error removing event listeners:', error);
       }
     };
-  }, []);
+  }, [isTokenValid]);
 
   const handleAuthClick = useCallback(() => {
     console.log('🚨 handleAuthClick called - this should NOT happen from calendar features!');

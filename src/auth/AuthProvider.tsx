@@ -100,7 +100,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   if (response.access_token) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                     window.gapi.client.setToken({ access_token: response.access_token });
-                    setIsGoogleCalendarAuthed(true);
                     
                     // Save token to localStorage with expiration
                     // Google OAuth tokens typically expire in 1 hour (3600 seconds)
@@ -117,12 +116,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     // Mark that user has connected successfully for silent refresh
                     localStorage.setItem('google_calendar_was_connected', 'true');
                     
-                    // Trigger storage event to notify other components
+                    // IMPORTANT: Update state to reflect Calendar is connected
+                    setIsGoogleCalendarAuthed(true);
+                    console.log('✅ Google Calendar connected successfully');
+                    
+                    // Trigger storage event to notify other components (for cross-tab sync)
                     window.dispatchEvent(new StorageEvent('storage', {
                       key: 'google_calendar_token',
                       newValue: JSON.stringify(tokenData),
                       oldValue: null
                     }));
+                    
+                    // Trigger custom event for same-tab notification (storage events don't fire in same tab)
+                    window.dispatchEvent(new CustomEvent('google_calendar_token_updated', {
+                      detail: { tokenData }
+                    }));
+                  } else if (response.error) {
+                    console.error('❌ Google Calendar connection error:', response.error);
+                    setIsGoogleCalendarAuthed(false);
                   }
                 }
               });
