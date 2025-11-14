@@ -551,40 +551,44 @@ export function useGoogleCalendar() {
           setTokenClient(tc as TokenClient);
           console.log('🔍 [useGoogleCalendar] Token client state updated');
 
-          // Attempt silent token fetch if user connected before and no valid token is present
+          // Attempt silent token fetch only if there's a valid token that can be refreshed
+          // DON'T try silent refresh if no token exists - it will fail and cause popup blocking warnings
           try {
-            const wasConnected = localStorage.getItem('google_calendar_was_connected') === 'true';
             const hasCurrentToken = !!window.gapi.client.getToken()?.access_token;
             const saved = localStorage.getItem('google_calendar_token');
             const savedValid = (() => {
               try {
                 if (!saved) return false;
                 const data = JSON.parse(saved);
-                return !isTokenExpired(data);
+                // Only try silent refresh if token exists but is expired (can be refreshed)
+                // If no token exists at all, silent refresh will fail
+                return !isTokenExpired(data) || (data.expires_at && Date.now() < data.expires_at + (24 * 60 * 60 * 1000)); // Within 24h of expiry
               } catch { return false; }
             })();
 
             console.log('🔍 [useGoogleCalendar] Checking if should attempt silent token request:', {
-              wasConnected,
               hasCurrentToken,
               hasSavedToken: !!saved,
               savedValid,
-              shouldAttempt: wasConnected && !hasCurrentToken && !savedValid,
+              shouldAttempt: hasCurrentToken || savedValid, // Only if we have a token to work with
               timestamp: new Date().toISOString()
             });
 
-            if (wasConnected && !hasCurrentToken && !savedValid) {
+            // Only attempt silent refresh if we have a token (current or saved) that might be refreshable
+            // Silent refresh works best when there's an existing session/token to refresh
+            if ((hasCurrentToken || savedValid) && !hasCurrentToken) {
+              // We have a saved token but no current token - try silent refresh
               console.log('🔐 [useGoogleCalendar] Attempting silent Google token request (prompt: none)', {
                 prompt: 'none',
+                hasSavedToken: !!saved,
                 timestamp: new Date().toISOString()
               });
               (tc as TokenClient).requestAccessToken({ prompt: 'none' });
             } else {
               console.log('🔍 [useGoogleCalendar] Silent token request not needed:', {
-                wasConnected,
                 hasCurrentToken,
                 savedValid,
-                reason: !wasConnected ? 'User never connected' : hasCurrentToken ? 'Already has token' : savedValid ? 'Saved token valid' : 'Unknown'
+                reason: hasCurrentToken ? 'Already has current token' : !savedValid ? 'No valid token to refresh' : 'Unknown'
               });
             }
           } catch (e) {
@@ -974,8 +978,9 @@ export function useGoogleCalendar() {
     
     try {
       setError(null);
-      console.log('🚨 About to call requestAccessToken from handleAuthClick');
-      tokenClient.requestAccessToken({ prompt: "" });
+      console.log('🚨 About to call requestAccessToken from handleAuthClick (no prompt - will reuse consent if available)');
+      // No prompt = Google will reuse existing consent if available, otherwise show consent
+      tokenClient.requestAccessToken();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Authentication failed";
       setError(errorMessage);

@@ -73,37 +73,63 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
       
       // Auto-connect Google Calendar when user logs in
-      // Try silent refresh first (no popup), only show popup if needed
+      // Only try silent refresh if there's a valid token that can be refreshed
+      // Don't try silent refresh if no token exists - it will fail and cause popup blocking warnings
       if (wasLoggedOut && firebaseUser && tokenClient && !isGoogleCalendarAuthed) {
-        console.log('🔍 [AuthProvider] User just logged in, preparing auto-connect Calendar...', {
+        console.log('🔍 [AuthProvider] User just logged in, checking for Calendar token...', {
           hasFirebaseUser: !!firebaseUser,
           hasTokenClient: !!tokenClient,
           isGoogleCalendarAuthed,
-          willAttemptIn: '1500ms'
+          timestamp: new Date().toISOString()
         });
         
-        // Small delay to ensure everything is ready
-        setTimeout(() => {
+        // Check if there's a saved token that can be refreshed
+        const savedToken = localStorage.getItem('google_calendar_token');
+        const hasValidToken = (() => {
+          if (!savedToken) return false;
           try {
-            console.log('🔄 [AuthProvider] Attempting silent Google Calendar connection after login...', {
-              tokenClientExists: !!tokenClient,
-              prompt: 'none',
-              timestamp: new Date().toISOString()
-            });
-            // Try silent refresh first (no popup - won't be blocked)
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            tokenClient.requestAccessToken({ prompt: 'none' });
-            
-            // If silent refresh fails, we'll show a message to user to click "Kết nối" button
-            // We don't auto-open popup because browser will block it (no user interaction)
-          } catch (calendarError) {
-            console.warn('⚠️ [AuthProvider] Silent Calendar connection failed (user can connect manually):', {
-              error: calendarError,
-              timestamp: new Date().toISOString()
-            });
-            // Don't show error - user can click "Kết nối" button if needed
+            const tokenData = JSON.parse(savedToken);
+            // Check if token exists and is either valid or recently expired (within 24h)
+            // Recently expired tokens can still be refreshed silently
+            if (tokenData.expires_at) {
+              const timeSinceExpiry = Date.now() - tokenData.expires_at;
+              const isValid = Date.now() < tokenData.expires_at;
+              const isRecentlyExpired = timeSinceExpiry > 0 && timeSinceExpiry < (24 * 60 * 60 * 1000); // Within 24h
+              return isValid || isRecentlyExpired;
+            }
+            return false;
+          } catch {
+            return false;
           }
-        }, 1500);
+        })();
+        
+        if (hasValidToken) {
+          // Small delay to ensure everything is ready
+          setTimeout(() => {
+            try {
+              console.log('🔄 [AuthProvider] Attempting silent Google Calendar connection after login (has valid token)...', {
+                tokenClientExists: !!tokenClient,
+                prompt: 'none',
+                timestamp: new Date().toISOString()
+              });
+              // Try silent refresh (only works if there's a valid session/token to refresh)
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+              tokenClient.requestAccessToken({ prompt: 'none' });
+            } catch (calendarError) {
+              console.warn('⚠️ [AuthProvider] Silent Calendar connection failed (user can connect manually):', {
+                error: calendarError,
+                timestamp: new Date().toISOString()
+              });
+              // Don't show error - user can click "Kết nối" button if needed
+            }
+          }, 1500);
+        } else {
+          console.log('🔍 [AuthProvider] No valid token found for silent refresh after login', {
+            hasSavedToken: !!savedToken,
+            reason: 'User needs to click "Kết nối" button to grant consent',
+            timestamp: new Date().toISOString()
+          });
+        }
       } else if (wasLoggedOut && firebaseUser) {
         console.log('🔍 [AuthProvider] User logged in but conditions not met for auto-connect:', {
           hasTokenClient: !!tokenClient,
@@ -312,26 +338,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   localStorage.removeItem('google_calendar_token');
                 }
               } else {
-                // No saved token, try silent refresh if user was previously connected
-                console.log('🔍 [AuthProvider] No saved token, checking if should attempt silent refresh...', {
+                // No saved token - DON'T try silent refresh because it will fail
+                // Silent refresh only works if there's a valid session/token to refresh
+                // If no token exists, user needs to explicitly grant consent again
+                console.log('🔍 [AuthProvider] No saved token - skipping silent refresh', {
                   wasConnected,
-                  hasTokenClient: !!tc
+                  hasTokenClient: !!tc,
+                  reason: 'Silent refresh requires an existing valid token/session. User needs to grant consent explicitly.',
+                  timestamp: new Date().toISOString()
                 });
-                
-                if (wasConnected && tc) {
-                  console.log('🔄 [AuthProvider] No saved token, attempting silent refresh...', {
-                    prompt: 'none',
-                    timestamp: new Date().toISOString()
-                  });
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                  tc.requestAccessToken({ prompt: 'none' });
-                } else {
-                  console.log('🔍 [AuthProvider] No saved token and no silent refresh attempt', {
-                    wasConnected,
-                    hasTokenClient: !!tc,
-                    reason: !wasConnected ? 'User never connected before' : !tc ? 'No token client' : 'Unknown'
-                  });
-                }
               }
 
               // Also check current token from gapi
@@ -561,13 +576,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     
     try {
-      console.log('🔍 [AuthProvider] Requesting access token with consent prompt...', {
-        prompt: 'consent',
+      // Don't use 'consent' prompt - it forces user to re-consent every time
+      // Without prompt (undefined), Google will reuse existing consent if available
+      // If no consent exists, it will show the consent screen automatically
+      // This allows seamless reconnection without asking for permission again
+      console.log('🔍 [AuthProvider] Requesting access token (will reuse existing consent if available)...', {
+        prompt: 'undefined (Google will auto-decide: reuse consent if available, show consent if needed)',
         hasTokenClient: !!tokenClient,
         timestamp: new Date().toISOString()
       });
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      tokenClient.requestAccessToken({ prompt: 'consent' });
+      tokenClient.requestAccessToken(); // No prompt = Google will reuse consent if available, otherwise show consent
       console.log('🔍 [AuthProvider] Access token request sent (waiting for callback)...');
     } catch (error) {
       console.error('❌ [AuthProvider] Error signing in with Google Calendar:', {
