@@ -54,20 +54,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     console.log('🔍 [AuthProvider] Setting up Firebase auth state listener');
     
+    // Track if this is the initial load to differentiate between restored session and new login
+    let isInitialLoad = true;
+    
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       const previousUser = user;
       const wasLoggedOut = !previousUser && firebaseUser; // User just logged in
       const wasLoggedIn = previousUser && !firebaseUser; // User just logged out
+      const isRestoredSession = isInitialLoad && firebaseUser !== null; // Session restored from persistence
       
       console.log('🔍 [AuthProvider] Firebase auth state changed:', {
         previousUser: previousUser ? { uid: previousUser.uid, email: previousUser.email } : null,
         newUser: firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null,
         wasLoggedOut,
         wasLoggedIn,
+        isRestoredSession,
         hasTokenClient: !!tokenClient,
         isGoogleCalendarAuthed,
         timestamp: new Date().toISOString()
       });
+      
+      // Mark that initial load is complete
+      if (isInitialLoad) {
+        isInitialLoad = false;
+        if (firebaseUser) {
+          console.log('✅ [AuthProvider] User session restored from persistence:', {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName
+          });
+        } else {
+          console.log('🔍 [AuthProvider] No persisted session found');
+        }
+      }
       
       setUser(firebaseUser);
       setLoading(false);
