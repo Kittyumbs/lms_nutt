@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import { AuthProvider } from './auth/AuthProvider';
-import { initializeFirebase } from './lib/firebase';
+import { persistenceInitialized } from './lib/firebase';
 import AppLayout from './components/Layout/AppLayout';
 import CourseDetailPage from './pages/lms/CourseDetailPage';
 import CourseEditorPage from './pages/lms/CourseEditorPage';
@@ -52,6 +52,6 @@ const renderApp = () => {
 };
 
 // Initialize Firebase and then render the app
-initializeFirebase().then(() => {
+persistenceInitialized.then(() => {
   renderApp();
 });
