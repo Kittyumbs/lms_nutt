@@ -1,7 +1,7 @@
 import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
 import React, { createContext, useEffect, useState, useCallback } from 'react';
 
-import { auth, googleProvider } from '../lib/firebase';
+import { auth, googleProvider, getInitializedAuth } from '../lib/firebase';
 
 import type { User} from 'firebase/auth';
 import type { ReactNode } from 'react';
@@ -53,16 +53,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Listen for auth state changes
   useEffect(() => {
     console.log('🔍 [AuthProvider] Setting up Firebase auth state listener');
-    
+
     // Track if this is the initial load to differentiate between restored session and new login
     let isInitialLoad = true;
-    
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       const previousUser = user;
       const wasLoggedOut = !previousUser && firebaseUser; // User just logged in
       const wasLoggedIn = previousUser && !firebaseUser; // User just logged out
       const isRestoredSession = isInitialLoad && firebaseUser !== null; // Session restored from persistence
-      
+
       console.log('🔍 [AuthProvider] Firebase auth state changed:', {
         previousUser: previousUser ? { uid: previousUser.uid, email: previousUser.email } : null,
         newUser: firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null,
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isGoogleCalendarAuthed,
         timestamp: new Date().toISOString()
       });
-      
+
       // Mark that initial load is complete
       if (isInitialLoad) {
         isInitialLoad = false;
@@ -87,10 +87,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('🔍 [AuthProvider] No persisted session found');
         }
       }
-      
+
       setUser(firebaseUser);
       setLoading(false);
-      
+
       // Auto-connect Google Calendar when user logs in
       // Only try silent refresh if there's a valid token that can be refreshed
       // Don't try silent refresh if no token exists - it will fail and cause popup blocking warnings
@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isGoogleCalendarAuthed,
           timestamp: new Date().toISOString()
         });
-        
+
         // Check if there's a saved token that can be refreshed
         const savedToken = localStorage.getItem('google_calendar_token');
         const hasValidToken = (() => {
@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             return false;
           }
         })();
-        
+
         if (hasValidToken) {
           // Small delay to ensure everything is ready
           setTimeout(() => {

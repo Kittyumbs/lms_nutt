@@ -34,6 +34,13 @@ export const persistenceInitialized = setPersistence(auth, browserLocalPersisten
     console.error('❌ Error setting Firebase auth persistence:', error);
   });
 
+// Wait for persistence to be initialized before using auth
+export const getInitializedAuth = () => {
+  return new Promise<typeof auth>((resolve) => {
+    persistenceInitialized.then(() => resolve(auth)).catch(() => resolve(auth));
+  });
+};
+
 // Configure Google Provider with additional scopes if needed
 export const googleProvider = new GoogleAuthProvider();
 // Add custom parameters to ensure proper authentication flow
