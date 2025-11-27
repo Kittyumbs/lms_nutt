@@ -3,6 +3,34 @@ import React, { createContext, useEffect, useState, useCallback } from 'react';
 
 import { auth, googleProvider, getInitializedAuth } from '../lib/firebase';
 
+// Extend Window interface for Google APIs
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        oauth2?: {
+          initTokenClient: (config: {
+            client_id: string;
+            scope: string;
+            callback: (response: { access_token?: string; expires_in?: number; error?: string }) => void;
+          }) => any;
+        };
+      };
+    };
+    gapi?: {
+      load: (module: string, callback: () => Promise<void>) => void;
+      client?: {
+        init: (config: {
+          apiKey: string;
+          discoveryDocs: string[];
+        }) => Promise<void>;
+        setToken: (token: { access_token: string }) => void;
+        getToken: () => { access_token?: string } | null;
+      };
+    };
+  }
+}
+
 import type { User} from 'firebase/auth';
 import type { ReactNode } from 'react';
 
@@ -50,6 +78,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
   }, [user, loading, isGoogleCalendarAuthed, tokenClient]);
 
+  // Auto-refresh Detection
+  useEffect(() => {
+    // Detect page refresh
+    const handleBeforeUnload = () => {
+      console.log('🔄 [PRODUCTION-DEBUG] Page refreshing/closing', {
+        user: user ? { email: user.email } : null,
+        timestamp: new Date().toISOString()
+      });
+    };
+
+    // Detect visibility change (tab switch)
+    const handleVisibilityChange = () => {
+      console.log('👀 [PRODUCTION-DEBUG] Tab visibility changed', {
+        hidden: document.hidden,
+        user: user ? { email: user.email } : null,
+        timestamp: new Date().toISOString()
+      });
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
   // Listen for auth state changes
   useEffect(() => {
     console.log('🔍 [AuthProvider] Setting up Firebase auth state listener');
@@ -57,7 +113,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Track if this is the initial load to differentiate between restored session and new login
     let isInitialLoad = true;
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🚨 [PRODUCTION-DEBUG] Auth State Changed', {
+        timestamp: new Date().toISOString(),
+        hasUser: !!user,
+        userEmail: user?.email,
+        userUid: user?.uid,
+        loading: loading,
+        location: window.location.href
+      });
+
       const previousUser = user;
       const wasLoggedOut = !previousUser && firebaseUser; // User just logged in
       const wasLoggedIn = previousUser && !firebaseUser; // User just logged out
@@ -90,6 +155,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setUser(firebaseUser);
       setLoading(false);
+
+      if (firebaseUser) {
+        console.log('✅ [PRODUCTION-DEBUG] USER LOGGED IN', {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          lastSignIn: firebaseUser.metadata.lastSignInTime,
+          creationTime: firebaseUser.metadata.creationTime
+        });
+      } else {
+        console.log('🚨 [PRODUCTION-DEBUG] USER LOGGED OUT - INVESTIGATING', {
+          previousUser: user ? { uid: user.uid, email: user.email } : null,
+          currentPath: window.location.pathname,
+          timestamp: new Date().toISOString()
+        });
+
+        // Kiểm tra Firebase Auth state
+        setTimeout(() => {
+          const authState = {
+            localStorage: {
+              firebaseKeys: Object.keys(localStorage).filter(k => k.includes('firebase')),
+              googleCalendarToken: !!localStorage.getItem('google_calendar_token')
+            },
+            sessionStorage: {
+              firebaseKeys: Object.keys(sessionStorage).filter(k => k.includes('firebase'))
+            },
+            currentTime: new Date().toISOString()
+          };
+
+          console.log('🔍 [PRODUCTION-DEBUG] Auth State Snapshot:', authState);
+        }, 1000);
+      }
 
       // Auto-connect Google Calendar when user logs in
       // Only try silent refresh if there's a valid token that can be refreshed

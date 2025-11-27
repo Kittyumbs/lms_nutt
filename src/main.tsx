@@ -13,6 +13,7 @@ import DashboardViewerPage from './pages/dashboard/DashboardViewerPage';
 import LessonPlayerPage from './pages/lms/LessonPlayerPage';
 import NotesCenterPage from './pages/lms/NotesCenterPage';
 import TaskManageHome from './pages/taskmanage/TaskManageHome';
+import DebugAuth from './components/DebugAuth';
 import './index.css';
 
 const renderApp = () => {
@@ -45,6 +46,7 @@ const renderApp = () => {
               <Route path="/lms/notes" element={<NotesCenterPage />} />
             </Route>
           </Routes>
+          <DebugAuth />
         </BrowserRouter>
       </AuthProvider>
     </ConfigProvider>
