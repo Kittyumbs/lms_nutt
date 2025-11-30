@@ -22,16 +22,47 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 
-// Set persistence to local storage to maintain login across browser sessions
-// This ensures users stay logged in even after closing the browser
-// browserLocalPersistence: persists authentication state in localStorage
-// This is the default behavior in Firebase v9+, but we set it explicitly to ensure it works
+// 🚨 Debug Firebase config
+console.log('🚨 [FIREBASE-DEBUG] Firebase Config:', {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  hasApiKey: !!firebaseConfig.apiKey,
+  appId: firebaseConfig.appId,
+  currentDomain: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
+  timestamp: new Date().toISOString()
+});
+
+// 🚨 Set persistence with enhanced error handling and immediate verification
 export const persistenceInitialized = setPersistence(auth, browserLocalPersistence)
   .then(() => {
-    console.log('✅ Firebase auth persistence set to browserLocalPersistence');
+    console.log('✅ [FIREBASE-DEBUG] Persistence set to browserLocalPersistence SUCCESSFULLY');
+
+    // 🚨 Check current user immediately after persistence is set
+    const currentUser = auth.currentUser;
+    console.log('🔍 [FIREBASE-DEBUG] Immediate currentUser check after persistence:', {
+      hasUser: !!currentUser,
+      userEmail: currentUser?.email,
+      userUid: currentUser?.uid,
+      timestamp: new Date().toISOString()
+    });
   })
   .catch((error) => {
-    console.error('❌ Error setting Firebase auth persistence:', error);
+    console.error('❌ [FIREBASE-DEBUG] Persistence setup FAILED:', {
+      error: error.message,
+      code: error.code,
+      timestamp: new Date().toISOString()
+    });
+
+    // 🚨 Try to get current user even if persistence failed
+    setTimeout(() => {
+      const fallbackUser = auth.currentUser;
+      console.log('🔍 [FIREBASE-DEBUG] Fallback currentUser check after persistence error:', {
+        hasUser: !!fallbackUser,
+        userEmail: fallbackUser?.email,
+        errorContext: 'Persistence failed but user might still be available',
+        timestamp: new Date().toISOString()
+      });
+    }, 100);
   });
 
 // Wait for persistence to be initialized before using auth

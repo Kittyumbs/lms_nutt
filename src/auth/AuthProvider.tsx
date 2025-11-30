@@ -1,4 +1,4 @@
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import React, { createContext, useEffect, useState, useCallback } from 'react';
 
 import { auth, googleProvider, getInitializedAuth } from '../lib/firebase';
@@ -106,159 +106,96 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [user]);
 
-  // Listen for auth state changes
+  // 🚨 FIXED: Listen for auth state changes with proper persistence handling
   useEffect(() => {
-    console.log('🔍 [AuthProvider] Setting up Firebase auth state listener');
+    console.log('🔍 [AuthProvider] Setting up Firebase auth with persistence check');
 
-    // Track if this is the initial load to differentiate between restored session and new login
-    let isInitialLoad = true;
+    const initializeAuth = async () => {
+      try {
+        // 🚨 ĐẢM BẢO persistence được set trước khi listen
+        console.log('🔍 [AuthProvider] Setting persistence...');
+        await setPersistence(auth, browserLocalPersistence);
+        console.log('✅ [AuthProvider] Persistence confirmed');
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('🚨 [PRODUCTION-DEBUG] Auth State Changed', {
-        timestamp: new Date().toISOString(),
-        hasUser: !!user,
-        userEmail: user?.email,
-        userUid: user?.uid,
-        loading: loading,
-        location: window.location.href
-      });
+        // 🚨 Kiểm tra current user NGAY LẬP TỨC
+        const immediateUser = auth.currentUser;
+        console.log('🔍 [AuthProvider] Immediate currentUser:', {
+          hasUser: !!immediateUser,
+          userEmail: immediateUser?.email,
+          timestamp: new Date().toISOString()
+        });
 
-      const previousUser = user;
-      const wasLoggedOut = !previousUser && firebaseUser; // User just logged in
-      const wasLoggedIn = previousUser && !firebaseUser; // User just logged out
-      const isRestoredSession = isInitialLoad && firebaseUser !== null; // Session restored from persistence
+        if (immediateUser) {
+          console.log('✅ [AuthProvider] User found in immediate check');
+          setUser(immediateUser);
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error('❌ [AuthProvider] Persistence setup error:', error);
+      }
+    };
 
-      console.log('🔍 [AuthProvider] Firebase auth state changed:', {
-        previousUser: previousUser ? { uid: previousUser.uid, email: previousUser.email } : null,
-        newUser: firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null,
-        wasLoggedOut,
-        wasLoggedIn,
-        isRestoredSession,
-        hasTokenClient: !!tokenClient,
-        isGoogleCalendarAuthed,
-        timestamp: new Date().toISOString()
-      });
+    // Chạy persistence setup
+    void initializeAuth();
 
-      // Mark that initial load is complete
-      if (isInitialLoad) {
-        isInitialLoad = false;
+    // 🚨 Setup auth state listener với error handling
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (firebaseUser) => {
+        console.log('🔍 [AuthProvider] Firebase auth state changed:', {
+          hasUser: !!firebaseUser,
+          userEmail: firebaseUser?.email,
+          timestamp: new Date().toISOString()
+        });
+
+        // 🚨 LUÔN tin tưởng Firebase user state
+        setUser(firebaseUser);
+        setLoading(false);
+
         if (firebaseUser) {
-          console.log('✅ [AuthProvider] User session restored from persistence:', {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName
-          });
-        } else {
-          console.log('🔍 [AuthProvider] No persisted session found');
-        }
-      }
+          console.log('✅ [AuthProvider] User authenticated via Firebase listener');
 
-      setUser(firebaseUser);
-      setLoading(false);
-
-      if (firebaseUser) {
-        console.log('✅ [PRODUCTION-DEBUG] USER LOGGED IN', {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          lastSignIn: firebaseUser.metadata.lastSignInTime,
-          creationTime: firebaseUser.metadata.creationTime
-        });
-      } else {
-        console.log('🚨 [PRODUCTION-DEBUG] USER LOGGED OUT - INVESTIGATING', {
-          previousUser: user ? { uid: user.uid, email: user.email } : null,
-          currentPath: window.location.pathname,
-          timestamp: new Date().toISOString()
-        });
-
-        // Kiểm tra Firebase Auth state
-        setTimeout(() => {
-          const authState = {
-            localStorage: {
-              firebaseKeys: Object.keys(localStorage).filter(k => k.includes('firebase')),
-              googleCalendarToken: !!localStorage.getItem('google_calendar_token')
-            },
-            sessionStorage: {
-              firebaseKeys: Object.keys(sessionStorage).filter(k => k.includes('firebase'))
-            },
-            currentTime: new Date().toISOString()
-          };
-
-          console.log('🔍 [PRODUCTION-DEBUG] Auth State Snapshot:', authState);
-        }, 1000);
-      }
-
-      // Auto-connect Google Calendar when user logs in
-      // Only try silent refresh if there's a valid token that can be refreshed
-      // Don't try silent refresh if no token exists - it will fail and cause popup blocking warnings
-      if (wasLoggedOut && firebaseUser && tokenClient && !isGoogleCalendarAuthed) {
-        console.log('🔍 [AuthProvider] User just logged in, checking for Calendar token...', {
-          hasFirebaseUser: !!firebaseUser,
-          hasTokenClient: !!tokenClient,
-          isGoogleCalendarAuthed,
-          timestamp: new Date().toISOString()
-        });
-
-        // Check if there's a saved token that can be refreshed
-        const savedToken = localStorage.getItem('google_calendar_token');
-        const hasValidToken = (() => {
-          if (!savedToken) return false;
-          try {
-            const tokenData = JSON.parse(savedToken);
-            // Check if token exists and is either valid or recently expired (within 24h)
-            // Recently expired tokens can still be refreshed silently
-            if (tokenData.expires_at) {
-              const timeSinceExpiry = Date.now() - tokenData.expires_at;
-              const isValid = Date.now() < tokenData.expires_at;
-              const isRecentlyExpired = timeSinceExpiry > 0 && timeSinceExpiry < (24 * 60 * 60 * 1000); // Within 24h
-              return isValid || isRecentlyExpired;
+          // Simplified Calendar connection - only if conditions met
+          if (tokenClient && !isGoogleCalendarAuthed) {
+            console.log('🔄 [AuthProvider] Checking for existing Calendar token...');
+            const savedToken = localStorage.getItem('google_calendar_token');
+            if (savedToken) {
+              try {
+                const tokenData = JSON.parse(savedToken);
+                if (tokenData.expires_at && Date.now() < tokenData.expires_at) {
+                  console.log('🔄 [AuthProvider] Restoring valid Calendar token...');
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                  tokenClient.requestAccessToken({ prompt: 'none' });
+                }
+              } catch (error) {
+                console.warn('⚠️ [AuthProvider] Error restoring Calendar token:', error);
+              }
             }
-            return false;
-          } catch {
-            return false;
           }
-        })();
-
-        if (hasValidToken) {
-          // Small delay to ensure everything is ready
-          setTimeout(() => {
-            try {
-              console.log('🔄 [AuthProvider] Attempting silent Google Calendar connection after login (has valid token)...', {
-                tokenClientExists: !!tokenClient,
-                prompt: 'none',
-                timestamp: new Date().toISOString()
-              });
-              // Try silent refresh (only works if there's a valid session/token to refresh)
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-              tokenClient.requestAccessToken({ prompt: 'none' });
-            } catch (calendarError) {
-              console.warn('⚠️ [AuthProvider] Silent Calendar connection failed (user can connect manually):', {
-                error: calendarError,
-                timestamp: new Date().toISOString()
-              });
-              // Don't show error - user can click "Kết nối" button if needed
-            }
-          }, 1500);
         } else {
-          console.log('🔍 [AuthProvider] No valid token found for silent refresh after login', {
-            hasSavedToken: !!savedToken,
-            reason: 'User needs to click "Kết nối" button to grant consent',
-            timestamp: new Date().toISOString()
-          });
+          console.log('🚨 [AuthProvider] User logged out');
+          setIsGoogleCalendarAuthed(false);
         }
-      } else if (wasLoggedOut && firebaseUser) {
-        console.log('🔍 [AuthProvider] User logged in but conditions not met for auto-connect:', {
-          hasTokenClient: !!tokenClient,
-          isGoogleCalendarAuthed,
-          reason: !tokenClient ? 'No tokenClient' : isGoogleCalendarAuthed ? 'Already connected' : 'Unknown'
+      },
+      (error) => {
+        // 🚨 QUAN TRỌNG: Xử lý lỗi mà KHÔNG reset user
+        const firebaseError = error as { code?: string } & Error;
+        console.error('❌ [AuthProvider] Auth state listener error:', {
+          error: firebaseError.message,
+          code: firebaseError.code,
+          timestamp: new Date().toISOString()
         });
+        // KHÔNG set user = null khi có lỗi, giữ nguyên state hiện tại
+        setLoading(false);
       }
-    });
+    );
 
     return () => {
-      console.log('🔍 [AuthProvider] Cleaning up Firebase auth state listener');
+      console.log('🔍 [AuthProvider] Cleaning up auth listener');
       unsubscribe();
     };
-  }, [user, tokenClient, isGoogleCalendarAuthed]);
+  }, []); // � Empty dependencies
 
   // Initialize Google Calendar API
   useEffect(() => {
