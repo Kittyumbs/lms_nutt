@@ -1,7 +1,7 @@
 import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import React, { createContext, useEffect, useState, useCallback } from 'react';
 
-import { auth, googleProvider, getInitializedAuth } from '../lib/firebase';
+import { auth, googleProvider } from '../lib/firebase';
 
 // Extend Window interface for Google APIs
 declare global {
@@ -38,7 +38,7 @@ export interface AuthContextType {
   user: User | null;
   loading: boolean;
   isGoogleCalendarAuthed: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<any>;
   signInWithGoogleCalendar: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -143,6 +143,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [user]);
 
+  // Domain Validation for Production
+  useEffect(() => {
+    // 🚨 DOMAIN VALIDATION: Đảm bảo domain khớp với Firebase config
+    const validateDomainConfiguration = () => {
+      const currentHost = window.location.hostname;
+      const isProduction = currentHost.includes('vercel.app');
+
+      console.log('🔍 [AUTH-DOMAIN] Domain validation:', {
+        currentHost,
+        isProduction,
+        expectedAuthDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+        timestamp: new Date().toISOString()
+      });
+
+      if (isProduction) {
+        // Kiểm tra xem authDomain có khớp với production domain không
+        const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
+        if (authDomain && !authDomain.includes('firebaseapp.com')) {
+          console.error('❌ [AUTH-DOMAIN] Invalid authDomain for production:', authDomain);
+        }
+      }
+    };
+
+    validateDomainConfiguration();
+  }, []);
+
   // Production Session Recovery
   useEffect(() => {
     // 🚨 PRODUCTION FIX: Session Recovery Mechanism
@@ -180,6 +206,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Thử recovery sau 2 giây và 5 giây
     setTimeout(attemptSessionRecovery, 2000);
     setTimeout(attemptSessionRecovery, 5000);
+  }, [user, loading]);
+
+  // Emergency Production Hotfix
+  useEffect(() => {
+    // 🚨 EMERGENCY FIX: Manual session restoration for production
+    const manualSessionRestoration = () => {
+      if (!user && !loading) {
+        console.log('🔄 [AUTH-EMERGENCY] Manual session restoration triggered');
+
+        // Phương pháp 1: Direct auth check
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          console.log('✅ [AUTH-EMERGENCY] User found via auth.currentUser');
+          setUser(currentUser);
+          return;
+        }
+
+        // Phương pháp 2: Check for specific Firebase keys
+        const firebaseAuthKey = Object.keys(localStorage).find(key =>
+          key.startsWith('firebase:authUser:')
+        );
+
+        if (firebaseAuthKey) {
+          console.log('🔍 [AUTH-EMERGENCY] Firebase auth key found:', firebaseAuthKey);
+          try {
+            const authData = JSON.parse(localStorage.getItem(firebaseAuthKey) || '{}');
+            if (authData.uid) {
+              console.log('🔄 [AUTH-EMERGENCY] Attempting to restore session from localStorage');
+              // Trigger auth state change bằng cách reload
+              window.location.reload();
+            }
+          } catch (e) {
+            console.error('❌ [AUTH-EMERGENCY] Error parsing auth data:', e);
+          }
+        }
+      }
+    };
+
+    // Chạy sau 3 giây
+    const timer = setTimeout(manualSessionRestoration, 3000);
+    return () => clearTimeout(timer);
   }, [user, loading]);
 
   // 🚨 FIXED: Listen for auth state changes with proper persistence handling
@@ -675,46 +742,61 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [tokenClient]);
 
-  // 🚨 SỬA Sign in with Google - Đảm bảo Session được lưu
+  // 🚨 ENHANCED Sign in with Google - Session Verification
   const signInWithGoogle = async () => {
-    console.log('🔍 [AuthProvider] signInWithGoogle called - WITH SESSION CHECK');
+    console.log('🔍 [AuthProvider] signInWithGoogle - ENHANCED SESSION VERIFICATION');
 
     try {
-      // 🚨 Đảm bảo persistence được set trước khi sign in
-      console.log('🔍 [AuthProvider] Setting persistence before sign in...');
+      // 🚨 Bước 1: Đảm bảo persistence
+      console.log('🔧 [AuthProvider] Step 1: Setting persistence...');
       await setPersistence(auth, browserLocalPersistence);
 
-      console.log('🔍 [AuthProvider] Calling signInWithPopup...');
+      // 🚨 Bước 2: Sign in
+      console.log('🔧 [AuthProvider] Step 2: Calling signInWithPopup...');
       const result = await signInWithPopup(auth, googleProvider);
+      console.log('✅ [AuthProvider] Step 2: Sign in successful');
 
-      console.log('✅ [AuthProvider] signInWithPopup completed successfully');
+      // 🚨 Bước 3: Verify session được lưu
+      console.log('🔧 [AuthProvider] Step 3: Verifying session storage...');
 
-      // 🚨 KIỂM TRA NGAY user session sau khi login
-      const immediateUser = auth.currentUser;
-      console.log('🔍 [AuthProvider] Immediate user check after login:', {
-        hasUser: !!immediateUser,
-        userEmail: immediateUser?.email,
-        userUid: immediateUser?.uid,
-        timestamp: new Date().toISOString()
-      });
-
-      // 🚨 ĐẢM BẢO user state được cập nhật
-      setUser(result.user);
-
-      // 🚨 KIỂM TRA localStorage sau khi login
-      setTimeout(() => {
-        const firebaseKeys = Object.keys(localStorage).filter(key =>
+      // Kiểm tra multiple ways
+      const verificationChecks = {
+        authCurrentUser: !!auth.currentUser,
+        resultUser: !!result.user,
+        localStorageKeys: Object.keys(localStorage).filter(key =>
           key.includes('firebase') || key.includes('auth')
-        );
-        console.log('🔍 [AuthProvider] Post-login localStorage check:', {
-          hasFirebaseKeys: firebaseKeys.length > 0,
-          keyCount: firebaseKeys.length,
-          timestamp: new Date().toISOString()
-        });
-      }, 500);
+        ).length
+      };
+
+      console.log('🔍 [AuthProvider] Session verification:', verificationChecks);
+
+      if (!verificationChecks.authCurrentUser) {
+        console.error('❌ [AuthProvider] auth.currentUser is null after sign in!');
+      }
+
+      if (verificationChecks.localStorageKeys === 0) {
+        console.error('❌ [AuthProvider] No Firebase keys in localStorage after sign in!');
+      }
+
+      // 🚨 Bước 4: Force update state
+      setUser(result.user);
+      console.log('✅ [AuthProvider] Step 4: User state updated');
+
+      // 🚨 Bước 5: Additional verification after delay
+      setTimeout(() => {
+        const finalCheck = {
+          finalCurrentUser: !!auth.currentUser,
+          finalLocalStorage: Object.keys(localStorage).filter(key =>
+            key.includes('firebase') || key.includes('auth')
+          ).length
+        };
+        console.log('🔍 [AuthProvider] Final session verification:', finalCheck);
+      }, 1000);
+
+      return result;
 
     } catch (error) {
-      console.error('❌ [AuthProvider] Error signing in with Google:', {
+      console.error('❌ [AuthProvider] Enhanced sign in failed:', {
         error: error instanceof Error ? error.message : String(error),
         code: (error as any)?.code,
         timestamp: new Date().toISOString()

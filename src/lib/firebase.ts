@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration with null checks
@@ -14,22 +14,29 @@ const firebaseConfig = {
 };
 
 // 🚨 QUAN TRỌNG: Production Firebase config với domain chính xác
-console.log('🚨 [FIREBASE-CONFIG] Current configuration:', {
+console.log('🚨 [FIREBASE-DOMAIN-DEBUG] Domain Analysis:', {
+  // Firebase config domains
   authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+
+  // Current deployment domains
   currentHostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
+  currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server-side',
   isVercel: typeof window !== 'undefined' ? window.location.hostname.includes('vercel.app') : false,
+
+  // Domain matching check
+  domainMatches: typeof window !== 'undefined' ? window.location.hostname.includes(firebaseConfig.authDomain?.replace('.firebaseapp.com', '') || '') : false,
+  expectedAuthDomain: `${firebaseConfig.projectId}.firebaseapp.com`,
+
   timestamp: new Date().toISOString()
 });
 
-// 🚨 QUAN TRỌNG: Kiểm tra domain matching
-if (firebaseConfig.authDomain && typeof window !== 'undefined' &&
-    !window.location.hostname.includes(firebaseConfig.authDomain.replace('.firebaseapp.com', '')) &&
-    !window.location.hostname.includes('localhost') &&
-    !window.location.hostname.includes('vercel.app')) {
-  console.error('❌ [FIREBASE-CONFIG] Domain mismatch!', {
-    authDomain: firebaseConfig.authDomain,
-    currentHost: window.location.hostname,
-    expected: `Should contain: ${firebaseConfig.authDomain.replace('.firebaseapp.com', '')} or be localhost/vercel`
+// 🚨 QUAN TRỌNG: Validate authDomain
+if (firebaseConfig.authDomain !== `${firebaseConfig.projectId}.firebaseapp.com`) {
+  console.error('❌ [FIREBASE-DOMAIN] authDomain mismatch!', {
+    current: firebaseConfig.authDomain,
+    expected: `${firebaseConfig.projectId}.firebaseapp.com`,
+    fix: 'Update VITE_FIREBASE_AUTH_DOMAIN in Vercel environment variables'
   });
 }
 
@@ -52,45 +59,63 @@ console.log('🚨 [FIREBASE-DEBUG] Firebase Config:', {
   timestamp: new Date().toISOString()
 });
 
-// 🚨 Set persistence with enhanced error handling and immediate verification
-export const persistenceInitialized = setPersistence(auth, browserLocalPersistence)
-  .then(() => {
-    console.log('✅ [FIREBASE-DEBUG] Persistence set to browserLocalPersistence SUCCESSFULLY');
+// 🚨 PRODUCTION FIX: Enhanced persistence setup
+const initializeAuthPersistence = async () => {
+  try {
+    console.log('🔧 [FIREBASE-INIT] Starting auth persistence setup...');
 
-    // 🚨 Check current user immediately after persistence is set
-    const currentUser = auth.currentUser;
-    console.log('🔍 [FIREBASE-DEBUG] Immediate currentUser check after persistence:', {
-      hasUser: !!currentUser,
-      userEmail: currentUser?.email,
-      userUid: currentUser?.uid,
-      timestamp: new Date().toISOString()
-    });
-  })
-  .catch((error) => {
-    console.error('❌ [FIREBASE-DEBUG] Persistence setup FAILED:', {
-      error: error.message,
-      code: error.code,
-      timestamp: new Date().toISOString()
+    // Set persistence với retry logic
+    await setPersistence(auth, browserLocalPersistence);
+    console.log('✅ [FIREBASE-INIT] Persistence set successfully');
+
+    // Kiểm tra immediate user
+    const immediateUser = auth.currentUser;
+    console.log('🔍 [FIREBASE-INIT] Immediate user check:', {
+      hasUser: !!immediateUser,
+      userEmail: immediateUser?.email,
+      userUid: immediateUser?.uid
     });
 
-    // 🚨 Try to get current user even if persistence failed
-    setTimeout(() => {
-      const fallbackUser = auth.currentUser;
-      console.log('🔍 [FIREBASE-DEBUG] Fallback currentUser check after persistence error:', {
-        hasUser: !!fallbackUser,
-        userEmail: fallbackUser?.email,
-        errorContext: 'Persistence failed but user might still be available',
-        timestamp: new Date().toISOString()
-      });
-    }, 100);
-  });
+    // Kiểm tra localStorage ngay lập tức
+    const firebaseKeys = Object.keys(localStorage).filter(key =>
+      key.includes('firebase') || key.includes('auth')
+    );
+    console.log('🔍 [FIREBASE-INIT] Initial localStorage check:', {
+      keyCount: firebaseKeys.length,
+      keys: firebaseKeys
+    });
 
-// Wait for persistence to be initialized before using auth
-export const getInitializedAuth = () => {
-  return new Promise<typeof auth>((resolve) => {
-    persistenceInitialized.then(() => resolve(auth)).catch(() => resolve(auth));
-  });
+    return immediateUser;
+  } catch (error) {
+    console.error('❌ [FIREBASE-INIT] Persistence setup failed:', {
+      error: error instanceof Error ? error.message : String(error),
+      code: (error as any)?.code
+    });
+
+    // Fallback: thử với inMemoryPersistence
+    try {
+      await setPersistence(auth, inMemoryPersistence);
+      console.log('🔄 [FIREBASE-INIT] Fallback to inMemory persistence');
+    } catch (fallbackError) {
+      console.error('❌ [FIREBASE-INIT] Fallback persistence also failed:', fallbackError);
+    }
+
+    return null;
+  }
 };
+
+// Đảm bảo persistence được khởi tạo ngay lập tức
+export const persistenceInitialized = initializeAuthPersistence();
+
+// Khởi tạo ngay lập tức
+persistenceInitialized.then(user => {
+  console.log('🎯 [FIREBASE-INIT] Auth initialization completed:', {
+    hasUser: !!user,
+    timestamp: new Date().toISOString()
+  });
+}).catch(err => {
+  console.error('❌ [FIREBASE-INIT] Auth initialization error:', err);
+});
 
 // Configure Google Provider with additional scopes if needed
 export const googleProvider = new GoogleAuthProvider();
