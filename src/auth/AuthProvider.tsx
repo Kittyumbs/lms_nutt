@@ -78,6 +78,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
   }, [user, loading, isGoogleCalendarAuthed, tokenClient]);
 
+  // Session Debug Chi Tiết
+  useEffect(() => {
+    console.log('🔍 [AuthProvider] Checking for existing auth session...');
+
+    // Kiểm tra chi tiết Firebase session trong localStorage
+    const checkFirebaseSession = () => {
+      const firebaseKeys = Object.keys(localStorage).filter(key =>
+        key.includes('firebase') || key.includes('auth')
+      );
+
+      console.log('🔍 [AuthProvider] Detailed Firebase session check:', {
+        totalKeys: firebaseKeys.length,
+        keys: firebaseKeys,
+        hasFirebaseAuthKey: firebaseKeys.some(key => key.includes('auth')),
+        timestamp: new Date().toISOString()
+      });
+
+      // Kiểm tra từng key Firebase quan trọng
+      firebaseKeys.forEach(key => {
+        try {
+          const value = localStorage.getItem(key);
+          if (value && value.length > 50) { // Chỉ log nếu có dữ liệu
+            console.log(`🔍 [AuthProvider] ${key}:`, {
+              length: value.length,
+              hasData: true,
+              preview: value.substring(0, 100) + '...'
+            });
+          }
+        } catch (e) {
+          console.log(`🔍 [AuthProvider] ${key}: [cannot parse]`);
+        }
+      });
+    };
+
+    checkFirebaseSession();
+  }, []);
+
   // Auto-refresh Detection
   useEffect(() => {
     // Detect page refresh
@@ -105,6 +142,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user]);
+
+  // Production Session Recovery
+  useEffect(() => {
+    // 🚨 PRODUCTION FIX: Session Recovery Mechanism
+    const attemptSessionRecovery = () => {
+      if (!user && !loading) {
+        console.log('🔄 [AuthProvider] Attempting session recovery...');
+
+        // Phương pháp 1: Kiểm tra auth.currentUser trực tiếp
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          console.log('✅ [AuthProvider] Session recovered via auth.currentUser');
+          setUser(currentUser);
+          return;
+        }
+
+        // Phương pháp 2: Kiểm tra localStorage keys
+        const hasFirebaseKeys = Object.keys(localStorage).some(key =>
+          key.startsWith('firebase:authUser:')
+        );
+
+        if (hasFirebaseKeys) {
+          console.log('🔍 [AuthProvider] Firebase auth keys found but no user - forcing auth refresh');
+          // Try to trigger auth state change by forcing a token refresh if we have a user
+          if (currentUser) {
+            void (currentUser as any).getIdToken(true).catch(() => {
+              // Ignore errors, just trying to trigger auth state
+            });
+          } else {
+            console.log('🔍 [AuthProvider] No current user found for token refresh');
+          }
+        }
+      }
+    };
+
+    // Thử recovery sau 2 giây và 5 giây
+    setTimeout(attemptSessionRecovery, 2000);
+    setTimeout(attemptSessionRecovery, 5000);
+  }, [user, loading]);
 
   // 🚨 FIXED: Listen for auth state changes with proper persistence handling
   useEffect(() => {
@@ -139,13 +215,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Chạy persistence setup
     void initializeAuth();
 
-    // 🚨 Setup auth state listener với error handling
+    // 🚨 Setup auth state listener với detailed logging
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
-        console.log('🔍 [AuthProvider] Firebase auth state changed:', {
+        console.log('🔍 [AuthProvider] Firebase auth state changed - DETAILED:', {
           hasUser: !!firebaseUser,
           userEmail: firebaseUser?.email,
+          userUid: firebaseUser?.uid,
+          isAnonymous: firebaseUser?.isAnonymous,
+          providerData: firebaseUser?.providerData?.length,
+          metadata: firebaseUser?.metadata ? {
+            creationTime: firebaseUser.metadata.creationTime,
+            lastSignInTime: firebaseUser.metadata.lastSignInTime
+          } : null,
           timestamp: new Date().toISOString()
         });
 
@@ -154,7 +237,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false);
 
         if (firebaseUser) {
-          console.log('✅ [AuthProvider] User authenticated via Firebase listener');
+          console.log('✅ [AuthProvider] User authenticated successfully');
+
+          // 🚨 Debug thêm về user object
+          console.log('🔍 [AuthProvider] User object details:', {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            emailVerified: firebaseUser.emailVerified,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            providerId: firebaseUser.providerId,
+            refreshToken: firebaseUser.refreshToken ? '[exists]' : null
+          });
 
           // Simplified Calendar connection - only if conditions met
           if (tokenClient && !isGoogleCalendarAuthed) {
@@ -174,8 +268,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }
         } else {
-          console.log('🚨 [AuthProvider] User logged out');
-          setIsGoogleCalendarAuthed(false);
+          console.log('🔍 [AuthProvider] No user found in Firebase Auth');
+
+          // 🚨 Kiểm tra lại localStorage ngay lập tức
+          setTimeout(() => {
+            const firebaseKeys = Object.keys(localStorage).filter(key =>
+              key.includes('firebase') || key.includes('auth')
+            );
+            console.log('🔍 [AuthProvider] Post-auth-check localStorage:', {
+              hasFirebaseKeys: firebaseKeys.length > 0,
+              keys: firebaseKeys
+            });
+          }, 1000);
         }
       },
       (error) => {
@@ -571,43 +675,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [tokenClient]);
 
-  // Sign in with Google (Firebase + Calendar)
+  // 🚨 SỬA Sign in with Google - Đảm bảo Session được lưu
   const signInWithGoogle = async () => {
-    console.log('🔍 [AuthProvider] signInWithGoogle called', {
-      currentUser: user ? { uid: user.uid, email: user.email } : null,
-      hasTokenClient: !!tokenClient,
-      isGoogleCalendarAuthed,
-      timestamp: new Date().toISOString()
-    });
-    
+    console.log('🔍 [AuthProvider] signInWithGoogle called - WITH SESSION CHECK');
+
     try {
-      // First, sign in with Firebase
-      // Auto-connect Calendar will be handled by onAuthStateChanged listener
+      // 🚨 Đảm bảo persistence được set trước khi sign in
+      console.log('🔍 [AuthProvider] Setting persistence before sign in...');
+      await setPersistence(auth, browserLocalPersistence);
+
       console.log('🔍 [AuthProvider] Calling signInWithPopup...');
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+
       console.log('✅ [AuthProvider] signInWithPopup completed successfully');
-    } catch (error) {
-      console.error('❌ [AuthProvider] Error signing in with Google:', {
-        error,
-        errorCode: (error as { code?: string })?.code,
-        errorMessage: (error as { message?: string })?.message || (error instanceof Error ? error.message : String(error)),
+
+      // 🚨 KIỂM TRA NGAY user session sau khi login
+      const immediateUser = auth.currentUser;
+      console.log('🔍 [AuthProvider] Immediate user check after login:', {
+        hasUser: !!immediateUser,
+        userEmail: immediateUser?.email,
+        userUid: immediateUser?.uid,
         timestamp: new Date().toISOString()
       });
-      
-      // Type-safe error handling
-      const firebaseError = error as { code?: string; message?: string };
-      
-      // Show user-friendly error message
-      if (firebaseError?.code === 'auth/configuration-not-found') {
-        throw new Error('❌ Firebase Authentication setup required:\n\n1. Go to Firebase Console → Authentication → Get started\n2. Enable Google Sign-in\n3. Add "localhost" to authorized domains\n4. Try again');
-      } else if (firebaseError?.code === 'auth/popup-blocked') {
-        throw new Error('Sign-in popup was blocked by browser. Please allow popups and try again.');
-      } else if (firebaseError?.code === 'auth/popup-closed-by-user') {
-        throw new Error('Sign-in was cancelled.');
-      } else {
-        const errorMessage = firebaseError?.message || (error instanceof Error ? error.message : 'Unknown error');
-        throw new Error(`Authentication failed: ${errorMessage}`);
-      }
+
+      // 🚨 ĐẢM BẢO user state được cập nhật
+      setUser(result.user);
+
+      // 🚨 KIỂM TRA localStorage sau khi login
+      setTimeout(() => {
+        const firebaseKeys = Object.keys(localStorage).filter(key =>
+          key.includes('firebase') || key.includes('auth')
+        );
+        console.log('🔍 [AuthProvider] Post-login localStorage check:', {
+          hasFirebaseKeys: firebaseKeys.length > 0,
+          keyCount: firebaseKeys.length,
+          timestamp: new Date().toISOString()
+        });
+      }, 500);
+
+    } catch (error) {
+      console.error('❌ [AuthProvider] Error signing in with Google:', {
+        error: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
     }
   };
 

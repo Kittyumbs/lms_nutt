@@ -13,6 +13,26 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID as string || ''
 };
 
+// 🚨 QUAN TRỌNG: Production Firebase config với domain chính xác
+console.log('🚨 [FIREBASE-CONFIG] Current configuration:', {
+  authDomain: firebaseConfig.authDomain,
+  currentHostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
+  isVercel: typeof window !== 'undefined' ? window.location.hostname.includes('vercel.app') : false,
+  timestamp: new Date().toISOString()
+});
+
+// 🚨 QUAN TRỌNG: Kiểm tra domain matching
+if (firebaseConfig.authDomain && typeof window !== 'undefined' &&
+    !window.location.hostname.includes(firebaseConfig.authDomain.replace('.firebaseapp.com', '')) &&
+    !window.location.hostname.includes('localhost') &&
+    !window.location.hostname.includes('vercel.app')) {
+  console.error('❌ [FIREBASE-CONFIG] Domain mismatch!', {
+    authDomain: firebaseConfig.authDomain,
+    currentHost: window.location.hostname,
+    expected: `Should contain: ${firebaseConfig.authDomain.replace('.firebaseapp.com', '')} or be localhost/vercel`
+  });
+}
+
 // Validate required Firebase config
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   console.error('Missing required Firebase configuration. Please check your environment variables.');
