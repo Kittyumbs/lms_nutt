@@ -390,7 +390,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     console.log('🔍 [AuthProvider] Setting up Firebase ID token auto-refresh...');
 
-    const refreshToken = async (retryCount = 0) => {
+    const refreshToken = async () => {
       try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
@@ -400,53 +400,64 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         console.log('🔄 [AuthProvider] Refreshing Firebase ID token...', {
           userEmail: currentUser.email,
-          retryCount,
           timestamp: new Date().toISOString()
         });
 
-        // Force refresh token (true = force refresh from server)
-        const token = await currentUser.getIdToken(true);
-        console.log('✅ [AuthProvider] Firebase ID token refreshed successfully', {
+        // Use getIdToken() without force - Firebase will auto-refresh if needed
+        // Only force refresh if token is actually expired or about to expire
+        const token = await currentUser.getIdToken();
+        console.log('✅ [AuthProvider] Firebase ID token retrieved/refreshed successfully', {
           tokenLength: token.length,
           timestamp: new Date().toISOString()
         });
       } catch (error) {
         const firebaseError = error as { code?: string } & Error;
+        const errorCode = firebaseError.code;
+        
+        // Don't log as error for certain Firebase errors that are expected
+        if (errorCode === 'auth/token-service-api-has-not-been-used-in-project') {
+          console.warn('⚠️ [AuthProvider] Token service API not enabled yet - Firebase will handle this automatically', {
+            timestamp: new Date().toISOString()
+          });
+          // This error usually means the project needs time to propagate, or Firebase will handle it automatically
+          return;
+        }
+
         console.error('❌ [AuthProvider] Error refreshing Firebase ID token:', {
           error: firebaseError.message,
-          code: firebaseError.code,
-          retryCount,
+          code: errorCode,
           timestamp: new Date().toISOString()
         });
-
-        // Retry logic with exponential backoff (max 3 retries)
-        if (retryCount < 3) {
-          const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Max 10 seconds
-          console.log(`🔄 [AuthProvider] Retrying token refresh in ${delay}ms...`, {
-            retryCount: retryCount + 1,
-            maxRetries: 3
-          });
-          setTimeout(() => {
-            void refreshToken(retryCount + 1);
-          }, delay);
-        } else {
-          console.error('❌ [AuthProvider] Max retries reached for token refresh');
-          // If all retries fail, check if user still exists
-          // Firebase SDK should handle token refresh automatically on next request
-        }
+        
+        // Don't retry - Firebase SDK will handle token refresh automatically when needed
+        // Forcing refresh can cause issues if the project isn't fully set up yet
       }
     };
 
     // Refresh token every 50 minutes (3000 seconds)
     // Firebase ID tokens expire after 1 hour, so refresh at 50 minutes to be safe
-    const refreshInterval = setInterval(refreshToken, 50 * 60 * 1000);
+    // Don't refresh immediately - wait at least 5 minutes after login to avoid issues
+    const initialDelay = 5 * 60 * 1000; // 5 minutes
+    const refreshInterval = 50 * 60 * 1000; // 50 minutes
 
-    // Also refresh immediately to ensure token is fresh
-    void refreshToken();
+    console.log('🔍 [AuthProvider] Token refresh scheduled:', {
+      initialDelay: `${initialDelay / 1000 / 60} minutes`,
+      refreshInterval: `${refreshInterval / 1000 / 60} minutes`,
+      timestamp: new Date().toISOString()
+    });
+
+    // Start refreshing after initial delay (to avoid refreshing right after login)
+    const initialTimeout = setTimeout(() => {
+      void refreshToken();
+    }, initialDelay);
+
+    // Then refresh every 50 minutes
+    const refreshIntervalId = setInterval(refreshToken, refreshInterval);
 
     return () => {
       console.log('🔍 [AuthProvider] Cleaning up token refresh interval');
-      clearInterval(refreshInterval);
+      clearTimeout(initialTimeout);
+      clearInterval(refreshIntervalId);
     };
   }, [user]);
 
