@@ -299,6 +299,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           timestamp: new Date().toISOString()
         });
 
+        // 🚨 QUAN TRỌNG: Chỉ cập nhật user nếu thực sự có thay đổi
+        // Nếu firebaseUser là null nhưng user hiện tại vẫn tồn tại, có thể đang refresh token
+        // Chỉ set null nếu thực sự không có user trong auth.currentUser
+        if (!firebaseUser && user) {
+          // Kiểm tra lại auth.currentUser sau một khoảng thời gian ngắn
+          // để tránh reset user khi token đang được refresh
+          setTimeout(() => {
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+              console.log('🔄 [AuthProvider] User still exists after null event, likely token refresh');
+              setUser(currentUser);
+              return;
+            }
+          }, 100);
+        }
+
         // 🚨 LUÔN tin tưởng Firebase user state
         setUser(firebaseUser);
         setLoading(false);
@@ -367,6 +383,72 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       unsubscribe();
     };
   }, []); // � Empty dependencies
+
+  // 🚨 FIX: Auto-refresh Firebase ID token before expiration (every 50 minutes)
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('🔍 [AuthProvider] Setting up Firebase ID token auto-refresh...');
+
+    const refreshToken = async (retryCount = 0) => {
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          console.log('🔍 [AuthProvider] No current user for token refresh');
+          return;
+        }
+
+        console.log('🔄 [AuthProvider] Refreshing Firebase ID token...', {
+          userEmail: currentUser.email,
+          retryCount,
+          timestamp: new Date().toISOString()
+        });
+
+        // Force refresh token (true = force refresh from server)
+        const token = await currentUser.getIdToken(true);
+        console.log('✅ [AuthProvider] Firebase ID token refreshed successfully', {
+          tokenLength: token.length,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        const firebaseError = error as { code?: string } & Error;
+        console.error('❌ [AuthProvider] Error refreshing Firebase ID token:', {
+          error: firebaseError.message,
+          code: firebaseError.code,
+          retryCount,
+          timestamp: new Date().toISOString()
+        });
+
+        // Retry logic with exponential backoff (max 3 retries)
+        if (retryCount < 3) {
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Max 10 seconds
+          console.log(`🔄 [AuthProvider] Retrying token refresh in ${delay}ms...`, {
+            retryCount: retryCount + 1,
+            maxRetries: 3
+          });
+          setTimeout(() => {
+            void refreshToken(retryCount + 1);
+          }, delay);
+        } else {
+          console.error('❌ [AuthProvider] Max retries reached for token refresh');
+          // If all retries fail, check if user still exists
+          // Firebase SDK should handle token refresh automatically on next request
+        }
+      }
+    };
+
+    // Refresh token every 50 minutes (3000 seconds)
+    // Firebase ID tokens expire after 1 hour, so refresh at 50 minutes to be safe
+    const refreshInterval = setInterval(refreshToken, 50 * 60 * 1000);
+
+    // Also refresh immediately to ensure token is fresh
+    void refreshToken();
+
+    return () => {
+      console.log('🔍 [AuthProvider] Cleaning up token refresh interval');
+      clearInterval(refreshInterval);
+    };
+  }, [user]);
 
   // Initialize Google Calendar API
   useEffect(() => {
