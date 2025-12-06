@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import React, { createContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useEffect, useState, useCallback, useRef } from 'react';
 
 import { auth, googleProvider } from '../lib/firebase';
 
@@ -67,16 +67,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isGoogleCalendarAuthed, setIsGoogleCalendarAuthed] = useState(false);
   const [tokenClient, setTokenClient] = useState<any>(null);
 
-  // Debug: Log state changes
+  // Debug: Log state changes (only when user or auth state changes significantly)
   useEffect(() => {
-    console.log('🔍 [AuthProvider] State changed:', {
-      user: user ? { uid: user.uid, email: user.email, displayName: user.displayName } : null,
-      loading,
-      isGoogleCalendarAuthed,
-      hasTokenClient: !!tokenClient,
-      timestamp: new Date().toISOString()
-    });
-  }, [user, loading, isGoogleCalendarAuthed, tokenClient]);
+    // Only log when user state changes (login/logout), not on every minor state update
+    if (user !== null || loading === false) {
+      console.log('🔍 [AuthProvider] State changed:', {
+        user: user ? { uid: user.uid, email: user.email, displayName: user.displayName } : null,
+        loading,
+        isGoogleCalendarAuthed,
+        hasTokenClient: !!tokenClient,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [user, loading]); // Removed isGoogleCalendarAuthed and tokenClient to reduce noise
 
   // Session Debug Chi Tiết
   useEffect(() => {
@@ -125,13 +128,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
     };
 
-    // Detect visibility change (tab switch)
+    // Detect visibility change (tab switch) - removed excessive logging
     const handleVisibilityChange = () => {
-      console.log('👀 [PRODUCTION-DEBUG] Tab visibility changed', {
-        hidden: document.hidden,
-        user: user ? { email: user.email } : null,
-        timestamp: new Date().toISOString()
-      });
+      // Only log if there's an actual issue or for debugging specific problems
+      // Removed to reduce console noise
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -706,8 +706,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     void initGoogleAPI();
   }, []);
 
+  // Track last token state to avoid excessive logging
+  const lastTokenStateRef = useRef<{ hasToken: boolean; isValid: boolean } | null>(null);
+
   // Auto-refresh token when it's about to expire and listen for storage changes
   useEffect(() => {
+    if (!tokenClient) return;
+    
     console.log('🔍 [AuthProvider] Setting up token expiration checker...', {
       hasTokenClient: !!tokenClient,
       timestamp: new Date().toISOString()
@@ -715,40 +720,58 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     const checkTokenExpiration = () => {
       const savedToken = localStorage.getItem('google_calendar_token');
-      console.log('🔍 [AuthProvider] Checking token expiration...', {
-        hasSavedToken: !!savedToken,
-        timestamp: new Date().toISOString()
-      });
+      const hasToken = !!savedToken;
+      let isValid = false;
+      let shouldLog = false;
       
       if (savedToken) {
         try {
           const tokenData = JSON.parse(savedToken);
           const timeUntilExpiry = tokenData.expires_at - Date.now();
           const minutesUntilExpiry = Math.round(timeUntilExpiry / 1000 / 60);
+          isValid = timeUntilExpiry > 5 * 60 * 1000;
           
-          console.log('🔍 [AuthProvider] Token expiration check:', {
-            expiresAt: new Date(tokenData.expires_at).toISOString(),
-            timeUntilExpiry: minutesUntilExpiry + ' minutes',
-            isExpiringSoon: timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0,
-            isExpired: timeUntilExpiry <= 0,
-            isValid: timeUntilExpiry > 5 * 60 * 1000
-          });
+          // Only log if state changed or if there's an issue
+          const currentState = { hasToken: true, isValid };
+          const lastState = lastTokenStateRef.current;
+          if (!lastState || 
+              lastState.hasToken !== currentState.hasToken || 
+              lastState.isValid !== currentState.isValid) {
+            shouldLog = true;
+            lastTokenStateRef.current = currentState;
+          }
+          
+          if (shouldLog) {
+            console.log('🔍 [AuthProvider] Token expiration check:', {
+              expiresAt: new Date(tokenData.expires_at).toISOString(),
+              timeUntilExpiry: minutesUntilExpiry + ' minutes',
+              isExpiringSoon: timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0,
+              isExpired: timeUntilExpiry <= 0,
+              isValid: timeUntilExpiry > 5 * 60 * 1000
+            });
+          }
           
           // If token expires in less than 5 minutes, just mark as not authenticated
           // Let useGoogleCalendar handle the refresh automatically
           if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
-            console.log('🔍 [AuthProvider] Token expiring soon, setting isGoogleCalendarAuthed = false');
+            if (shouldLog) {
+              console.log('🔍 [AuthProvider] Token expiring soon, setting isGoogleCalendarAuthed = false');
+            }
             setIsGoogleCalendarAuthed(false);
           } else if (timeUntilExpiry <= 0) {
             // Token expired
-            console.log('🔍 [AuthProvider] Token expired, removing and setting isGoogleCalendarAuthed = false');
+            if (shouldLog) {
+              console.log('🔍 [AuthProvider] Token expired, removing and setting isGoogleCalendarAuthed = false');
+            }
             localStorage.removeItem('google_calendar_token');
             setIsGoogleCalendarAuthed(false);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
             window.gapi?.client?.setToken(null);
           } else {
             // Token is still valid
-            console.log('🔍 [AuthProvider] Token still valid, setting isGoogleCalendarAuthed = true');
+            if (shouldLog) {
+              console.log('🔍 [AuthProvider] Token still valid, setting isGoogleCalendarAuthed = true');
+            }
             setIsGoogleCalendarAuthed(true);
           }
         } catch (error) {
@@ -759,10 +782,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           });
           localStorage.removeItem('google_calendar_token');
           setIsGoogleCalendarAuthed(false);
+          lastTokenStateRef.current = { hasToken: false, isValid: false };
         }
       } else {
-        // No token in localStorage
-        console.log('🔍 [AuthProvider] No saved token, setting isGoogleCalendarAuthed = false');
+        // No token in localStorage - only log if state changed from having token to not having token
+        const currentState = { hasToken: false, isValid: false };
+        const lastState = lastTokenStateRef.current;
+        
+        // Only update state if it changed
+        if (!lastState || lastState.hasToken !== currentState.hasToken) {
+          // Only log when transitioning from having token to not having token
+          // Don't log if we never had a token (user hasn't connected Calendar yet)
+          if (lastState?.hasToken) {
+            console.log('🔍 [AuthProvider] Token removed, setting isGoogleCalendarAuthed = false');
+          }
+          lastTokenStateRef.current = currentState;
+        }
         setIsGoogleCalendarAuthed(false);
       }
     };
@@ -816,13 +851,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    // Check every minute
-    console.log('🔍 [AuthProvider] Starting token expiration checker (every 60 seconds)');
-    const interval = setInterval(checkTokenExpiration, 60000);
+    // Check every 5 minutes (reduced from 60 seconds to reduce noise)
+    // Only check more frequently if token is about to expire
+    console.log('🔍 [AuthProvider] Starting token expiration checker (every 5 minutes)');
     
-    // Also check immediately
+    // Initial check
     console.log('🔍 [AuthProvider] Running initial token expiration check');
     checkTokenExpiration();
+    
+    // Check every 5 minutes (300000ms) instead of every minute
+    const interval = setInterval(checkTokenExpiration, 300000);
 
     // Listen for storage changes
     console.log('🔍 [AuthProvider] Adding storage event listener');
