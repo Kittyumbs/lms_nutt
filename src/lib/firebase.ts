@@ -59,35 +59,39 @@ console.log('🚨 [FIREBASE-DEBUG] Firebase Config:', {
   timestamp: new Date().toISOString()
 });
 
-// 🚨 SYNCHRONOUS: Set persistence synchronously to ensure it's ready before any auth listeners
-console.log('🔧 [FIREBASE-INIT] Setting up Firebase auth persistence synchronously...');
+// 🚨 CRITICAL: Setup persistence asynchronously to avoid top-level await issues
+const initializePersistence = async () => {
+  console.log('🔧 [FIREBASE-INIT] Setting up Firebase auth persistence...');
 
-try {
-  await setPersistence(auth, browserLocalPersistence);
-  console.log('✅ [FIREBASE-INIT] Persistence set successfully - using localStorage for session persistence');
-} catch (error) {
-  console.error('❌ [FIREBASE-INIT] Persistence setup failed, trying fallback:', error);
   try {
-    await setPersistence(auth, inMemoryPersistence);
-    console.log('🔄 [FIREBASE-INIT] Fallback to inMemory persistence - session will not persist across browser restarts');
-  } catch (fallbackError) {
-    console.error('❌ [FIREBASE-INIT] Fallback persistence also failed:', fallbackError);
+    await setPersistence(auth, browserLocalPersistence);
+    console.log('✅ [FIREBASE-INIT] Persistence set successfully - using localStorage for session persistence');
+  } catch (error) {
+    console.error('❌ [FIREBASE-INIT] Persistence setup failed, trying fallback:', error);
+    try {
+      await setPersistence(auth, inMemoryPersistence);
+      console.log('🔄 [FIREBASE-INIT] Fallback to inMemory persistence - session will not persist across browser restarts');
+    } catch (fallbackError) {
+      console.error('❌ [FIREBASE-INIT] Fallback persistence also failed:', fallbackError);
+    }
   }
-}
 
-// 🚨 CRITICAL: Verify persistence is working by checking localStorage
-console.log('🔍 [FIREBASE-INIT] Verifying persistence setup...');
-try {
-  // Test if we can access localStorage (this will fail in private browsing)
-  const testKey = '__firebase_persistence_test__';
-  localStorage.setItem(testKey, 'test');
-  localStorage.removeItem(testKey);
-  console.log('✅ [FIREBASE-INIT] localStorage access confirmed');
-} catch (storageError) {
-  console.warn('⚠️ [FIREBASE-INIT] localStorage access failed, persistence may not work:', storageError);
-}
+  // 🚨 CRITICAL: Verify persistence is working by checking localStorage
+  console.log('🔍 [FIREBASE-INIT] Verifying persistence setup...');
+  try {
+    // Test if we can access localStorage (this will fail in private browsing)
+    const testKey = '__firebase_persistence_test__';
+    localStorage.setItem(testKey, 'test');
+    localStorage.removeItem(testKey);
+    console.log('✅ [FIREBASE-INIT] localStorage access confirmed');
+  } catch (storageError) {
+    console.warn('⚠️ [FIREBASE-INIT] localStorage access failed, persistence may not work:', storageError);
+  }
 
-export const persistenceInitialized = Promise.resolve(null);
+  return true;
+};
+
+export const persistenceInitialized = initializePersistence();
 
 // Configure Google Provider with additional scopes if needed
 export const googleProvider = new GoogleAuthProvider();

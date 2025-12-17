@@ -53,7 +53,7 @@ const renderApp = () => {
   );
 };
 
-// Initialize Firebase and then render the app
-persistenceInitialized.then(() => {
+// Initialize Firebase persistence and then render the app
+void persistenceInitialized.then(() => {
   renderApp();
 });
