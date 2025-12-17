@@ -98,6 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         totalKeys: firebaseKeys.length,
         keys: firebaseKeys,
         hasFirebaseAuthKey: firebaseKeys.some(key => key.includes('auth')),
+
         timestamp: new Date().toISOString()
       });
 
@@ -306,7 +307,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('🔍 [AuthProvider] Cleaning up auth listener');
       unsubscribe();
     };
-  }, []); // � Empty dependencies
+  }, [persistenceReady]); // Wait for persistence to be ready
 
   // 🚨 REMOVED: Manual token refresh logic - Firebase handles this automatically
 
@@ -335,7 +336,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const gapiScript = document.createElement('script');
         gapiScript.src = 'https://apis.google.com/js/api.js';
         gapiScript.async = true;
-        
+
         gapiScript.onload = () => {
           console.log('🔍 [AuthProvider] Google API script loaded, initializing client...');
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -357,7 +358,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 clientId: GOOGLE_CLIENT_ID ? GOOGLE_CLIENT_ID.substring(0, 20) + '...' : 'MISSING',
                 scope: GOOGLE_SCOPE
               });
-              
+
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
               const tc = window.google?.accounts?.oauth2?.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
@@ -369,12 +370,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     expiresIn: response.expires_in || null,
                     timestamp: new Date().toISOString()
                   });
-                  
+
                   if (response.access_token) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                     window.gapi.client.setToken({ access_token: response.access_token });
                     console.log('🔍 [AuthProvider] Token set to gapi.client');
-                    
+
                     // Save token to localStorage with expiration
                     // Google OAuth tokens typically expire in 1 hour (3600 seconds)
                     // But we'll use the actual expires_in from response, or default to 1 hour
@@ -386,23 +387,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       expires_in: expiresIn, // Store for reference
                       created_at: Date.now()
                     };
-                    
+
                     console.log('🔍 [AuthProvider] Saving token to localStorage:', {
                       expiresAt: new Date(expiresAt).toISOString(),
                       expiresIn: expiresIn,
                       expiresInMinutes: Math.round(expiresIn / 60),
                       timestamp: new Date().toISOString()
                     });
-                    
+
                     localStorage.setItem('google_calendar_token', JSON.stringify(tokenData));
                     // Mark that user has connected successfully for silent refresh
                     localStorage.setItem('google_calendar_was_connected', 'true');
-                    
+
                     // IMPORTANT: Update state to reflect Calendar is connected
                     console.log('🔍 [AuthProvider] Setting isGoogleCalendarAuthed = true');
                     setIsGoogleCalendarAuthed(true);
                     console.log('✅ [AuthProvider] Google Calendar connected successfully');
-                    
+
                     // Trigger storage event to notify other components (for cross-tab sync)
                     window.dispatchEvent(new StorageEvent('storage', {
                       key: 'google_calendar_token',
@@ -410,7 +411,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       oldValue: null
                     }));
                     console.log('🔍 [AuthProvider] Storage event dispatched (for cross-tab sync)');
-                    
+
                     // Trigger custom event for same-tab notification (storage events don't fire in same tab)
                     window.dispatchEvent(new CustomEvent('google_calendar_token_updated', {
                       detail: { tokenData }
@@ -420,12 +421,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     // Handle different error types
                     console.log('🔍 [AuthProvider] Token client callback error:', {
                       error: response.error,
-                      errorType: response.error === 'popup_closed_by_user' ? 'popup_closed' : 
-                                 response.error === 'popup_blocked' ? 'popup_blocked' : 
+                      errorType: response.error === 'popup_closed_by_user' ? 'popup_closed' :
+                                 response.error === 'popup_blocked' ? 'popup_blocked' :
                                  'other',
                       timestamp: new Date().toISOString()
                     });
-                    
+
                     if (response.error === 'popup_closed_by_user' || response.error === 'popup_blocked') {
                       console.warn('⚠️ [AuthProvider] Calendar popup was blocked or closed. User can connect manually from sidebar.');
                       // Don't set to false - keep current state, user can retry manually
@@ -436,7 +437,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   }
                 }
               });
-              
+
               console.log('✅ [AuthProvider] Token client created successfully');
               setTokenClient(tc);
               console.log('🔍 [AuthProvider] Token client state updated');
@@ -445,13 +446,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               console.log('🔍 [AuthProvider] Checking for saved token in localStorage...');
               const savedToken = localStorage.getItem('google_calendar_token');
               const wasConnected = localStorage.getItem('google_calendar_was_connected') === 'true';
-              
+
               console.log('🔍 [AuthProvider] Token check results:', {
                 hasSavedToken: !!savedToken,
                 wasConnected,
                 hasTokenClient: !!tc
               });
-              
+
               if (savedToken) {
                 try {
                   const tokenData = JSON.parse(savedToken);
@@ -459,7 +460,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   const expiresAt = tokenData.expires_at;
                   const isValid = expiresAt && now < expiresAt;
                   const timeUntilExpiry = expiresAt ? expiresAt - now : 0;
-                  
+
                   console.log('🔍 [AuthProvider] Saved token details:', {
                     hasExpiresAt: !!expiresAt,
                     expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
@@ -468,7 +469,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     timeUntilExpiry: timeUntilExpiry > 0 ? Math.round(timeUntilExpiry / 1000 / 60) + ' minutes' : 'expired',
                     timestamp: new Date().toISOString()
                   });
-                  
+
                   // Check if token is still valid (not expired)
                   if (isValid) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -481,7 +482,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       wasConnected,
                       hasTokenClient: !!tc
                     });
-                    
+
                     if (wasConnected && tc) {
                       console.log('🔄 [AuthProvider] Token expired, attempting silent refresh...', {
                         prompt: 'none',
@@ -561,35 +562,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Auto-refresh token when it's about to expire and listen for storage changes
   useEffect(() => {
     if (!tokenClient) return;
-    
+
     console.log('🔍 [AuthProvider] Setting up token expiration checker...', {
       hasTokenClient: !!tokenClient,
       timestamp: new Date().toISOString()
     });
-    
+
     const checkTokenExpiration = () => {
       const savedToken = localStorage.getItem('google_calendar_token');
       const hasToken = !!savedToken;
       let isValid = false;
       let shouldLog = false;
-      
+
       if (savedToken) {
         try {
           const tokenData = JSON.parse(savedToken);
           const timeUntilExpiry = tokenData.expires_at - Date.now();
           const minutesUntilExpiry = Math.round(timeUntilExpiry / 1000 / 60);
           isValid = timeUntilExpiry > 5 * 60 * 1000;
-          
+
           // Only log if state changed or if there's an issue
           const currentState = { hasToken: true, isValid };
           const lastState = lastTokenStateRef.current;
-          if (!lastState || 
-              lastState.hasToken !== currentState.hasToken || 
+          if (!lastState ||
+              lastState.hasToken !== currentState.hasToken ||
               lastState.isValid !== currentState.isValid) {
             shouldLog = true;
             lastTokenStateRef.current = currentState;
           }
-          
+
           if (shouldLog) {
             console.log('🔍 [AuthProvider] Token expiration check:', {
               expiresAt: new Date(tokenData.expires_at).toISOString(),
@@ -599,7 +600,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               isValid: timeUntilExpiry > 5 * 60 * 1000
             });
           }
-          
+
           // 🚨 CRITICAL: Proactively refresh token if expiring within 10 minutes
           if (timeUntilExpiry < 10 * 60 * 1000 && timeUntilExpiry > 0) {
             console.log('🔄 [AuthProvider] Token expiring soon, attempting proactive refresh...', {
@@ -651,7 +652,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // No token in localStorage - only log if state changed from having token to not having token
         const currentState = { hasToken: false, isValid: false };
         const lastState = lastTokenStateRef.current;
-        
+
         // Only update state if it changed
         if (!lastState || lastState.hasToken !== currentState.hasToken) {
           // Only log when transitioning from having token to not having token
@@ -673,19 +674,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           hasOldValue: !!e.oldValue,
           timestamp: new Date().toISOString()
         });
-        
+
         if (e.newValue) {
           // Token was added or modified
           try {
             const tokenData = JSON.parse(e.newValue);
             const timeUntilExpiry = tokenData.expires_at - Date.now();
-            
+
             console.log('🔍 [AuthProvider] Processing storage event token:', {
               expiresAt: new Date(tokenData.expires_at).toISOString(),
               timeUntilExpiry: Math.round(timeUntilExpiry / 1000 / 60) + ' minutes',
               isValid: timeUntilExpiry > 0
             });
-            
+
             if (timeUntilExpiry > 0) {
               setIsGoogleCalendarAuthed(true);
               // Restore token to gapi client
@@ -717,11 +718,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check every 5 minutes (reduced from 60 seconds to reduce noise)
     // Only check more frequently if token is about to expire
     console.log('🔍 [AuthProvider] Starting token expiration checker (every 5 minutes)');
-    
+
     // Initial check
     console.log('🔍 [AuthProvider] Running initial token expiration check');
     checkTokenExpiration();
-    
+
     // Check every 5 minutes (300000ms) instead of every minute
     const interval = setInterval(checkTokenExpiration, 300000);
 
@@ -834,14 +835,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isGoogleCalendarAuthed,
       timestamp: new Date().toISOString()
     });
-    
+
     if (!tokenClient) {
       console.error('❌ [AuthProvider] signInWithGoogleCalendar failed: No token client', {
         timestamp: new Date().toISOString()
       });
       throw new Error('Google Calendar authentication not ready. Please wait and try again.');
     }
-    
+
     try {
       // Don't use 'consent' prompt - it forces user to re-consent every time
       // Without prompt (undefined), Google will reuse existing consent if available
@@ -872,13 +873,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isGoogleCalendarAuthed,
       timestamp: new Date().toISOString()
     });
-    
+
     try {
       // Sign out from Firebase
       console.log('🔍 [AuthProvider] Signing out from Firebase...');
       await firebaseSignOut(auth);
       console.log('✅ [AuthProvider] Firebase sign out completed');
-      
+
       // Sign out from Google Calendar
       try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -887,14 +888,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           hasToken: !!token,
           timestamp: new Date().toISOString()
         });
-        
+
         if (token) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           window.gapi.client.setToken(null);
           setIsGoogleCalendarAuthed(false);
           console.log('🔍 [AuthProvider] Google Calendar token cleared from gapi.client');
         }
-        
+
         // Remove token from localStorage
         const hadToken = !!localStorage.getItem('google_calendar_token');
         localStorage.removeItem('google_calendar_token');
@@ -903,7 +904,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           hadToken,
           timestamp: new Date().toISOString()
         });
-        
+
         // Trigger storage event to notify other components
         window.dispatchEvent(new StorageEvent('storage', {
           key: 'google_calendar_token',
@@ -911,7 +912,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           oldValue: null
         }));
         console.log('🔍 [AuthProvider] Storage event dispatched (token removed)');
-        
+
         console.log('✅ [AuthProvider] Google Calendar sign out completed');
       } catch (calendarError) {
         console.error('❌ [AuthProvider] Error signing out from Google Calendar:', {
@@ -921,7 +922,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         });
         // Don't throw here, Firebase signout is more important
       }
-      
+
       console.log('✅ [AuthProvider] signOut completed successfully');
     } catch (error) {
       console.error('❌ [AuthProvider] Error signing out:', {
