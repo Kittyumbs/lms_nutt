@@ -264,7 +264,18 @@ const KanbanBoard: React.FC = () => {
   const filteredColumns = useMemo(() => {
     return columns.map(column => ({
       ...column,
-      tickets: filterTickets(column.tickets),
+      tickets: filterTickets(column.tickets).sort((a, b) => {
+        // Sort by deadline: nearest deadline first (earliest date first)
+        const deadlineA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const deadlineB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+
+        // Tickets with deadlines come before tickets without deadlines
+        if (deadlineA === Infinity && deadlineB === Infinity) return 0;
+        if (deadlineA === Infinity) return 1; // a has no deadline, comes after
+        if (deadlineB === Infinity) return -1; // b has no deadline, comes after
+
+        return deadlineA - deadlineB; // Earlier deadline first
+      }),
     }));
   }, [columns, filterTickets]);
 

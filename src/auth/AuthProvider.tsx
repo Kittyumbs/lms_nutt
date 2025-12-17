@@ -737,20 +737,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [tokenClient]);
 
-  // 🚨 CRITICAL: Session restoration on page refresh
+  // 🚨 CRITICAL: Session restoration on page refresh with forced token refresh
   useEffect(() => {
-    console.log('🔍 [AuthProvider] Initializing session restoration...');
+    console.log('🔍 [AuthProvider] Initializing aggressive session restoration...');
 
-    // Force Firebase to check for existing session on app startup
+    // Force Firebase to check for existing session and refresh tokens if needed
     const restoreSession = async () => {
       try {
-        // Wait for Firebase auth to initialize
-        await new Promise((resolve) => {
+        // Wait for Firebase auth to initialize and get current user
+        const currentUser = await new Promise<User | null>((resolve) => {
           const unsubscribe = onAuthStateChanged(auth, (user) => {
             unsubscribe(); // Only run once
             resolve(user);
           });
         });
+
+        if (currentUser) {
+          console.log('🔍 [AuthProvider] Found existing user, checking token validity...');
+
+          try {
+            // Get current token and check if it's close to expiry
+            const tokenResult = await currentUser.getIdTokenResult();
+            const timeUntilExpiry = new Date(tokenResult.expirationTime).getTime() - Date.now();
+            const minutesUntilExpiry = Math.round(timeUntilExpiry / 1000 / 60);
+
+            console.log('🔍 [AuthProvider] Existing token expiry check:', {
+              expiresAt: new Date(tokenResult.expirationTime).toISOString(),
+              timeUntilExpiry: minutesUntilExpiry + ' minutes',
+              needsRefresh: timeUntilExpiry < 30 * 60 * 1000 // Less than 30 minutes
+            });
+
+            // Force refresh if token expires within 30 minutes
+            if (timeUntilExpiry < 30 * 60 * 1000) {
+              console.log('🔄 [AuthProvider] Token expires soon, forcing refresh on app startup...');
+              await currentUser.getIdToken(true);
+              console.log('✅ [AuthProvider] Token refreshed successfully on app startup');
+            } else {
+              console.log('✅ [AuthProvider] Existing token is still valid');
+            }
+          } catch (tokenError) {
+            console.error('❌ [AuthProvider] Error checking token on startup:', tokenError);
+          }
+        } else {
+          console.log('🔍 [AuthProvider] No existing user session found');
+        }
 
         console.log('✅ [AuthProvider] Session restoration check completed');
       } catch (error) {
@@ -761,7 +791,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     restoreSession();
   }, []);
 
-  // 🚨 CRITICAL: Add Firebase token auto-refresh
+  // 🚨 CRITICAL: Add Firebase token auto-refresh with more frequent checks
   useEffect(() => {
     if (!user) return;
 
@@ -773,13 +803,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const refreshFirebaseToken = async () => {
       try {
-        // Force refresh the Firebase ID token
-        const newToken = await user.getIdToken(true);
-        console.log('✅ [AuthProvider] Firebase ID token refreshed successfully', {
-          tokenLength: newToken.length,
+        // Get current token first to check if it needs refresh
+        const currentToken = await user.getIdToken(false);
+        const tokenResult = await user.getIdTokenResult();
+
+        console.log('🔍 [AuthProvider] Current token info:', {
+          expiresAt: new Date(tokenResult.expirationTime).toISOString(),
+          timeUntilExpiry: Math.round((new Date(tokenResult.expirationTime).getTime() - Date.now()) / 1000 / 60) + ' minutes',
+          issuedAt: new Date(tokenResult.issuedAtTime).toISOString(),
           timestamp: new Date().toISOString()
         });
-        return newToken;
+
+        // Force refresh if token expires within 15 minutes
+        const timeUntilExpiry = new Date(tokenResult.expirationTime).getTime() - Date.now();
+        if (timeUntilExpiry < 15 * 60 * 1000) {
+          console.log('🔄 [AuthProvider] Token expiring soon, forcing refresh...');
+          const newToken = await user.getIdToken(true);
+          console.log('✅ [AuthProvider] Firebase ID token refreshed successfully', {
+            tokenLength: newToken.length,
+            timestamp: new Date().toISOString()
+          });
+          return newToken;
+        } else {
+          console.log('✅ [AuthProvider] Firebase token still valid');
+          return currentToken;
+        }
       } catch (error) {
         console.error('❌ [AuthProvider] Failed to refresh Firebase ID token:', {
           error,
@@ -790,19 +838,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    // Refresh token every 50 minutes (Firebase tokens expire after 1 hour)
+    // Check token every 10 minutes (more frequent to catch expiry issues)
     const tokenRefreshInterval = setInterval(async () => {
       try {
         await refreshFirebaseToken();
       } catch (error) {
-        // If refresh fails, user might need to re-authenticate
         console.warn('⚠️ [AuthProvider] Firebase token refresh failed, user may need to re-authenticate');
       }
-    }, 50 * 60 * 1000); // 50 minutes
+    }, 10 * 60 * 1000); // 10 minutes
 
-    // Initial token refresh to ensure we have a fresh token
+    // Initial token check
     refreshFirebaseToken().catch((error) => {
-      console.warn('⚠️ [AuthProvider] Initial Firebase token refresh failed:', error);
+      console.warn('⚠️ [AuthProvider] Initial Firebase token check failed:', error);
     });
 
     return () => {
