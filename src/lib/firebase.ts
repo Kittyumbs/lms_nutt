@@ -59,63 +59,35 @@ console.log('🚨 [FIREBASE-DEBUG] Firebase Config:', {
   timestamp: new Date().toISOString()
 });
 
-// 🚨 PRODUCTION FIX: Enhanced persistence setup
-const initializeAuthPersistence = async () => {
+// 🚨 SYNCHRONOUS: Set persistence synchronously to ensure it's ready before any auth listeners
+console.log('🔧 [FIREBASE-INIT] Setting up Firebase auth persistence synchronously...');
+
+try {
+  await setPersistence(auth, browserLocalPersistence);
+  console.log('✅ [FIREBASE-INIT] Persistence set successfully - using localStorage for session persistence');
+} catch (error) {
+  console.error('❌ [FIREBASE-INIT] Persistence setup failed, trying fallback:', error);
   try {
-    console.log('🔧 [FIREBASE-INIT] Starting auth persistence setup...');
-
-    // Set persistence với retry logic
-    await setPersistence(auth, browserLocalPersistence);
-    console.log('✅ [FIREBASE-INIT] Persistence set successfully');
-
-    // Kiểm tra immediate user
-    const immediateUser = auth.currentUser;
-    console.log('🔍 [FIREBASE-INIT] Immediate user check:', {
-      hasUser: !!immediateUser,
-      userEmail: immediateUser?.email,
-      userUid: immediateUser?.uid
-    });
-
-    // Kiểm tra localStorage ngay lập tức
-    const firebaseKeys = Object.keys(localStorage).filter(key =>
-      key.includes('firebase') || key.includes('auth')
-    );
-    console.log('🔍 [FIREBASE-INIT] Initial localStorage check:', {
-      keyCount: firebaseKeys.length,
-      keys: firebaseKeys
-    });
-
-    return immediateUser;
-  } catch (error) {
-    console.error('❌ [FIREBASE-INIT] Persistence setup failed:', {
-      error: error instanceof Error ? error.message : String(error),
-      code: (error as any)?.code
-    });
-
-    // Fallback: thử với inMemoryPersistence
-    try {
-      await setPersistence(auth, inMemoryPersistence);
-      console.log('🔄 [FIREBASE-INIT] Fallback to inMemory persistence');
-    } catch (fallbackError) {
-      console.error('❌ [FIREBASE-INIT] Fallback persistence also failed:', fallbackError);
-    }
-
-    return null;
+    await setPersistence(auth, inMemoryPersistence);
+    console.log('🔄 [FIREBASE-INIT] Fallback to inMemory persistence - session will not persist across browser restarts');
+  } catch (fallbackError) {
+    console.error('❌ [FIREBASE-INIT] Fallback persistence also failed:', fallbackError);
   }
-};
+}
 
-// Đảm bảo persistence được khởi tạo ngay lập tức
-export const persistenceInitialized = initializeAuthPersistence();
+// 🚨 CRITICAL: Verify persistence is working by checking localStorage
+console.log('🔍 [FIREBASE-INIT] Verifying persistence setup...');
+try {
+  // Test if we can access localStorage (this will fail in private browsing)
+  const testKey = '__firebase_persistence_test__';
+  localStorage.setItem(testKey, 'test');
+  localStorage.removeItem(testKey);
+  console.log('✅ [FIREBASE-INIT] localStorage access confirmed');
+} catch (storageError) {
+  console.warn('⚠️ [FIREBASE-INIT] localStorage access failed, persistence may not work:', storageError);
+}
 
-// Khởi tạo ngay lập tức
-persistenceInitialized.then(user => {
-  console.log('🎯 [FIREBASE-INIT] Auth initialization completed:', {
-    hasUser: !!user,
-    timestamp: new Date().toISOString()
-  });
-}).catch(err => {
-  console.error('❌ [FIREBASE-INIT] Auth initialization error:', err);
-});
+export const persistenceInitialized = Promise.resolve(null);
 
 // Configure Google Provider with additional scopes if needed
 export const googleProvider = new GoogleAuthProvider();

@@ -1,4 +1,4 @@
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import React, { createContext, useEffect, useState, useCallback, useRef } from 'react';
 
 import { auth, googleProvider } from '../lib/firebase';
@@ -66,6 +66,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isGoogleCalendarAuthed, setIsGoogleCalendarAuthed] = useState(false);
   const [tokenClient, setTokenClient] = useState<any>(null);
+
+  // 🚨 CRITICAL: Ensure persistence is set before any auth operations
+  const [persistenceReady, setPersistenceReady] = useState(false);
 
   // Debug: Log state changes (only when user or auth state changes significantly)
   useEffect(() => {
@@ -169,118 +172,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     validateDomainConfiguration();
   }, []);
 
-  // Production Session Recovery
+  // 🚨 CRITICAL: Setup persistence first, then auth listeners
   useEffect(() => {
-    // 🚨 PRODUCTION FIX: Session Recovery Mechanism
-    const attemptSessionRecovery = () => {
-      if (!user && !loading) {
-        console.log('🔄 [AuthProvider] Attempting session recovery...');
+    const ensurePersistenceSet = async () => {
+      console.log('🔍 [AuthProvider] Ensuring persistence is set before auth listeners...');
 
-        // Phương pháp 1: Kiểm tra auth.currentUser trực tiếp
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          console.log('✅ [AuthProvider] Session recovered via auth.currentUser');
-          setUser(currentUser);
-          return;
-        }
-
-        // Phương pháp 2: Kiểm tra localStorage keys
-        const hasFirebaseKeys = Object.keys(localStorage).some(key =>
-          key.startsWith('firebase:authUser:')
-        );
-
-        if (hasFirebaseKeys) {
-          console.log('🔍 [AuthProvider] Firebase auth keys found but no user - forcing auth refresh');
-          // Try to trigger auth state change by forcing a token refresh if we have a user
-          if (currentUser) {
-            void (currentUser as any).getIdToken(true).catch(() => {
-              // Ignore errors, just trying to trigger auth state
-            });
-          } else {
-            console.log('🔍 [AuthProvider] No current user found for token refresh');
-          }
-        }
-      }
-    };
-
-    // Thử recovery sau 2 giây và 5 giây
-    setTimeout(attemptSessionRecovery, 2000);
-    setTimeout(attemptSessionRecovery, 5000);
-  }, [user, loading]);
-
-  // Emergency Production Hotfix
-  useEffect(() => {
-    // 🚨 EMERGENCY FIX: Manual session restoration for production
-    const manualSessionRestoration = () => {
-      if (!user && !loading) {
-        console.log('🔄 [AUTH-EMERGENCY] Manual session restoration triggered');
-
-        // Phương pháp 1: Direct auth check
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          console.log('✅ [AUTH-EMERGENCY] User found via auth.currentUser');
-          setUser(currentUser);
-          return;
-        }
-
-        // Phương pháp 2: Check for specific Firebase keys
-        const firebaseAuthKey = Object.keys(localStorage).find(key =>
-          key.startsWith('firebase:authUser:')
-        );
-
-        if (firebaseAuthKey) {
-          console.log('🔍 [AUTH-EMERGENCY] Firebase auth key found:', firebaseAuthKey);
-          try {
-            const authData = JSON.parse(localStorage.getItem(firebaseAuthKey) || '{}');
-            if (authData.uid) {
-              console.log('🔄 [AUTH-EMERGENCY] Attempting to restore session from localStorage');
-              // Trigger auth state change bằng cách reload
-              window.location.reload();
-            }
-          } catch (e) {
-            console.error('❌ [AUTH-EMERGENCY] Error parsing auth data:', e);
-          }
-        }
-      }
-    };
-
-    // Chạy sau 3 giây
-    const timer = setTimeout(manualSessionRestoration, 3000);
-    return () => clearTimeout(timer);
-  }, [user, loading]);
-
-  // 🚨 FIXED: Listen for auth state changes with proper persistence handling
-  useEffect(() => {
-    console.log('🔍 [AuthProvider] Setting up Firebase auth with persistence check');
-
-    const initializeAuth = async () => {
       try {
-        // 🚨 ĐẢM BẢO persistence được set trước khi listen
-        console.log('🔍 [AuthProvider] Setting persistence...');
+        // Ensure persistence is set - if it fails, fallback to inMemoryPersistence
         await setPersistence(auth, browserLocalPersistence);
-        console.log('✅ [AuthProvider] Persistence confirmed');
-
-        // 🚨 Kiểm tra current user NGAY LẬP TỨC
-        const immediateUser = auth.currentUser;
-        console.log('🔍 [AuthProvider] Immediate currentUser:', {
-          hasUser: !!immediateUser,
-          userEmail: immediateUser?.email,
-          timestamp: new Date().toISOString()
-        });
-
-        if (immediateUser) {
-          console.log('✅ [AuthProvider] User found in immediate check');
-          setUser(immediateUser);
-          setLoading(false);
-          return;
-        }
+        console.log('✅ [AuthProvider] Persistence verified/ensured in AuthProvider - using localStorage');
       } catch (error) {
-        console.error('❌ [AuthProvider] Persistence setup error:', error);
+        console.error('❌ [AuthProvider] Persistence set failed in AuthProvider:', error);
+        try {
+          await setPersistence(auth, inMemoryPersistence);
+          console.log('🔄 [AuthProvider] Fallback persistence set - using inMemory (session only)');
+        } catch (fallbackError) {
+          console.error('❌ [AuthProvider] Fallback persistence also failed:', fallbackError);
+        }
       }
+
+      setPersistenceReady(true);
     };
 
-    // Chạy persistence setup
-    void initializeAuth();
+    ensurePersistenceSet();
+  }, []);
+
+  // 🚨 Only setup auth state listener after persistence is ready
+  useEffect(() => {
+    if (!persistenceReady) {
+      console.log('🔍 [AuthProvider] Waiting for persistence setup...');
+      return;
+    }
+
+    console.log('🔍 [AuthProvider] Setting up Firebase auth state listener');
 
     // 🚨 Setup auth state listener với detailed logging
     const unsubscribe = onAuthStateChanged(
@@ -384,82 +308,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, []); // � Empty dependencies
 
-  // 🚨 FIX: Auto-refresh Firebase ID token before expiration (every 50 minutes)
-  useEffect(() => {
-    if (!user) return;
-
-    console.log('🔍 [AuthProvider] Setting up Firebase ID token auto-refresh...');
-
-    const refreshToken = async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          console.log('🔍 [AuthProvider] No current user for token refresh');
-          return;
-        }
-
-        console.log('🔄 [AuthProvider] Refreshing Firebase ID token...', {
-          userEmail: currentUser.email,
-          timestamp: new Date().toISOString()
-        });
-
-        // Use getIdToken() without force - Firebase will auto-refresh if needed
-        // Only force refresh if token is actually expired or about to expire
-        const token = await currentUser.getIdToken();
-        console.log('✅ [AuthProvider] Firebase ID token retrieved/refreshed successfully', {
-          tokenLength: token.length,
-          timestamp: new Date().toISOString()
-        });
-      } catch (error) {
-        const firebaseError = error as { code?: string } & Error;
-        const errorCode = firebaseError.code;
-        
-        // Don't log as error for certain Firebase errors that are expected
-        if (errorCode === 'auth/token-service-api-has-not-been-used-in-project') {
-          console.warn('⚠️ [AuthProvider] Token service API not enabled yet - Firebase will handle this automatically', {
-            timestamp: new Date().toISOString()
-          });
-          // This error usually means the project needs time to propagate, or Firebase will handle it automatically
-          return;
-        }
-
-        console.error('❌ [AuthProvider] Error refreshing Firebase ID token:', {
-          error: firebaseError.message,
-          code: errorCode,
-          timestamp: new Date().toISOString()
-        });
-        
-        // Don't retry - Firebase SDK will handle token refresh automatically when needed
-        // Forcing refresh can cause issues if the project isn't fully set up yet
-      }
-    };
-
-    // Refresh token every 50 minutes (3000 seconds)
-    // Firebase ID tokens expire after 1 hour, so refresh at 50 minutes to be safe
-    // Don't refresh immediately - wait at least 5 minutes after login to avoid issues
-    const initialDelay = 5 * 60 * 1000; // 5 minutes
-    const refreshInterval = 50 * 60 * 1000; // 50 minutes
-
-    console.log('🔍 [AuthProvider] Token refresh scheduled:', {
-      initialDelay: `${initialDelay / 1000 / 60} minutes`,
-      refreshInterval: `${refreshInterval / 1000 / 60} minutes`,
-      timestamp: new Date().toISOString()
-    });
-
-    // Start refreshing after initial delay (to avoid refreshing right after login)
-    const initialTimeout = setTimeout(() => {
-      void refreshToken();
-    }, initialDelay);
-
-    // Then refresh every 50 minutes
-    const refreshIntervalId = setInterval(refreshToken, refreshInterval);
-
-    return () => {
-      console.log('🔍 [AuthProvider] Cleaning up token refresh interval');
-      clearTimeout(initialTimeout);
-      clearInterval(refreshIntervalId);
-    };
-  }, [user]);
+  // 🚨 REMOVED: Manual token refresh logic - Firebase handles this automatically
 
   // Initialize Google Calendar API
   useEffect(() => {
@@ -751,13 +600,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             });
           }
           
-          // If token expires in less than 5 minutes, just mark as not authenticated
-          // Let useGoogleCalendar handle the refresh automatically
-          if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
-            if (shouldLog) {
-              console.log('🔍 [AuthProvider] Token expiring soon, setting isGoogleCalendarAuthed = false');
+          // 🚨 CRITICAL: Proactively refresh token if expiring within 10 minutes
+          if (timeUntilExpiry < 10 * 60 * 1000 && timeUntilExpiry > 0) {
+            console.log('🔄 [AuthProvider] Token expiring soon, attempting proactive refresh...', {
+              timeUntilExpiry: Math.round(timeUntilExpiry / 1000 / 60) + ' minutes',
+              timestamp: new Date().toISOString()
+            });
+
+            // Try silent refresh
+            if (tokenClient) {
+              try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                tokenClient.requestAccessToken({ prompt: 'none' });
+                console.log('🔄 [AuthProvider] Proactive token refresh initiated');
+              } catch (refreshError) {
+                console.error('❌ [AuthProvider] Proactive token refresh failed:', refreshError);
+                setIsGoogleCalendarAuthed(false);
+              }
+            } else {
+              console.warn('⚠️ [AuthProvider] Token expiring but no token client available');
+              setIsGoogleCalendarAuthed(false);
             }
-            setIsGoogleCalendarAuthed(false);
           } else if (timeUntilExpiry <= 0) {
             // Token expired
             if (shouldLog) {
@@ -873,65 +736,92 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [tokenClient]);
 
-  // 🚨 ENHANCED Sign in with Google - Session Verification
+  // 🚨 CRITICAL: Session restoration on page refresh
+  useEffect(() => {
+    console.log('🔍 [AuthProvider] Initializing session restoration...');
+
+    // Force Firebase to check for existing session on app startup
+    const restoreSession = async () => {
+      try {
+        // Wait for Firebase auth to initialize
+        await new Promise((resolve) => {
+          const unsubscribe = onAuthStateChanged(auth, (user) => {
+            unsubscribe(); // Only run once
+            resolve(user);
+          });
+        });
+
+        console.log('✅ [AuthProvider] Session restoration check completed');
+      } catch (error) {
+        console.error('❌ [AuthProvider] Session restoration failed:', error);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  // 🚨 CRITICAL: Add Firebase token auto-refresh
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('🔍 [AuthProvider] Setting up Firebase token auto-refresh for user:', {
+      email: user.email,
+      uid: user.uid,
+      timestamp: new Date().toISOString()
+    });
+
+    const refreshFirebaseToken = async () => {
+      try {
+        // Force refresh the Firebase ID token
+        const newToken = await user.getIdToken(true);
+        console.log('✅ [AuthProvider] Firebase ID token refreshed successfully', {
+          tokenLength: newToken.length,
+          timestamp: new Date().toISOString()
+        });
+        return newToken;
+      } catch (error) {
+        console.error('❌ [AuthProvider] Failed to refresh Firebase ID token:', {
+          error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString()
+        });
+        throw error;
+      }
+    };
+
+    // Refresh token every 50 minutes (Firebase tokens expire after 1 hour)
+    const tokenRefreshInterval = setInterval(async () => {
+      try {
+        await refreshFirebaseToken();
+      } catch (error) {
+        // If refresh fails, user might need to re-authenticate
+        console.warn('⚠️ [AuthProvider] Firebase token refresh failed, user may need to re-authenticate');
+      }
+    }, 50 * 60 * 1000); // 50 minutes
+
+    // Initial token refresh to ensure we have a fresh token
+    refreshFirebaseToken().catch((error) => {
+      console.warn('⚠️ [AuthProvider] Initial Firebase token refresh failed:', error);
+    });
+
+    return () => {
+      console.log('🔍 [AuthProvider] Cleaning up Firebase token refresh interval');
+      clearInterval(tokenRefreshInterval);
+    };
+  }, [user]);
+
+  // 🚨 SIMPLIFIED: Sign in with Google (persistence is handled globally)
   const signInWithGoogle = async () => {
-    console.log('🔍 [AuthProvider] signInWithGoogle - ENHANCED SESSION VERIFICATION');
+    console.log('🔍 [AuthProvider] signInWithGoogle called');
 
     try {
-      // 🚨 Bước 1: Đảm bảo persistence
-      console.log('🔧 [AuthProvider] Step 1: Setting persistence...');
-      await setPersistence(auth, browserLocalPersistence);
-
-      // 🚨 Bước 2: Sign in
-      console.log('🔧 [AuthProvider] Step 2: Calling signInWithPopup...');
       const result = await signInWithPopup(auth, googleProvider);
-      console.log('✅ [AuthProvider] Step 2: Sign in successful');
+      console.log('✅ [AuthProvider] Google sign in successful');
 
-      // 🚨 Bước 3: Verify session được lưu
-      console.log('🔧 [AuthProvider] Step 3: Verifying session storage...');
-
-      // Kiểm tra multiple ways
-      const verificationChecks = {
-        authCurrentUser: !!auth.currentUser,
-        resultUser: !!result.user,
-        localStorageKeys: Object.keys(localStorage).filter(key =>
-          key.includes('firebase') || key.includes('auth')
-        ).length
-      };
-
-      console.log('🔍 [AuthProvider] Session verification:', verificationChecks);
-
-      if (!verificationChecks.authCurrentUser) {
-        console.error('❌ [AuthProvider] auth.currentUser is null after sign in!');
-      }
-
-      if (verificationChecks.localStorageKeys === 0) {
-        console.error('❌ [AuthProvider] No Firebase keys in localStorage after sign in!');
-      }
-
-      // 🚨 Bước 4: Force update state
-      setUser(result.user);
-      console.log('✅ [AuthProvider] Step 4: User state updated');
-
-      // 🚨 Bước 5: Additional verification after delay
-      setTimeout(() => {
-        const finalCheck = {
-          finalCurrentUser: !!auth.currentUser,
-          finalLocalStorage: Object.keys(localStorage).filter(key =>
-            key.includes('firebase') || key.includes('auth')
-          ).length
-        };
-        console.log('🔍 [AuthProvider] Final session verification:', finalCheck);
-      }, 1000);
-
+      // Firebase auth state listener will handle the user state update automatically
       return result;
-
     } catch (error) {
-      console.error('❌ [AuthProvider] Enhanced sign in failed:', {
-        error: error instanceof Error ? error.message : String(error),
-        code: (error as any)?.code,
-        timestamp: new Date().toISOString()
-      });
+      console.error('❌ [AuthProvider] Google sign in failed:', error);
       throw error;
     }
   };
