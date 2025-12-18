@@ -1,4 +1,4 @@
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import React, { createContext, useEffect, useState, useCallback, useRef } from 'react';
 
 import { auth, googleProvider } from '../lib/firebase';
@@ -206,6 +206,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     console.log('🔍 [AuthProvider] Setting up Firebase auth state listener');
+
+    // Handle redirect result for production environments
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log('✅ [AuthProvider] Redirect sign-in successful:', {
+            user: result.user.email,
+            timestamp: new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.error('❌ [AuthProvider] Redirect sign-in failed:', error);
+      }
+    };
+
+    void handleRedirectResult();
 
     // 🚨 Setup auth state listener với detailed logging
     const unsubscribe = onAuthStateChanged(
@@ -858,16 +875,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [user]);
 
-  // 🚨 SIMPLIFIED: Sign in with Google (persistence is handled globally)
+  // 🚨 FIXED: Sign in with Google - use redirect in production to avoid COOP issues
   const signInWithGoogle = async () => {
     console.log('🔍 [AuthProvider] signInWithGoogle called');
 
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('✅ [AuthProvider] Google sign in successful');
+    const isProduction = window.location.hostname.includes('vercel.app');
+    console.log('🔍 [AuthProvider] Auth mode:', isProduction ? 'redirect (production)' : 'popup (development)');
 
-      // Firebase auth state listener will handle the user state update automatically
-      return result;
+    try {
+      if (isProduction) {
+        // Use redirect in production to avoid COOP issues
+        await signInWithRedirect(auth, googleProvider);
+        console.log('✅ [AuthProvider] Google sign in redirect initiated');
+        // Note: This will redirect the page, so we won't get a result here
+        return null;
+      } else {
+        // Use popup in development
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log('✅ [AuthProvider] Google sign in successful');
+        return result;
+      }
     } catch (error) {
       console.error('❌ [AuthProvider] Google sign in failed:', error);
       throw error;
